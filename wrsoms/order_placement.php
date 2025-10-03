@@ -43,38 +43,92 @@ function generateReferenceId($pdo) {
     return $reference_id;
 }
 
-// Function to assign batch based on city and vehicle capacity
-function assignBatch($pdo, $city) {
-    $vehicle_type = ($city === 'Taguig') ? 'Tricycle' : 'Car';
-    $capacity = ($vehicle_type === 'Tricycle') ? 5 : 10;
+//working batches for tricycle only (still has some logical error)
 
+// Function to assign batch based on city and vehicle capacity
+function assignBatch($pdo, $city, $delivery_date) {
+    $vehicle_type = ($city === 'Taguig') ? 'Tricycle' : 'Car';
+    $capacity = 5; // Universal capacity for shared batches (Tricycle's limit)
+    $batch_date = $delivery_date; // Use delivery date for limit check
+
+    // Debug: Log input parameters
+    error_log("assignBatch called: city=$city, delivery_date=$batch_date, vehicle_type=$vehicle_type, capacity=$capacity");
+
+    // Check number of batches for the delivery date
     $stmt = $pdo->prepare("
-        SELECT b.batch_id
+        SELECT COUNT(*) 
+        FROM batches 
+        WHERE DATE(batch_date) = ?
+    ");
+    $stmt->execute([$batch_date]);
+    $batch_count = $stmt->fetchColumn();
+    error_log("Batch count for $batch_date: $batch_count");
+
+    // Debug: Log all batches for the delivery date
+    $stmt = $pdo->prepare("
+        SELECT batch_id, vehicle_type, DATE(batch_date) AS batch_date
+        FROM batches 
+        WHERE DATE(batch_date) = ?
+    ");
+    $stmt->execute([$batch_date]);
+    $all_batches = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    error_log("All batches for $batch_date: " . json_encode($all_batches));
+
+    // If 3 batches already exist for the delivery date, check if any have space
+    if ($batch_count >= 3) {
+        $stmt = $pdo->prepare("
+            SELECT b.batch_id, COALESCE(SUM(od.quantity), 0) AS total_quantity
+            FROM batches b
+            LEFT JOIN orders o ON b.batch_id = o.batch_id
+            LEFT JOIN order_details od ON o.reference_id = od.reference_id
+            WHERE DATE(b.batch_date) = ?
+            GROUP BY b.batch_id
+            HAVING COALESCE(SUM(od.quantity), 0) < ?
+            ORDER BY b.batch_id ASC
+            LIMIT 1
+        ");
+        $stmt->execute([$batch_date, $capacity]);
+        $batch = $stmt->fetch(PDO::FETCH_ASSOC);
+        error_log("Checking for space in 3 batches: " . ($batch ? "Found batch_id={$batch['batch_id']}, total_quantity={$batch['total_quantity']}" : "No batch with space"));
+
+        if ($batch) {
+            return $batch['batch_id'];
+        } else {
+            throw new Exception("Cannot assign batch: Limit of 3 batches reached for $batch_date and all are full.");
+        }
+    }
+
+    // Find existing batch with space for the delivery date
+    $stmt = $pdo->prepare("
+        SELECT b.batch_id, COALESCE(SUM(od.quantity), 0) AS total_quantity
         FROM batches b
         LEFT JOIN orders o ON b.batch_id = o.batch_id
-        WHERE b.vehicle_type = ?
+        LEFT JOIN order_details od ON o.reference_id = od.reference_id
+        WHERE DATE(b.batch_date) = ?
         GROUP BY b.batch_id
-        HAVING COUNT(o.reference_id) < ?
+        HAVING COALESCE(SUM(od.quantity), 0) < ?
         ORDER BY b.batch_id ASC
         LIMIT 1
     ");
-    $stmt->execute([$vehicle_type, $capacity]);
+    $stmt->execute([$batch_date, $capacity]);
     $batch = $stmt->fetch(PDO::FETCH_ASSOC);
+    error_log("Checking existing batches: " . ($batch ? "Found batch_id={$batch['batch_id']}, total_quantity={$batch['total_quantity']}" : "No batch with space"));
 
     if ($batch) {
         return $batch['batch_id'];
     } else {
-        $stmt = $pdo->prepare("SELECT MAX(batch_id) + 1 AS new_batch_id FROM batches");
-        $stmt->execute();
-        $new_batch_id = $stmt->fetchColumn() ?: 3;
-
-        $stmt = $pdo->prepare("INSERT INTO batches (batch_id, vehicle, vehicle_type, batch_status_id, notes) VALUES (?, ?, ?, 1, 'Auto-created batch')");
+        // Create new batch for the delivery date
+        $stmt = $pdo->prepare("
+            INSERT INTO batches (vehicle, vehicle_type, batch_status_id, notes, batch_date) 
+            VALUES (?, ?, 1, 'Auto-created batch', ?)
+        ");
         $vehicle_name = ($vehicle_type === 'Tricycle') ? 'Tricycle #' . rand(100, 999) : 'Car #' . rand(100, 999);
-        $stmt->execute([$new_batch_id, $vehicle_name, $vehicle_type]);
+        $stmt->execute([$vehicle_name, $vehicle_type, $batch_date]);
+        $new_batch_id = $pdo->lastInsertId();
+        error_log("Created new $vehicle_type batch: batch_id=$new_batch_id");
         return $new_batch_id;
     }
 }
-
 // Handle form submission
 $errors = [];
 $success = null;
@@ -427,4 +481,5 @@ $order_types = $pdo->query("SELECT order_type_id, type_name FROM order_types")->
         <?php endif; ?>
     </script>
 </body>
+
 </html>
