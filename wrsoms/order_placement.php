@@ -44,33 +44,86 @@ function generateReferenceId($pdo) {
 }
 
 // Function to assign batch based on city and vehicle capacity
-function assignBatch($pdo, $city) {
+function assignBatch($pdo, $city, $delivery_date) {
     $vehicle_type = ($city === 'Taguig') ? 'Tricycle' : 'Car';
-    $capacity = ($vehicle_type === 'Tricycle') ? 5 : 10;
+    $capacity = 5; // Universal capacity for shared batches (Tricycle's limit)
+    $batch_date = $delivery_date; // Use delivery date for limit check
 
+    // Debug: Log input parameters
+    error_log("assignBatch called: city=$city, delivery_date=$batch_date, vehicle_type=$vehicle_type, capacity=$capacity");
+
+    // Check number of batches for the delivery date
     $stmt = $pdo->prepare("
-        SELECT b.batch_id
+        SELECT COUNT(*) 
+        FROM batches 
+        WHERE DATE(batch_date) = ?
+    ");
+    $stmt->execute([$batch_date]);
+    $batch_count = $stmt->fetchColumn();
+    error_log("Batch count for $batch_date: $batch_count");
+
+    // Debug: Log all batches for the delivery date
+    $stmt = $pdo->prepare("
+        SELECT batch_id, vehicle_type, DATE(batch_date) AS batch_date
+        FROM batches 
+        WHERE DATE(batch_date) = ?
+    ");
+    $stmt->execute([$batch_date]);
+    $all_batches = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    error_log("All batches for $batch_date: " . json_encode($all_batches));
+
+    // If 3 batches already exist for the delivery date, check if any have space
+    if ($batch_count >= 3) {
+        $stmt = $pdo->prepare("
+            SELECT b.batch_id, COALESCE(SUM(od.quantity), 0) AS total_quantity
+            FROM batches b
+            LEFT JOIN orders o ON b.batch_id = o.batch_id
+            LEFT JOIN order_details od ON o.reference_id = od.reference_id
+            WHERE DATE(b.batch_date) = ?
+            GROUP BY b.batch_id
+            HAVING COALESCE(SUM(od.quantity), 0) < ?
+            ORDER BY b.batch_id ASC
+            LIMIT 1
+        ");
+        $stmt->execute([$batch_date, $capacity]);
+        $batch = $stmt->fetch(PDO::FETCH_ASSOC);
+        error_log("Checking for space in 3 batches: " . ($batch ? "Found batch_id={$batch['batch_id']}, total_quantity={$batch['total_quantity']}" : "No batch with space"));
+
+        if ($batch) {
+            return $batch['batch_id'];
+        } else {
+            throw new Exception("Cannot assign batch: Limit of 3 batches reached for $batch_date and all are full.");
+        }
+    }
+
+    // Find existing batch with space for the delivery date
+    $stmt = $pdo->prepare("
+        SELECT b.batch_id, COALESCE(SUM(od.quantity), 0) AS total_quantity
         FROM batches b
         LEFT JOIN orders o ON b.batch_id = o.batch_id
-        WHERE b.vehicle_type = ?
+        LEFT JOIN order_details od ON o.reference_id = od.reference_id
+        WHERE DATE(b.batch_date) = ?
         GROUP BY b.batch_id
-        HAVING COUNT(o.reference_id) < ?
+        HAVING COALESCE(SUM(od.quantity), 0) < ?
         ORDER BY b.batch_id ASC
         LIMIT 1
     ");
-    $stmt->execute([$vehicle_type, $capacity]);
+    $stmt->execute([$batch_date, $capacity]);
     $batch = $stmt->fetch(PDO::FETCH_ASSOC);
+    error_log("Checking existing batches: " . ($batch ? "Found batch_id={$batch['batch_id']}, total_quantity={$batch['total_quantity']}" : "No batch with space"));
 
     if ($batch) {
         return $batch['batch_id'];
     } else {
-        $stmt = $pdo->prepare("SELECT MAX(batch_id) + 1 AS new_batch_id FROM batches");
-        $stmt->execute();
-        $new_batch_id = $stmt->fetchColumn() ?: 3;
-
-        $stmt = $pdo->prepare("INSERT INTO batches (batch_id, vehicle, vehicle_type, batch_status_id, notes) VALUES (?, ?, ?, 1, 'Auto-created batch')");
+        // Create new batch for the delivery date
+        $stmt = $pdo->prepare("
+            INSERT INTO batches (vehicle, vehicle_type, batch_status_id, notes, batch_date) 
+            VALUES (?, ?, 1, 'Auto-created batch', ?)
+        ");
         $vehicle_name = ($vehicle_type === 'Tricycle') ? 'Tricycle #' . rand(100, 999) : 'Car #' . rand(100, 999);
-        $stmt->execute([$new_batch_id, $vehicle_name, $vehicle_type]);
+        $stmt->execute([$vehicle_name, $vehicle_type, $batch_date]);
+        $new_batch_id = $pdo->lastInsertId();
+        error_log("Created new $vehicle_type batch: batch_id=$new_batch_id");
         return $new_batch_id;
     }
 }
@@ -127,7 +180,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_order'])) {
             } else {
                 $subtotal = $container['price'] * $quantity;
                 $reference_id = generateReferenceId($pdo);
-                $batch_id = assignBatch($pdo, $city);
+                $batch_id = assignBatch($pdo, $city, $delivery_date);
 
                 $stmt = $pdo->prepare("INSERT INTO orders (reference_id, customer_id, order_type_id, batch_id, order_date, delivery_date, order_status_id, total_amount) VALUES (?, ?, ?, ?, NOW(), ?, 1, ?)");
                 $stmt->execute([$reference_id, $customer_id, $order_type_id, $batch_id, $delivery_date, $subtotal]);
@@ -179,61 +232,186 @@ $order_types = $pdo->query("SELECT order_type_id, type_name FROM order_types")->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Place an Order</title>
+    <title>Place an Order - WaterWorld</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        * {
             margin: 0;
-            padding: 20px;
-            background-color: #f4f4f4;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         }
-        h1, h2, h3 {
+
+        body {
+            background-color: #f9fbfc;
             color: #333;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        header {
+            background: #ffffffcc;
+            backdrop-filter: blur(10px);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e5e5e5;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #008CBA;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            position: relative;
+            padding-bottom: 4px;
+            transition: color 0.3s;
+        }
+
+        nav ul li a::after {
+            content: "";
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background: #008CBA;
+            transition: width 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: #008CBA;
+        }
+
+        nav ul li a:hover::after {
+            width: 100%;
+        }
+
+        section {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 1s ease;
+        }
+
+        section.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .order {
+            padding: 4rem 5%;
             text-align: center;
         }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+
+        .order h1 {
+            font-size: 2.2rem;
+            margin-bottom: 1rem;
+            color: #008CBA;
+            animation: slideDown 1.5s ease forwards;
         }
+
         .form-container {
-            background-color: #fff;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            max-width: 800px;
+            margin: 2rem auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
         }
+
+        .form-container h3 {
+            grid-column: 1 / -1;
+            color: #008CBA;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
         .form-container label {
             display: block;
             margin: 10px 0 5px;
+            font-weight: 500;
+            color: #333;
+            text-align: left;
         }
-        .form-container select, .form-container input {
+
+        .form-container input,
+        .form-container select {
             width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
             border: 1px solid #ddd;
-            border-radius: 4px;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
         }
+
+        .form-container input:focus,
+        .form-container select:focus {
+            border-color: #008CBA;
+            outline: none;
+        }
+
+        .form-container input[readonly] {
+            background: #f0f0f0;
+        }
+
         .form-container button {
-            background-color: #007bff;
-            color: #fff;
-            padding: 10px 20px;
+            grid-column: 1 / -1;
+            background: #008CBA;
+            color: white;
+            padding: 0.75rem 1.5rem;
             border: none;
-            border-radius: 4px;
+            border-radius: 30px;
+            font-weight: bold;
             cursor: pointer;
+            transition: background 0.3s, transform 0.3s;
         }
+
         .form-container button:hover {
-            background-color: #0056b3;
+            background: #005f80;
+            transform: scale(1.05);
         }
-        .success, .error {
-            text-align: center;
-            margin: 10px 0;
-        }
+
         .success {
-            color: green;
+            color: #2e7d32;
+            margin: 1rem 0;
+            font-weight: 500;
+            text-align: center;
+            grid-column: 1 / -1;
         }
+
         .error {
-            color: red;
+            color: #d32f2f;
+            margin: 1rem 0;
+            font-weight: 500;
+            text-align: center;
+            grid-column: 1 / -1;
         }
+
+        .error ul {
+            list-style: none;
+            padding: 0;
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -247,55 +425,148 @@ $order_types = $pdo->query("SELECT order_type_id, type_name FROM order_types")->
             align-items: center;
             z-index: 1000;
         }
+
         .modal-content {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 5px;
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             max-width: 500px;
             width: 90%;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
             position: relative;
+            animation: slideUp 0.5s ease forwards;
         }
+
         .modal-content h2 {
-            margin-top: 0;
+            color: #008CBA;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+            text-align: center;
         }
-        .modal-content .warning {
-            color: red;
+
+        .modal-content .cart-item {
+            border-bottom: 1px solid #e5e5e5;
+            padding: 1rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-content .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .modal-content .cart-total {
             font-weight: bold;
-            margin: 10px 0;
+            color: #008CBA;
+            margin-top: 1rem;
+            text-align: right;
         }
+
+        .modal-content .warning {
+            color: #d32f2f;
+            font-weight: 500;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
         .modal-content button {
-            background-color: #007bff;
-            color: #fff;
-            padding: 10px 20px;
+            background: #008CBA;
+            color: white;
+            padding: 0.75rem 1.5rem;
             border: none;
-            border-radius: 4px;
+            border-radius: 30px;
+            font-weight: bold;
             cursor: pointer;
             display: block;
-            margin: 10px auto;
+            margin: 1rem auto;
+            transition: background 0.3s, transform 0.3s;
         }
+
         .modal-content button:hover {
-            background-color: #0056b3;
+            background: #005f80;
+            transform: scale(1.05);
         }
+
         .back-button {
-            display: block;
             text-align: center;
-            margin: 20px 0;
+            margin: 2rem 0;
         }
+
         .back-button a {
-            color: #007bff;
+            color: #008CBA;
             text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
         }
+
         .back-button a:hover {
+            color: #005f80;
             text-decoration: underline;
+        }
+
+        footer {
+            background: #008CBA;
+            color: white;
+            text-align: center;
+            padding: 2rem 5%;
+            margin-top: 2rem;
+        }
+
+        footer .socials {
+            margin: 1rem 0;
+        }
+
+        footer .socials a {
+            margin: 0 10px;
+            color: white;
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+        }
+
+        footer .socials a:hover {
+            color: #cceeff;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Place an Order</h1>
+    <header>
+        <div class="logo">WaterWorld</div>
+        <nav>
+            <ul>
+                <li><a href="index.php">Home</a></li>
+                <li><a href="order_placement.php">Order</a></li>
+                <li><a href="order_tracking.php">Track</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
 
-        <!-- Success or Error Messages -->
+    <section class="order show">
+        <h1>Place Your Order</h1>
+
         <?php if (isset($success)): ?>
             <p class="success"><?php echo htmlspecialchars($success); ?></p>
         <?php endif; ?>
@@ -309,90 +580,90 @@ $order_types = $pdo->query("SELECT order_type_id, type_name FROM order_types")->
             </div>
         <?php endif; ?>
 
-        <!-- Add New Order Form -->
         <div class="form-container">
-            <h2>Add New Order</h2>
-            <form method="POST" action="">
-                <h3>Customer Details</h3>
-                <label for="first_name">First Name</label>
-                <input type="text" name="first_name" required>
+            <h3>Customer Details</h3>
+            <label for="first_name">First Name</label>
+            <input type="text" name="first_name" required>
 
-                <label for="middle_name">Middle Name (Optional)</label>
-                <input type="text" name="middle_name">
+            <label for="middle_name">Middle Name (Optional)</label>
+            <input type="text" name="middle_name">
 
-                <label for="last_name">Last Name</label>
-                <input type="text" name="last_name" required>
+            <label for="last_name">Last Name</label>
+            <input type="text" name="last_name" required>
 
-                <label for="customer_contact">Contact Number</label>
-                <input type="text" name="customer_contact" required>
+            <label for="customer_contact">Contact Number</label>
+            <input type="text" name="customer_contact" required>
 
-                <label for="street">Street</label>
-                <input type="text" name="street" required>
+            <label for="street">Street</label>
+            <input type="text" name="street" required>
 
-                <label for="city">City</label>
-                <select name="city" id="city" required onchange="updateBarangays()">
-                    <option value="">Select City</option>
-                    <?php foreach (array_keys($ncr_cities) as $city): ?>
-                        <option value="<?php echo htmlspecialchars($city); ?>"><?php echo htmlspecialchars($city); ?></option>
-                    <?php endforeach; ?>
-                </select>
+            <label for="city">City</label>
+            <select name="city" id="city" required onchange="updateBarangays()">
+                <option value="">Select City</option>
+                <?php foreach (array_keys($ncr_cities) as $city): ?>
+                    <option value="<?php echo htmlspecialchars($city); ?>"><?php echo htmlspecialchars($city); ?></option>
+                <?php endforeach; ?>
+            </select>
 
-                <label for="barangay">Barangay</label>
-                <select name="barangay" id="barangay" required>
-                    <option value="">Select Barangay</option>
-                </select>
+            <label for="barangay">Barangay</label>
+            <select name="barangay" id="barangay" required>
+                <option value="">Select Barangay</option>
+            </select>
 
-                <label for="province">Province</label>
-                <input type="text" name="province" value="Metro Manila" readonly>
+            <label for="province">Province</label>
+            <input type="text" name="province" value="Metro Manila" readonly>
 
-                <h3>Order Details</h3>
-                <label for="order_type_id">Order Type</label>
-                <select name="order_type_id" required>
-                    <option value="">Select Order Type</option>
-                    <?php foreach ($order_types as $type): ?>
-                        <option value="<?php echo $type['order_type_id']; ?>"><?php echo htmlspecialchars($type['type_name']); ?></option>
-                    <?php endforeach; ?>
-                </select>
+            <h3>Order Details</h3>
+            <label for="order_type_id">Order Type</label>
+            <select name="order_type_id" required>
+                <option value="">Select Order Type</option>
+                <?php foreach ($order_types as $type): ?>
+                    <option value="<?php echo $type['order_type_id']; ?>"><?php echo htmlspecialchars($type['type_name']); ?></option>
+                <?php endforeach; ?>
+            </select>
 
-                <label for="container_id">Container</label>
-                <select name="container_id" required>
-                    <option value="">Select Container</option>
-                    <?php foreach ($containers as $container): ?>
-                        <option value="<?php echo $container['container_id']; ?>">
-                            <?php echo htmlspecialchars($container['container_type'] . ' (₱' . $container['price'] . ')'); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+            <label for="container_id">Container</label>
+            <select name="container_id" required>
+                <option value="">Select Container</option>
+                <?php foreach ($containers as $container): ?>
+                    <option value="<?php echo $container['container_id']; ?>">
+                        <?php echo htmlspecialchars($container['container_type'] . ' (₱' . $container['price'] . ')'); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
 
-                <label for="quantity">Quantity</label>
-                <input type="number" name="quantity" min="1" required>
+            <label for="quantity">Quantity</label>
+            <input type="number" name="quantity" min="1" required>
 
-                <label for="delivery_date">Delivery Date</label>
-                <input type="date" name="delivery_date" required>
+            <label for="delivery_date">Delivery Date</label>
+            <input type="date" name="delivery_date" required>
 
-                <button type="submit" name="add_order">Add Order</button>
-            </form>
+            <button type="submit" name="add_order">Add to Cart</button>
         </div>
 
-        <!-- Receipt Modal -->
         <?php if (isset($_SESSION['receipt_data'])): ?>
             <div id="receiptModal" class="modal">
                 <div class="modal-content">
-                    <h2>Order Receipt</h2>
+                    <h2>Your Order Summary</h2>
+                    <div class="cart-item">
+                        <span><strong>Item:</strong> <?php echo htmlspecialchars($_SESSION['receipt_data']['quantity'] . ' x ' . $_SESSION['receipt_data']['container']); ?></span>
+                        <span>₱<?php echo number_format($_SESSION['receipt_data']['subtotal'], 2); ?></span>
+                    </div>
+                    <div class="cart-total">
+                        <span>Total: ₱<?php echo number_format($_SESSION['receipt_data']['subtotal'], 2); ?></span>
+                    </div>
                     <p><strong>Reference ID:</strong> <?php echo htmlspecialchars($_SESSION['receipt_data']['reference_id']); ?></p>
                     <p><strong>Customer Name:</strong> <?php echo htmlspecialchars($_SESSION['receipt_data']['customer_name']); ?></p>
                     <p><strong>Contact Number:</strong> <?php echo htmlspecialchars($_SESSION['receipt_data']['customer_contact']); ?></p>
                     <p><strong>Address:</strong> <?php echo htmlspecialchars($_SESSION['receipt_data']['address']); ?></p>
                     <p><strong>Order Type:</strong> <?php echo htmlspecialchars($_SESSION['receipt_data']['order_type']); ?></p>
-                    <p><strong>Item:</strong> <?php echo htmlspecialchars($_SESSION['receipt_data']['quantity'] . ' x ' . $_SESSION['receipt_data']['container']); ?></p>
-                    <p><strong>Subtotal:</strong> ₱<?php echo number_format($_SESSION['receipt_data']['subtotal'], 2); ?></p>
                     <p><strong>Order Date:</strong> <?php echo $_SESSION['receipt_data']['order_date']; ?></p>
                     <p><strong>Delivery Date:</strong> <?php echo $_SESSION['receipt_data']['delivery_date']; ?></p>
                     <p><strong>Vehicle Type:</strong> <?php echo htmlspecialchars($_SESSION['receipt_data']['vehicle_type']); ?></p>
                     <p><strong>Batch ID:</strong> <?php echo htmlspecialchars($_SESSION['receipt_data']['batch_id']); ?></p>
                     <p class="warning">Please take a screenshot of this receipt for your records!</p>
                     <form method="POST" action="">
-                        <button type="submit" name="close_receipt">Close</button>
+                        <button type="submit" name="close_receipt">Confirm Order</button>
                     </form>
                 </div>
             </div>
@@ -401,9 +672,35 @@ $order_types = $pdo->query("SELECT order_type_id, type_name FROM order_types")->
         <div class="back-button">
             <a href="index.php">Back to Home</a>
         </div>
-    </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2025 WaterWorld Water Station. All rights reserved.</p>
+        <div class="socials">
+            <a href="#">Facebook</a>
+            <a href="#">Twitter</a>
+            <a href="#">Instagram</a>
+        </div>
+    </footer>
 
     <script>
+        const sections = document.querySelectorAll("section");
+
+        const revealOnScroll = () => {
+            const triggerBottom = window.innerHeight * 0.85;
+
+            sections.forEach(section => {
+                const sectionTop = section.getBoundingClientRect().top;
+
+                if (sectionTop < triggerBottom) {
+                    section.classList.add("show");
+                }
+            });
+        };
+
+        window.addEventListener("scroll", revealOnScroll);
+        revealOnScroll();
+
         function updateBarangays() {
             const citySelect = document.getElementById('city');
             const barangaySelect = document.getElementById('barangay');

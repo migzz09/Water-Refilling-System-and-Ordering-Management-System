@@ -87,94 +87,253 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['track_order'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Track an Order</title>
+    <title>Track an Order - WaterWorld</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        * {
             margin: 0;
-            padding: 20px;
-            background-color: #f4f4f4;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         }
-        h1, h2 {
+
+        body {
+            background-color: #f9fbfc;
             color: #333;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        header {
+            background: #ffffffcc;
+            backdrop-filter: blur(10px);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e5e5e5;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #008CBA;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            position: relative;
+            padding-bottom: 4px;
+            transition: color 0.3s;
+        }
+
+        nav ul li a::after {
+            content: "";
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background: #008CBA;
+            transition: width 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: #008CBA;
+        }
+
+        nav ul li a:hover::after {
+            width: 100%;
+        }
+
+        section {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 1s ease;
+        }
+
+        section.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .tracking {
+            padding: 4rem 5%;
             text-align: center;
         }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+
+        .tracking h1 {
+            font-size: 2.2rem;
+            margin-bottom: 1rem;
+            color: #008CBA;
+            animation: slideDown 1.5s ease forwards;
         }
+
         .form-container {
-            background-color: #fff;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            max-width: 500px;
+            margin: 2rem auto;
         }
+
         .form-container label {
             display: block;
             margin: 10px 0 5px;
+            font-weight: 500;
+            color: #333;
         }
+
         .form-container input {
             width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
             border: 1px solid #ddd;
-            border-radius: 4px;
+            border-radius: 8px;
+            font-size: 1rem;
         }
+
         .form-container button {
-            background-color: #007bff;
-            color: #fff;
-            padding: 10px 20px;
+            background: #008CBA;
+            color: white;
+            padding: 0.75rem 1.5rem;
             border: none;
-            border-radius: 4px;
+            border-radius: 30px;
+            font-weight: bold;
             cursor: pointer;
+            transition: background 0.3s, transform 0.3s;
         }
+
         .form-container button:hover {
-            background-color: #0056b3;
+            background: #005f80;
+            transform: scale(1.05);
         }
+
         .error {
+            color: #d32f2f;
+            margin: 1rem 0;
+            font-weight: 500;
             text-align: center;
-            margin: 10px 0;
-            color: red;
         }
+
         .tracking-section {
-            background-color: #fff;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            max-width: 700px;
+            margin: 2rem auto;
+            text-align: left;
         }
+
+        .tracking-section h2 {
+            color: #008CBA;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+        }
+
         .tracking-section dl {
             margin: 0;
         }
+
         .tracking-section dt {
             font-weight: bold;
-            margin-top: 10px;
+            margin-top: 1rem;
+            color: #333;
         }
+
         .tracking-section dd {
             margin-left: 20px;
+            color: #555;
         }
+
         .back-button {
-            display: block;
             text-align: center;
-            margin: 20px 0;
+            margin: 2rem 0;
         }
+
         .back-button a {
-            color: #007bff;
+            color: #008CBA;
             text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
         }
+
         .back-button a:hover {
+            color: #005f80;
             text-decoration: underline;
+        }
+
+        footer {
+            background: #008CBA;
+            color: white;
+            text-align: center;
+            padding: 2rem 5%;
+            margin-top: 2rem;
+        }
+
+        footer .socials {
+            margin: 1rem 0;
+        }
+
+        footer .socials a {
+            margin: 0 10px;
+            color: white;
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+        }
+
+        footer .socials a:hover {
+            color: #cceeff;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <header>
+        <div class="logo">WaterWorld</div>
+        <nav>
+            <ul>
+                <li><a href="index.php">Home</a></li>
+                <li><a href="order_placement.php">Order</a></li>
+                <li><a href="order_tracking.php">Track</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="tracking show">
         <h1>Track an Order</h1>
 
-        <!-- Order Tracking Form -->
         <div class="form-container">
-            <h2>Track Order</h2>
             <form method="POST" action="">
                 <label for="reference_id">Reference ID</label>
                 <input type="text" name="reference_id" required>
@@ -182,7 +341,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['track_order'])) {
             </form>
         </div>
 
-        <!-- Order Tracking Details -->
         <?php if (isset($tracking_error)): ?>
             <p class="error"><?php echo htmlspecialchars($tracking_error); ?></p>
         <?php elseif ($tracking_data): ?>
@@ -264,6 +422,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['track_order'])) {
         <div class="back-button">
             <a href="index.php">Back to Home</a>
         </div>
-    </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2025 WaterWorld Water Station. All rights reserved.</p>
+        <div class="socials">
+            <a href="#">Facebook</a>
+            <a href="#">Twitter</a>
+            <a href="#">Instagram</a>
+        </div>
+    </footer>
+
+    <script>
+        const sections = document.querySelectorAll("section");
+
+        const revealOnScroll = () => {
+            const triggerBottom = window.innerHeight * 0.85;
+
+            sections.forEach(section => {
+                const sectionTop = section.getBoundingClientRect().top;
+
+                if (sectionTop < triggerBottom) {
+                    section.classList.add("show");
+                }
+            });
+        };
+
+        window.addEventListener("scroll", revealOnScroll);
+        revealOnScroll();
+    </script>
 </body>
 </html>
