@@ -10,6 +10,7 @@ $files_to_check = [
     'connect.php' => 'Database Connection',
     'login.php' => 'Customer Login',
     'logout.php' => 'Customer Logout',
+    'register.php' => 'Customer Registration'
 ];
 
 foreach ($files_to_check as $file => $description) {
@@ -310,6 +311,7 @@ $base_url = 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . 
           <li><a href="logout.php">Logout</a></li>
           <li class="welcome">Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?>!</li>
         <?php else: ?>
+          <li><a href="register.php">Register</a></li>
           <li><a href="login.php">Login</a></li>
           <li><a href="order_tracking.php">Track</a></li>
         <?php endif; ?>
