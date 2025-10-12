@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:4306
--- Generation Time: Oct 12, 2025 at 08:31 AM
+-- Generation Time: Oct 12, 2025 at 11:26 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -67,16 +67,18 @@ CREATE TABLE `batches` (
   `batch_status_id` int(11) DEFAULT NULL,
   `vehicle` varchar(100) DEFAULT NULL,
   `notes` varchar(255) DEFAULT NULL,
-  `vehicle_type` enum('Tricycle','Car') NOT NULL
+  `vehicle_type` enum('Tricycle','Car') NOT NULL,
+  `batch_number` int(11) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `batches`
 --
 
-INSERT INTO `batches` (`batch_id`, `batch_date`, `batch_status_id`, `vehicle`, `notes`, `vehicle_type`) VALUES
-(106, '2025-10-11 16:00:00', 1, 'Tricycle #986', 'Auto-created batch', 'Tricycle'),
-(107, '2025-10-11 16:00:00', 1, 'Car #285', 'Auto-created batch', 'Car');
+INSERT INTO `batches` (`batch_id`, `batch_date`, `batch_status_id`, `vehicle`, `notes`, `vehicle_type`, `batch_number`) VALUES
+(106, '2025-10-11 16:00:00', 1, 'Tricycle #986', 'Auto-created batch', 'Tricycle', 1),
+(107, '2025-10-11 16:00:00', 1, 'Car #285', 'Auto-created batch', 'Car', 1),
+(108, '2025-10-11 16:00:00', 1, 'Tricycle #922', 'Auto-created batch', 'Tricycle', 2);
 
 -- --------------------------------------------------------
 
@@ -156,7 +158,9 @@ CREATE TABLE `customers` (
 
 INSERT INTO `customers` (`customer_id`, `first_name`, `middle_name`, `last_name`, `customer_contact`, `street`, `barangay`, `city`, `province`, `date_created`) VALUES
 (15, 'EQWE', 'halina', 'faustino', '09274772514', 'EQWE', 'Pinagsama', 'Taguig', 'Metro Manila', '2025-10-12 06:14:16'),
-(16, 'VBN', 'EQWE', 'VBN', '09274665124', 'EQWE', 'Binondo', 'Manila', 'Metro Manila', '2025-10-12 06:29:26');
+(16, 'VBN', 'EQWE', 'VBN', '09274665124', 'EQWE', 'Binondo', 'Manila', 'Metro Manila', '2025-10-12 06:29:26'),
+(17, 'dsa', 'dsadas', 'saddas', '09274665199', 'pp', 'Bambang', 'Taguig', 'Metro Manila', '2025-10-12 06:43:12'),
+(18, 'dsfgsd', 'jghjhj', 'rtrett', '09274772515', 'EQWE', 'Bagumbayan', 'Taguig', 'Metro Manila', '2025-10-12 06:43:50');
 
 -- --------------------------------------------------------
 
@@ -256,7 +260,10 @@ CREATE TABLE `orders` (
 --
 
 INSERT INTO `orders` (`reference_id`, `customer_id`, `order_type_id`, `batch_id`, `order_date`, `delivery_date`, `order_status_id`, `total_amount`) VALUES
+('09897', 18, 2, 108, '2025-10-12 06:43:50', '2025-10-12', 1, 80.00),
+('19149', 17, 1, 106, '2025-10-12 06:43:12', '2025-10-12', 1, 60.00),
 ('263780', 16, 1, 107, '2025-10-12 06:29:26', '2025-10-12', 1, 30.00),
+('42497', 15, 1, 108, '2025-10-12 09:07:29', '2025-10-12', 1, 40.00),
 ('546528', 15, 1, 106, '2025-10-12 06:14:16', '2025-10-12', 1, 90.00);
 
 -- --------------------------------------------------------
@@ -268,6 +275,7 @@ INSERT INTO `orders` (`reference_id`, `customer_id`, `order_type_id`, `batch_id`
 CREATE TABLE `order_details` (
   `order_detail_id` int(11) NOT NULL,
   `reference_id` varchar(6) NOT NULL,
+  `batch_number` int(11) NOT NULL DEFAULT 1,
   `container_id` int(11) DEFAULT NULL,
   `quantity` int(11) NOT NULL,
   `subtotal` decimal(10,2) NOT NULL
@@ -277,9 +285,12 @@ CREATE TABLE `order_details` (
 -- Dumping data for table `order_details`
 --
 
-INSERT INTO `order_details` (`order_detail_id`, `reference_id`, `container_id`, `quantity`, `subtotal`) VALUES
-(15, '546528', 2, 3, 90.00),
-(16, '263780', 2, 1, 30.00);
+INSERT INTO `order_details` (`order_detail_id`, `reference_id`, `batch_number`, `container_id`, `quantity`, `subtotal`) VALUES
+(15, '546528', 1, 2, 3, 90.00),
+(16, '263780', 1, 2, 1, 30.00),
+(17, '19149', 1, 2, 2, 60.00),
+(18, '09897', 1, 1, 2, 80.00),
+(19, '42497', 2, 1, 1, 40.00);
 
 -- --------------------------------------------------------
 
@@ -519,7 +530,7 @@ ALTER TABLE `payment_status`
 -- AUTO_INCREMENT for table `batches`
 --
 ALTER TABLE `batches`
-  MODIFY `batch_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=108;
+  MODIFY `batch_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=109;
 
 --
 -- AUTO_INCREMENT for table `batch_employees`
@@ -543,7 +554,7 @@ ALTER TABLE `containers`
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `customer_feedback`
@@ -573,7 +584,7 @@ ALTER TABLE `employees`
 -- AUTO_INCREMENT for table `order_details`
 --
 ALTER TABLE `order_details`
-  MODIFY `order_detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `order_detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `order_status`
@@ -664,3 +675,4 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
