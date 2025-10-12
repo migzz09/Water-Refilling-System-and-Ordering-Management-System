@@ -50,26 +50,30 @@ function assignBatch($pdo, $city, $delivery_date, $quantity) {
     $batch_date = $delivery_date;
 
     if ($quantity > $capacity) {
-        throw new Exception("Order quantity exceeds vehicle capacity for $vehicle_type. Please split your order into smaller quantities.");
+        throw new Exception("Order quantity exceeds vehicle capacity for $vehicle_type (Max: $capacity containers). Please split your order into smaller quantities.");
     }
 
-    // Find existing batch with enough space
+    // Find existing batch with enough space (prioritize lowest batch_number)
     $stmt = $pdo->prepare("
-        SELECT b.batch_id, COALESCE(SUM(od.quantity), 0) AS total_quantity
+        SELECT b.batch_id, b.batch_number, COALESCE(SUM(od.quantity), 0) AS total_quantity
         FROM batches b
         LEFT JOIN orders o ON b.batch_id = o.batch_id
         LEFT JOIN order_details od ON o.reference_id = od.reference_id
         WHERE DATE(b.batch_date) = ? AND b.vehicle_type = ?
-        GROUP BY b.batch_id
+        GROUP BY b.batch_id, b.batch_number
         HAVING total_quantity + ? <= ?
-        ORDER BY b.batch_id ASC
+        ORDER BY b.batch_number ASC, b.batch_id ASC
         LIMIT 1
     ");
     $stmt->execute([$batch_date, $vehicle_type, $quantity, $capacity]);
     $batch = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($batch) {
-        return $batch['batch_id'];
+        error_log("Assigned to existing batch: batch_id={$batch['batch_id']}, batch_number={$batch['batch_number']}, remaining_capacity=" . ($capacity - $batch['total_quantity']));
+        return [
+            'batch_id' => $batch['batch_id'],
+            'batch_number' => $batch['batch_number']
+        ];
     }
 
     // No existing batch has space, check if can create new
@@ -85,32 +89,22 @@ function assignBatch($pdo, $city, $delivery_date, $quantity) {
         throw new Exception("Cannot assign batch: Limit of 3 batches reached for $vehicle_type on $batch_date and all are full. Please choose a different delivery date.");
     }
 
-    // Create new batch
+    // Create new batch with sequential batch_number (1,2,3)
+    $new_batch_number = $batch_count + 1;
+    
     $stmt = $pdo->prepare("
-        INSERT INTO batches (vehicle, vehicle_type, batch_status_id, notes, batch_date) 
-        VALUES (?, ?, 1, 'Auto-created batch', ?)
+        INSERT INTO batches (vehicle, vehicle_type, batch_number, batch_status_id, notes, batch_date) 
+        VALUES (?, ?, ?, 1, 'Auto-created batch', ?)
     ");
     $vehicle_name = $vehicle_type . ' #' . rand(100, 999);
-    $stmt->execute([$vehicle_name, $vehicle_type, $batch_date]);
+    $stmt->execute([$vehicle_name, $vehicle_type, $new_batch_number, $batch_date]);
     $new_batch_id = $pdo->lastInsertId();
-    return $new_batch_id;
-}
-
-// Function to get display batch number (1,2,3) for the day and vehicle type
-function getDisplayBatchNumber($pdo, $batch_id, $delivery_date, $vehicle_type) {
-    $stmt = $pdo->prepare("
-        SELECT batch_id 
-        FROM batches 
-        WHERE DATE(batch_date) = ? AND vehicle_type = ?
-        ORDER BY batch_id ASC
-    ");
-    $stmt->execute([$delivery_date, $vehicle_type]);
-    $all_batches = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
-    $position = array_search($batch_id, $all_batches);
-    if ($position !== false) {
-        return $position + 1;
-    }
-    return 'Unknown';
+    
+    error_log("Created new batch: batch_id=$new_batch_id, batch_number=$new_batch_number, vehicle_type=$vehicle_type");
+    return [
+        'batch_id' => $new_batch_id,
+        'batch_number' => $new_batch_number
+    ];
 }
 
 // Handle form submission
@@ -145,6 +139,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_order'])) {
 
     if (empty($errors)) {
         try {
+            $pdo->beginTransaction();
+
             $stmt = $pdo->prepare("SELECT customer_id FROM customers WHERE customer_contact = ?");
             $stmt->execute([$customer_contact]);
             $customer = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -161,42 +157,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_order'])) {
             $stmt->execute([$container_id]);
             $container = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$container) {
-                $errors[] = "Container not found.";
-            } else {
-                $subtotal = $container['price'] * $quantity;
-                $reference_id = generateReferenceId($pdo);
-                $batch_id = assignBatch($pdo, $city, $delivery_date, $quantity);
-                $vehicle_type = ($city === 'Taguig') ? 'Tricycle' : 'Car';
-                $display_batch_number = getDisplayBatchNumber($pdo, $batch_id, $delivery_date, $vehicle_type);
-
-                $stmt = $pdo->prepare("INSERT INTO orders (reference_id, customer_id, order_type_id, batch_id, order_date, delivery_date, order_status_id, total_amount) VALUES (?, ?, ?, ?, NOW(), ?, 1, ?)");
-                $stmt->execute([$reference_id, $customer_id, $order_type_id, $batch_id, $delivery_date, $subtotal]);
-
-                $stmt = $pdo->prepare("INSERT INTO order_details (reference_id, container_id, quantity, subtotal) VALUES (?, ?, ?, ?)");
-                $stmt->execute([$reference_id, $container_id, $quantity, $subtotal]);
-
-                $stmt = $pdo->prepare("SELECT type_name FROM order_types WHERE order_type_id = ?");
-                $stmt->execute([$order_type_id]);
-                $order_type = $stmt->fetchColumn();
-
-                $_SESSION['receipt_data'] = [
-                    'reference_id' => $reference_id,
-                    'customer_name' => $first_name . ' ' . ($middle_name ? $middle_name . ' ' : '') . $last_name,
-                    'customer_contact' => $customer_contact,
-                    'address' => "$street, $barangay, $city, $province",
-                    'order_type' => $order_type,
-                    'container' => $container['container_type'],
-                    'quantity' => $quantity,
-                    'subtotal' => $subtotal,
-                    'delivery_date' => $delivery_date,
-                    'order_date' => date('Y-m-d H:i:s'),
-                    'vehicle_type' => $vehicle_type,
-                    'batch_number' => $display_batch_number
-                ];
-
-                $success = "Order added successfully!";
+                throw new Exception("Container not found.");
             }
+
+            $subtotal = $container['price'] * $quantity;
+            $reference_id = generateReferenceId($pdo);
+            
+            // Get batch assignment with batch_number
+            $batch_info = assignBatch($pdo, $city, $delivery_date, $quantity);
+            $batch_id = $batch_info['batch_id'];
+            $batch_number = $batch_info['batch_number'];
+            $vehicle_type = ($city === 'Taguig') ? 'Tricycle' : 'Car';
+
+            // Insert into orders table
+            $stmt = $pdo->prepare("INSERT INTO orders (reference_id, customer_id, order_type_id, batch_id, order_date, delivery_date, order_status_id, total_amount) VALUES (?, ?, ?, ?, NOW(), ?, 1, ?)");
+            $stmt->execute([$reference_id, $customer_id, $order_type_id, $batch_id, $delivery_date, $subtotal]);
+
+            // Insert into order_details table WITH batch_number
+            $stmt = $pdo->prepare("INSERT INTO order_details (reference_id, batch_number, container_id, quantity, subtotal) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$reference_id, $batch_number, $container_id, $quantity, $subtotal]);
+
+            $pdo->commit();
+
+            $stmt = $pdo->prepare("SELECT type_name FROM order_types WHERE order_type_id = ?");
+            $stmt->execute([$order_type_id]);
+            $order_type = $stmt->fetchColumn();
+
+            $_SESSION['receipt_data'] = [
+                'reference_id' => $reference_id,
+                'customer_name' => $first_name . ' ' . ($middle_name ? $middle_name . ' ' : '') . $last_name,
+                'customer_contact' => $customer_contact,
+                'address' => "$street, $barangay, $city, $province",
+                'order_type' => $order_type,
+                'container' => $container['container_type'],
+                'quantity' => $quantity,
+                'subtotal' => $subtotal,
+                'delivery_date' => $delivery_date,
+                'order_date' => date('Y-m-d H:i:s'),
+                'vehicle_type' => $vehicle_type,
+                'batch_number' => $batch_number,
+                'batch_id' => $batch_id
+            ];
+
+            $success = "Order added successfully to Batch #$batch_number ($vehicle_type)!";
+
         } catch (Exception $e) {
+            $pdo->rollBack();
             $errors[] = $e->getMessage();
         }
     }
@@ -329,6 +335,13 @@ $order_types = $pdo->query("SELECT order_type_id, type_name FROM order_types")->
         .back-button a:hover {
             text-decoration: underline;
         }
+        .batch-info {
+            background-color: #e7f3ff;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #007bff;
+        }
     </style>
 </head>
 <body>
@@ -404,8 +417,12 @@ $order_types = $pdo->query("SELECT order_type_id, type_name FROM order_types")->
                     <?php endforeach; ?>
                 </select>
 
-                <label for="quantity">Quantity</label>
+                <label for="quantity">Quantity (Containers)</label>
                 <input type="number" name="quantity" min="1" required>
+                <div class="batch-info">
+                    <strong>Note:</strong> Tricycle (Taguig only): Max 5 containers per batch | Car (Outside Taguig): Max 10 containers per batch<br>
+                    Maximum 3 batches per vehicle type per day. Orders exceeding capacity will be moved to next available batch.
+                </div>
 
                 <label for="delivery_date">Delivery Date</label>
                 <input type="date" name="delivery_date" required>
@@ -429,7 +446,7 @@ $order_types = $pdo->query("SELECT order_type_id, type_name FROM order_types")->
                     <p><strong>Order Date:</strong> <?php echo $_SESSION['receipt_data']['order_date']; ?></p>
                     <p><strong>Delivery Date:</strong> <?php echo $_SESSION['receipt_data']['delivery_date']; ?></p>
                     <p><strong>Vehicle Type:</strong> <?php echo htmlspecialchars($_SESSION['receipt_data']['vehicle_type']); ?></p>
-                    <p><strong>Batch Number:</strong> <?php echo htmlspecialchars($_SESSION['receipt_data']['batch_number']); ?></p>
+                    <p><strong>Batch Number:</strong> Batch #<?php echo htmlspecialchars($_SESSION['receipt_data']['batch_number']); ?></p>
                     <p class="warning">Please take a screenshot of this receipt for your records!</p>
                     <form method="POST" action="">
                         <button type="submit" name="close_receipt">Close</button>
