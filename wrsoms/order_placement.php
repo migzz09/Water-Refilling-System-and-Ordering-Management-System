@@ -2,6 +2,27 @@
 session_start();
 require_once 'connect.php';
 
+// Check if user is logged in
+if (!isset($_SESSION['customer_id']) || !isset($_SESSION['username'])) {
+    header("Location: login.php");
+    exit;
+}
+
+// Debug: Log the current session customer_id
+error_log("Session customer_id: " . $_SESSION['customer_id']);
+
+// Fetch customer details
+try {
+    $stmt = $pdo->prepare("SELECT first_name, middle_name, last_name, customer_contact, street, barangay, city, province FROM customers WHERE customer_id = ?");
+    $stmt->execute([$_SESSION['customer_id']]);
+    $customer = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$customer) {
+        die("Customer not found for customer_id: " . $_SESSION['customer_id']);
+    }
+} catch (PDOException $e) {
+    die("Error fetching customer details: " . $e->getMessage());
+}
+
 // NCR cities and barangays
 $ncr_cities = [
     'Taguig' => [
@@ -43,61 +64,78 @@ function generateReferenceId($pdo) {
     return $reference_id;
 }
 
-// Function to assign batch based on city and vehicle capacity
-function assignBatch($pdo, $city) {
+// Function to assign batch based on city, delivery date, and vehicle capacity
+function assignBatch($pdo, $city, $delivery_date, $quantity) {
     $vehicle_type = ($city === 'Taguig') ? 'Tricycle' : 'Car';
     $capacity = ($vehicle_type === 'Tricycle') ? 5 : 10;
+    $batch_date = $delivery_date;
 
+    if ($quantity > $capacity) {
+        throw new Exception("Order quantity exceeds vehicle capacity for $vehicle_type (Max: $capacity containers). Please split your order into smaller quantities.");
+    }
+
+    // Find existing batch with enough space (prioritize lowest batch_number)
     $stmt = $pdo->prepare("
-        SELECT b.batch_id
+        SELECT b.batch_id, b.batch_number, COALESCE(SUM(od.quantity), 0) AS total_quantity
         FROM batches b
         LEFT JOIN orders o ON b.batch_id = o.batch_id
-        WHERE b.vehicle_type = ?
-        GROUP BY b.batch_id
-        HAVING COUNT(o.reference_id) < ?
-        ORDER BY b.batch_id ASC
+        LEFT JOIN order_details od ON o.reference_id = od.reference_id
+        WHERE DATE(b.batch_date) = ? AND b.vehicle_type = ?
+        GROUP BY b.batch_id, b.batch_number
+        HAVING total_quantity + ? <= ?
+        ORDER BY b.batch_number ASC, b.batch_id ASC
         LIMIT 1
     ");
-    $stmt->execute([$vehicle_type, $capacity]);
+    $stmt->execute([$batch_date, $vehicle_type, $quantity, $capacity]);
     $batch = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($batch) {
-        return $batch['batch_id'];
-    } else {
-        $stmt = $pdo->prepare("SELECT MAX(batch_id) + 1 AS new_batch_id FROM batches");
-        $stmt->execute();
-        $new_batch_id = $stmt->fetchColumn() ?: 3;
-
-        $stmt = $pdo->prepare("INSERT INTO batches (batch_id, vehicle, vehicle_type, batch_status_id, notes) VALUES (?, ?, ?, 1, 'Auto-created batch')");
-        $vehicle_name = ($vehicle_type === 'Tricycle') ? 'Tricycle #' . rand(100, 999) : 'Car #' . rand(100, 999);
-        $stmt->execute([$new_batch_id, $vehicle_name, $vehicle_type]);
-        return $new_batch_id;
+        error_log("Assigned to existing batch: batch_id={$batch['batch_id']}, batch_number={$batch['batch_number']}, remaining_capacity=" . ($capacity - $batch['total_quantity']));
+        return [
+            'batch_id' => $batch['batch_id'],
+            'batch_number' => $batch['batch_number']
+        ];
     }
+
+    // No existing batch has space, check if can create new
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*)
+        FROM batches
+        WHERE DATE(batch_date) = ? AND vehicle_type = ?
+    ");
+    $stmt->execute([$batch_date, $vehicle_type]);
+    $batch_count = $stmt->fetchColumn();
+
+    if ($batch_count >= 3) {
+        throw new Exception("Cannot assign batch: Limit of 3 batches reached for $vehicle_type on $batch_date and all are full. Please choose a different delivery date.");
+    }
+
+    // Create new batch with sequential batch_number (1,2,3)
+    $new_batch_number = $batch_count + 1;
+    $stmt = $pdo->prepare("
+        INSERT INTO batches (vehicle, vehicle_type, batch_number, batch_status_id, notes, batch_date)
+        VALUES (?, ?, ?, 1, 'Auto-created batch', ?)
+    ");
+    $vehicle_name = $vehicle_type . ' #' . rand(100, 999);
+    $stmt->execute([$vehicle_name, $vehicle_type, $new_batch_number, $batch_date]);
+    $new_batch_id = $pdo->lastInsertId();
+
+    error_log("Created new batch: batch_id=$new_batch_id, batch_number=$new_batch_number, vehicle_type=$vehicle_type");
+    return [
+        'batch_id' => $new_batch_id,
+        'batch_number' => $new_batch_number
+    ];
 }
 
 // Handle form submission
 $errors = [];
 $success = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_order'])) {
-    $first_name = filter_input(INPUT_POST, 'first_name', FILTER_SANITIZE_STRING) ?: '';
-    $middle_name = filter_input(INPUT_POST, 'middle_name', FILTER_SANITIZE_STRING) ?: null;
-    $last_name = filter_input(INPUT_POST, 'last_name', FILTER_SANITIZE_STRING) ?: '';
-    $customer_contact = filter_input(INPUT_POST, 'customer_contact', FILTER_SANITIZE_STRING) ?: '';
-    $street = filter_input(INPUT_POST, 'street', FILTER_SANITIZE_STRING) ?: '';
-    $barangay = filter_input(INPUT_POST, 'barangay', FILTER_SANITIZE_STRING) ?: '';
-    $city = filter_input(INPUT_POST, 'city', FILTER_SANITIZE_STRING) ?: '';
-    $province = filter_input(INPUT_POST, 'province', FILTER_SANITIZE_STRING) ?: '';
     $order_type_id = filter_input(INPUT_POST, 'order_type_id', FILTER_VALIDATE_INT);
     $container_id = filter_input(INPUT_POST, 'container_id', FILTER_VALIDATE_INT);
     $quantity = filter_input(INPUT_POST, 'quantity', FILTER_VALIDATE_INT);
     $delivery_date = filter_input(INPUT_POST, 'delivery_date', FILTER_SANITIZE_STRING) ?: '';
 
-    if (empty($first_name) || empty($last_name)) $errors[] = "First name and last name are required.";
-    if (empty($customer_contact) || !preg_match('/^[0-9]{10,11}$/', $customer_contact)) $errors[] = "Invalid contact number (10-11 digits required).";
-    if (empty($street)) $errors[] = "Street is required.";
-    if (empty($barangay) || !in_array($barangay, $ncr_cities[$city] ?? [])) $errors[] = "Invalid barangay for selected city.";
-    if (empty($city) || !array_key_exists($city, $ncr_cities)) $errors[] = "Invalid city.";
-    if (empty($province) || $province !== 'Metro Manila') $errors[] = "Province must be Metro Manila.";
     if (!$order_type_id) $errors[] = "Invalid order type.";
     if (!$container_id) $errors[] = "Invalid container selection.";
     if (!$quantity || $quantity < 1) $errors[] = "Quantity must be at least 1.";
@@ -107,57 +145,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_order'])) {
 
     if (empty($errors)) {
         try {
-            $stmt = $pdo->prepare("SELECT customer_id FROM customers WHERE customer_contact = ?");
-            $stmt->execute([$customer_contact]);
-            $customer = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($customer) {
-                $customer_id = $customer['customer_id'];
-            } else {
-                $stmt = $pdo->prepare("INSERT INTO customers (first_name, middle_name, last_name, customer_contact, street, barangay, city, province, date_created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
-                $stmt->execute([$first_name, $middle_name, $last_name, $customer_contact, $street, $barangay, $city, $province]);
-                $customer_id = $pdo->lastInsertId();
-            }
+            $pdo->beginTransaction();
 
             $stmt = $pdo->prepare("SELECT container_type, price FROM containers WHERE container_id = ?");
             $stmt->execute([$container_id]);
             $container = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$container) {
-                $errors[] = "Container not found.";
-            } else {
-                $subtotal = $container['price'] * $quantity;
-                $reference_id = generateReferenceId($pdo);
-                $batch_id = assignBatch($pdo, $city);
-
-                $stmt = $pdo->prepare("INSERT INTO orders (reference_id, customer_id, order_type_id, batch_id, order_date, delivery_date, order_status_id, total_amount) VALUES (?, ?, ?, ?, NOW(), ?, 1, ?)");
-                $stmt->execute([$reference_id, $customer_id, $order_type_id, $batch_id, $delivery_date, $subtotal]);
-
-                $stmt = $pdo->prepare("INSERT INTO order_details (reference_id, container_id, quantity, subtotal) VALUES (?, ?, ?, ?)");
-                $stmt->execute([$reference_id, $container_id, $quantity, $subtotal]);
-
-                $stmt = $pdo->prepare("SELECT type_name FROM order_types WHERE order_type_id = ?");
-                $stmt->execute([$order_type_id]);
-                $order_type = $stmt->fetchColumn();
-
-                $_SESSION['receipt_data'] = [
-                    'reference_id' => $reference_id,
-                    'customer_name' => $first_name . ' ' . ($middle_name ? $middle_name . ' ' : '') . $last_name,
-                    'customer_contact' => $customer_contact,
-                    'address' => "$street, $barangay, $city, $province",
-                    'order_type' => $order_type,
-                    'container' => $container['container_type'],
-                    'quantity' => $quantity,
-                    'subtotal' => $subtotal,
-                    'delivery_date' => $delivery_date,
-                    'order_date' => date('Y-m-d H:i:s'),
-                    'vehicle_type' => ($city === 'Taguig') ? 'Tricycle' : 'Car',
-                    'batch_id' => $batch_id
-                ];
-
-                $success = "Order added successfully!";
+                throw new Exception("Container not found.");
             }
-        } catch (PDOException $e) {
-            $errors[] = "Database error: " . $e->getMessage();
+
+            $subtotal = $container['price'] * $quantity;
+            $reference_id = generateReferenceId($pdo);
+            $batch_info = assignBatch($pdo, $customer['city'], $delivery_date, $quantity);
+            $batch_id = $batch_info['batch_id'];
+            $batch_number = $batch_info['batch_number'];
+            $vehicle_type = ($customer['city'] === 'Taguig') ? 'Tricycle' : 'Car';
+
+            // Debug: Log order details before insertion
+            error_log("Inserting order: reference_id=$reference_id, customer_id={$_SESSION['customer_id']}, order_type_id=$order_type_id, batch_id=$batch_id, batch_number=$batch_number, delivery_date=$delivery_date, subtotal=$subtotal");
+
+            $stmt = $pdo->prepare("INSERT INTO orders (reference_id, customer_id, order_type_id, batch_id, order_date, delivery_date, order_status_id, total_amount) VALUES (?, ?, ?, ?, NOW(), ?, 1, ?)");
+            $stmt->execute([$reference_id, $_SESSION['customer_id'], $order_type_id, $batch_id, $delivery_date, $subtotal]);
+
+            $stmt = $pdo->prepare("INSERT INTO order_details (reference_id, batch_number, container_id, quantity, subtotal) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$reference_id, $batch_number, $container_id, $quantity, $subtotal]);
+
+            $stmt = $pdo->prepare("SELECT type_name FROM order_types WHERE order_type_id = ?");
+            $stmt->execute([$order_type_id]);
+            $order_type = $stmt->fetchColumn();
+
+            $_SESSION['receipt_data'] = [
+                'reference_id' => $reference_id,
+                'customer_name' => $customer['first_name'] . ' ' . ($customer['middle_name'] ? $customer['middle_name'] . ' ' : '') . $customer['last_name'],
+                'customer_contact' => $customer['customer_contact'],
+                'address' => "{$customer['street']}, {$customer['barangay']}, {$customer['city']}, {$customer['province']}",
+                'order_type' => $order_type,
+                'container' => $container['container_type'],
+                'quantity' => $quantity,
+                'subtotal' => $subtotal,
+                'delivery_date' => $delivery_date,
+                'order_date' => date('Y-m-d H:i:s'),
+                'vehicle_type' => $vehicle_type,
+                'batch_number' => $batch_number
+            ];
+
+            $pdo->commit();
+            $success = "Order added successfully to Batch #$batch_number ($vehicle_type)!";
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            $errors[] = $e->getMessage();
         }
     }
 }
@@ -289,6 +325,13 @@ $order_types = $pdo->query("SELECT order_type_id, type_name FROM order_types")->
         .back-button a:hover {
             text-decoration: underline;
         }
+        .batch-info {
+            background-color: #e7f3ff;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #007bff;
+        }
     </style>
 </head>
 <body>
@@ -309,42 +352,18 @@ $order_types = $pdo->query("SELECT order_type_id, type_name FROM order_types")->
             </div>
         <?php endif; ?>
 
+        <!-- Customer Details Display -->
+        <div class="form-container">
+            <h2>Customer Details</h2>
+            <p><strong>Name:</strong> <?php echo htmlspecialchars($customer['first_name'] . ' ' . ($customer['middle_name'] ? $customer['middle_name'] . ' ' : '') . $customer['last_name']); ?></p>
+            <p><strong>Contact Number:</strong> <?php echo htmlspecialchars($customer['customer_contact']); ?></p>
+            <p><strong>Address:</strong> <?php echo htmlspecialchars("{$customer['street']}, {$customer['barangay']}, {$customer['city']}, {$customer['province']}"); ?></p>
+        </div>
+
         <!-- Add New Order Form -->
         <div class="form-container">
             <h2>Add New Order</h2>
             <form method="POST" action="">
-                <h3>Customer Details</h3>
-                <label for="first_name">First Name</label>
-                <input type="text" name="first_name" required>
-
-                <label for="middle_name">Middle Name (Optional)</label>
-                <input type="text" name="middle_name">
-
-                <label for="last_name">Last Name</label>
-                <input type="text" name="last_name" required>
-
-                <label for="customer_contact">Contact Number</label>
-                <input type="text" name="customer_contact" required>
-
-                <label for="street">Street</label>
-                <input type="text" name="street" required>
-
-                <label for="city">City</label>
-                <select name="city" id="city" required onchange="updateBarangays()">
-                    <option value="">Select City</option>
-                    <?php foreach (array_keys($ncr_cities) as $city): ?>
-                        <option value="<?php echo htmlspecialchars($city); ?>"><?php echo htmlspecialchars($city); ?></option>
-                    <?php endforeach; ?>
-                </select>
-
-                <label for="barangay">Barangay</label>
-                <select name="barangay" id="barangay" required>
-                    <option value="">Select Barangay</option>
-                </select>
-
-                <label for="province">Province</label>
-                <input type="text" name="province" value="Metro Manila" readonly>
-
                 <h3>Order Details</h3>
                 <label for="order_type_id">Order Type</label>
                 <select name="order_type_id" required>
@@ -364,8 +383,13 @@ $order_types = $pdo->query("SELECT order_type_id, type_name FROM order_types")->
                     <?php endforeach; ?>
                 </select>
 
-                <label for="quantity">Quantity</label>
+                <label for="quantity">Quantity (Containers)</label>
                 <input type="number" name="quantity" min="1" required>
+
+                <div class="batch-info">
+                    <strong>Note:</strong> Tricycle (Taguig only): Max 5 containers per batch | Car (Outside Taguig): Max 10 containers per batch<br>
+                    Maximum 3 batches per vehicle type per day. Orders exceeding capacity will be moved to next available batch.
+                </div>
 
                 <label for="delivery_date">Delivery Date</label>
                 <input type="date" name="delivery_date" required>
@@ -389,7 +413,7 @@ $order_types = $pdo->query("SELECT order_type_id, type_name FROM order_types")->
                     <p><strong>Order Date:</strong> <?php echo $_SESSION['receipt_data']['order_date']; ?></p>
                     <p><strong>Delivery Date:</strong> <?php echo $_SESSION['receipt_data']['delivery_date']; ?></p>
                     <p><strong>Vehicle Type:</strong> <?php echo htmlspecialchars($_SESSION['receipt_data']['vehicle_type']); ?></p>
-                    <p><strong>Batch ID:</strong> <?php echo htmlspecialchars($_SESSION['receipt_data']['batch_id']); ?></p>
+                    <p><strong>Batch Number:</strong> <?php echo htmlspecialchars($_SESSION['receipt_data']['batch_number']); ?></p>
                     <p class="warning">Please take a screenshot of this receipt for your records!</p>
                     <form method="POST" action="">
                         <button type="submit" name="close_receipt">Close</button>
@@ -404,24 +428,6 @@ $order_types = $pdo->query("SELECT order_type_id, type_name FROM order_types")->
     </div>
 
     <script>
-        function updateBarangays() {
-            const citySelect = document.getElementById('city');
-            const barangaySelect = document.getElementById('barangay');
-            const cities = <?php echo json_encode($ncr_cities); ?>;
-            const selectedCity = citySelect.value;
-
-            barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
-
-            if (selectedCity && cities[selectedCity]) {
-                cities[selectedCity].forEach(barangay => {
-                    const option = document.createElement('option');
-                    option.value = barangay;
-                    option.textContent = barangay;
-                    barangaySelect.appendChild(option);
-                });
-            }
-        }
-
         <?php if (isset($_SESSION['receipt_data'])): ?>
             document.getElementById('receiptModal').style.display = 'flex';
         <?php endif; ?>
