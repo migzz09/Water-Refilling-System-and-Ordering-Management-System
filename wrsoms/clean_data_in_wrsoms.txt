@@ -1,0 +1,27 @@
+//pag gagawa ng acc, copy/paste then execute niyo lang //to sa query sa db para hindi hassle paulit ulit mag //register sa registration module
+INSERT INTO customers (username, password, first_name, last_name, customer_contact, street, barangay, city, province)
+VALUES ('testuser', 'testpassword', 'Test', 'User', '09123456789', '123 Street', 'Pinagsama', 'Taguig', 'Metro Manila');
+
+//execute niyo to para maglinis ng laman ng db (balik sa //1 incrementations)
+SET FOREIGN_KEY_CHECKS = 0;
+
+DELETE FROM batch_employees;
+DELETE FROM batches;
+DELETE FROM customers;
+DELETE FROM customer_feedback;
+DELETE FROM deliveries;
+DELETE FROM orders;
+DELETE FROM order_details;
+DELETE FROM payments;
+
+ALTER TABLE batch_employees AUTO_INCREMENT = 1;
+ALTER TABLE batches AUTO_INCREMENT = 1;
+ALTER TABLE customers AUTO_INCREMENT = 1;
+ALTER TABLE customer_feedback AUTO_INCREMENT = 1;
+ALTER TABLE deliveries AUTO_INCREMENT = 1;
+ALTER TABLE orders AUTO_INCREMENT = 1;
+ALTER TABLE order_details AUTO_INCREMENT = 1;
+ALTER TABLE payments AUTO_INCREMENT = 1;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
