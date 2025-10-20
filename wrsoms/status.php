@@ -167,7 +167,7 @@ function render_table($pdo, $table, $label) {
   </style>
 </head>
 <body>
-<a href="index.php" class="btn btn-secondary back-btn">← Back</a>
+<a href="admin_dashboard.php" class="btn btn-secondary back-btn">← Back</a>
 <div class="container">
   <h2 class="text-center mb-4">Manage Status</h2>
 
@@ -222,3 +222,4 @@ function render_table($pdo, $table, $label) {
 </script>
 </body>
 </html>
+
