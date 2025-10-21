@@ -96,7 +96,7 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="fw-bold text-primary">Manage Orders</h2>
-            <a href="../index.php" class="btn btn-secondary">← Back to Dashboard</a>
+            <a href="../admin_dashboard.php" class="btn btn-secondary">← Back to Dashboard</a>
         </div>
 
         <!-- Search Bar -->
@@ -166,3 +166,4 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
 </body>
 </html>
+
