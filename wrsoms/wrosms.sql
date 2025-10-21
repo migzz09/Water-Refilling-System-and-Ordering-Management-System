@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:4306
--- Generation Time: Oct 12, 2025 at 11:26 AM
+-- Generation Time: Oct 21, 2025 at 03:00 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -76,9 +76,7 @@ CREATE TABLE `batches` (
 --
 
 INSERT INTO `batches` (`batch_id`, `batch_date`, `batch_status_id`, `vehicle`, `notes`, `vehicle_type`, `batch_number`) VALUES
-(106, '2025-10-11 16:00:00', 1, 'Tricycle #986', 'Auto-created batch', 'Tricycle', 1),
-(107, '2025-10-11 16:00:00', 1, 'Car #285', 'Auto-created batch', 'Car', 1),
-(108, '2025-10-11 16:00:00', 1, 'Tricycle #922', 'Auto-created batch', 'Tricycle', 2);
+(4, '2025-10-19 16:00:00', 1, 'Tricycle #274', 'Auto-created batch', 'Tricycle', 1);
 
 -- --------------------------------------------------------
 
@@ -141,6 +139,8 @@ INSERT INTO `containers` (`container_id`, `container_type`, `price`) VALUES
 
 CREATE TABLE `customers` (
   `customer_id` int(11) NOT NULL,
+  `username` varchar(50) NOT NULL,
+  `password` varchar(50) NOT NULL,
   `first_name` varchar(50) NOT NULL,
   `middle_name` varchar(50) DEFAULT NULL,
   `last_name` varchar(50) NOT NULL,
@@ -156,11 +156,8 @@ CREATE TABLE `customers` (
 -- Dumping data for table `customers`
 --
 
-INSERT INTO `customers` (`customer_id`, `first_name`, `middle_name`, `last_name`, `customer_contact`, `street`, `barangay`, `city`, `province`, `date_created`) VALUES
-(15, 'EQWE', 'halina', 'faustino', '09274772514', 'EQWE', 'Pinagsama', 'Taguig', 'Metro Manila', '2025-10-12 06:14:16'),
-(16, 'VBN', 'EQWE', 'VBN', '09274665124', 'EQWE', 'Binondo', 'Manila', 'Metro Manila', '2025-10-12 06:29:26'),
-(17, 'dsa', 'dsadas', 'saddas', '09274665199', 'pp', 'Bambang', 'Taguig', 'Metro Manila', '2025-10-12 06:43:12'),
-(18, 'dsfgsd', 'jghjhj', 'rtrett', '09274772515', 'EQWE', 'Bagumbayan', 'Taguig', 'Metro Manila', '2025-10-12 06:43:50');
+INSERT INTO `customers` (`customer_id`, `username`, `password`, `first_name`, `middle_name`, `last_name`, `customer_contact`, `street`, `barangay`, `city`, `province`, `date_created`) VALUES
+(2, 'A12345407', '123', 'prince andrei', NULL, 'briongos', '09274772514', 'adela', 'Rizal', 'Taguig', 'Metro Manila', '2025-10-20 06:51:43');
 
 -- --------------------------------------------------------
 
@@ -241,6 +238,28 @@ INSERT INTO `employees` (`employee_id`, `first_name`, `middle_name`, `last_name`
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `inventory`
+--
+
+CREATE TABLE `inventory` (
+  `container_id` int(11) NOT NULL,
+  `container_type` varchar(50) NOT NULL,
+  `stock` int(11) NOT NULL DEFAULT 0 CHECK (`stock` >= 0),
+  `last_updated` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `inventory`
+--
+
+INSERT INTO `inventory` (`container_id`, `container_type`, `stock`, `last_updated`) VALUES
+(1, 'Round', 99, '2025-10-20 06:53:45'),
+(2, 'Slim', 100, '2025-10-20 06:53:30'),
+(3, 'Round', 100, '2025-10-20 06:53:30');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `orders`
 --
 
@@ -260,11 +279,7 @@ CREATE TABLE `orders` (
 --
 
 INSERT INTO `orders` (`reference_id`, `customer_id`, `order_type_id`, `batch_id`, `order_date`, `delivery_date`, `order_status_id`, `total_amount`) VALUES
-('09897', 18, 2, 108, '2025-10-12 06:43:50', '2025-10-12', 1, 80.00),
-('19149', 17, 1, 106, '2025-10-12 06:43:12', '2025-10-12', 1, 60.00),
-('263780', 16, 1, 107, '2025-10-12 06:29:26', '2025-10-12', 1, 30.00),
-('42497', 15, 1, 108, '2025-10-12 09:07:29', '2025-10-12', 1, 40.00),
-('546528', 15, 1, 106, '2025-10-12 06:14:16', '2025-10-12', 1, 90.00);
+('423281', 2, 2, 4, '2025-10-20 06:53:45', '2025-10-20', 1, 40.00);
 
 -- --------------------------------------------------------
 
@@ -286,11 +301,7 @@ CREATE TABLE `order_details` (
 --
 
 INSERT INTO `order_details` (`order_detail_id`, `reference_id`, `batch_number`, `container_id`, `quantity`, `subtotal`) VALUES
-(15, '546528', 1, 2, 3, 90.00),
-(16, '263780', 1, 2, 1, 30.00),
-(17, '19149', 1, 2, 2, 60.00),
-(18, '09897', 1, 1, 2, 80.00),
-(19, '42497', 2, 1, 1, 40.00);
+(5, '423281', 1, 1, 1, 40.00);
 
 -- --------------------------------------------------------
 
@@ -435,7 +446,8 @@ ALTER TABLE `containers`
 --
 ALTER TABLE `customers`
   ADD PRIMARY KEY (`customer_id`),
-  ADD UNIQUE KEY `unique_customer_contact` (`customer_contact`);
+  ADD UNIQUE KEY `unique_customer_contact` (`customer_contact`),
+  ADD UNIQUE KEY `username` (`username`);
 
 --
 -- Indexes for table `customer_feedback`
@@ -465,6 +477,12 @@ ALTER TABLE `delivery_status`
 --
 ALTER TABLE `employees`
   ADD PRIMARY KEY (`employee_id`);
+
+--
+-- Indexes for table `inventory`
+--
+ALTER TABLE `inventory`
+  ADD PRIMARY KEY (`container_id`);
 
 --
 -- Indexes for table `orders`
@@ -530,7 +548,7 @@ ALTER TABLE `payment_status`
 -- AUTO_INCREMENT for table `batches`
 --
 ALTER TABLE `batches`
-  MODIFY `batch_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=109;
+  MODIFY `batch_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `batch_employees`
@@ -554,7 +572,7 @@ ALTER TABLE `containers`
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `customer_feedback`
@@ -584,7 +602,7 @@ ALTER TABLE `employees`
 -- AUTO_INCREMENT for table `order_details`
 --
 ALTER TABLE `order_details`
-  MODIFY `order_detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `order_detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `order_status`
@@ -648,6 +666,12 @@ ALTER TABLE `deliveries`
   ADD CONSTRAINT `deliveries_ibfk_2` FOREIGN KEY (`delivery_status_id`) REFERENCES `delivery_status` (`delivery_status_id`) ON DELETE SET NULL;
 
 --
+-- Constraints for table `inventory`
+--
+ALTER TABLE `inventory`
+  ADD CONSTRAINT `inventory_ibfk_1` FOREIGN KEY (`container_id`) REFERENCES `containers` (`container_id`);
+
+--
 -- Constraints for table `orders`
 --
 ALTER TABLE `orders`
@@ -675,4 +699,3 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-
