@@ -5,8 +5,8 @@ require_once 'connect.php';
 // Set Philippine time (Asia/Manila, UTC+8)
 date_default_timezone_set('Asia/Manila');
 
-// Fetch order statistics for today (October 15, 2025)
-$today = date('Y-m-d', strtotime('2025-10-15'));
+// Fetch order statistics for today
+$today = date('Y-m-d');
 try {
     // Total Orders
     $stmt = $pdo->prepare("SELECT COUNT(*) as total_orders FROM orders WHERE DATE(order_date) = ?");
@@ -82,7 +82,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - WaterWorld</title>
+    <title>Admin Dashboard - WATER WORLD</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
@@ -117,7 +117,11 @@ try {
             width: 240px;
         }
 
-        .sidebar .logo {
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             font-size: 20px;
             font-weight: 600;
             color: #3B82F6;
@@ -125,9 +129,24 @@ try {
             margin-bottom: 32px;
             opacity: 0;
             transition: opacity 0.3s ease;
+            background: transparent;
+            padding: 8px;
         }
 
-        .sidebar:hover .logo, .sidebar:focus-within .logo {
+        .logo-img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            background: transparent;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: #3B82F6;
+        }
+
+        .sidebar:hover .logo-container, .sidebar:focus-within .logo-container {
             opacity: 1;
         }
 
@@ -313,7 +332,6 @@ try {
             border-bottom: none;
         }
 
-        /* Accessibility Enhancements */
         .sr-only {
             position: absolute;
             width: 1px;
@@ -325,7 +343,6 @@ try {
             border: 0;
         }
 
-        /* Mobile Responsiveness */
         @media (max-width: 768px) {
             .sidebar {
                 width: 100%;
@@ -348,6 +365,14 @@ try {
             .metrics {
                 grid-template-columns: 1fr;
             }
+            .logo-container {
+                flex-direction: column;
+                gap: 4px;
+            }
+            .logo-img {
+                width: 28px;
+                height: 28px;
+            }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -356,7 +381,6 @@ try {
             }
         }
 
-        /* Daily Report Sidebar Styles */
         .sidebar-report {
             position: fixed;
             top: 0;
@@ -398,17 +422,14 @@ try {
             cursor: pointer;
             color: #fff;
         }
-        .menu-toggle {
-            font-size: 1.5rem;
-            cursor: pointer;
-            margin-right: 10px;
-            user-select: none;
-        }
     </style>
 </head>
 <body>
     <nav class="sidebar" aria-label="Main navigation">
-        <div class="logo">WaterWorld</div>
+        <div class="logo-container">
+            <img src="ww_logo.png" alt="Water World Logo" class="logo-img">
+            <span class="logo-text">WATER WORLD</span>
+        </div>
         <ul>
             <li class="active"><button type="button" onclick="showDashboard()">Dashboard</button></li>
             <li><a href="manage_orders.php">Manage Orders</a></li>
@@ -423,7 +444,7 @@ try {
     <main class="content" aria-label="Dashboard content" id="mainContent">
         <header class="header">
             <h1 class="title">Dashboard</h1>
-            <div class="date-time" aria-live="polite">Date: <?php echo date('F d, Y', strtotime('2025-10-15')); ?> | Time: <?php echo date('h:i A T'); ?></div>
+            <div class="date-time" aria-live="polite">Date: <?php echo date('F d, Y'); ?> | Time: <?php echo date('h:i A T'); ?></div>
         </header>
         <section class="quick-actions" aria-label="Quick actions">
             <button type="button" onclick="location.reload();" aria-label="Refresh dashboard data">Refresh Data</button>
@@ -443,11 +464,11 @@ try {
             </div>
             <div class="metric-card" data-color="teal" role="region" aria-label="Total Revenue">
                 <h3>Total Revenue</h3>
-                <p><?php echo '$' . number_format($total_revenue, 2); ?></p>
+                <p><?php echo '₱' . number_format($total_revenue, 2); ?></p>
             </div>
             <div class="metric-card" data-color="pink" role="region" aria-label="Average Order Value">
                 <h3>Avg Order Value</h3>
-                <p><?php echo '$' . number_format($avg_order_value, 2); ?></p>
+                <p><?php echo '₱' . number_format($avg_order_value, 2); ?></p>
             </div>
             <div class="metric-card" data-color="gray" role="region" aria-label="Pending Deliveries">
                 <h3>Pending Deliveries</h3>
@@ -506,7 +527,7 @@ try {
                         <tr>
                             <td><?php echo htmlspecialchars($order['reference_id']); ?></td>
                             <td><?php echo htmlspecialchars($order['order_date']); ?></td>
-                            <td><?php echo '$' . number_format($order['total_amount'], 2); ?></td>
+                            <td><?php echo '₱' . number_format($order['total_amount'], 2); ?></td>
                             <td><?php echo htmlspecialchars($order['order_status']); ?></td>
                         </tr>
                     <?php endforeach; ?>
@@ -518,17 +539,10 @@ try {
         let originalContent = document.getElementById('mainContent').innerHTML;
 
         function showDashboard() {
-            // Clear existing content
             const mainContent = document.getElementById('mainContent');
             mainContent.innerHTML = '';
-
-            // Restore original dashboard content
             mainContent.innerHTML = originalContent;
-
-            // Hide report sidebar
             document.getElementById('reportSidebar').classList.remove('active');
-
-            // Update sidebar active state
             document.querySelector('.sidebar li.active').classList.remove('active');
             document.querySelector('.sidebar li button[onclick="showDashboard()"]').parentElement.classList.add('active');
         }
@@ -547,16 +561,13 @@ try {
                     const scripts = Array.from(doc.querySelectorAll('script')).map(script => script.textContent).join('\n');
                     document.getElementById('mainContent').innerHTML = content;
 
-                    // Re-execute scripts
                     const scriptElement = document.createElement('script');
                     scriptElement.textContent = scripts;
                     document.getElementById('mainContent').appendChild(scriptElement);
 
-                    // Update sidebar active state
                     document.querySelector('.sidebar li.active').classList.remove('active');
                     document.querySelector('.sidebar li button[onclick="showDailyReport()"]').parentElement.classList.add('active');
 
-                    // Fetch dates for report sidebar
                     fetchDates();
                 })
                 .catch(error => {
@@ -584,7 +595,6 @@ try {
                 .catch(error => console.error('Error fetching dates:', error));
         }
 
-        // Load Bootstrap JS
         const bootstrapScript = document.createElement('script');
         bootstrapScript.src = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js';
         document.body.appendChild(bootstrapScript);
