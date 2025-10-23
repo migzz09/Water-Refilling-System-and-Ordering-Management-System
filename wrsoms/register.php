@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'connect.php';
+$config = require_once '../config/config.php'; // Adjust path (e.g., go up one directory)
 
 // Include PHPMailer manually (adjust path based on your structure)
 require_once 'phpmailer-master/src/Exception.php';
@@ -170,8 +171,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $mail->isSMTP();
                 $mail->Host = 'smtp.gmail.com';
                 $mail->SMTPAuth = true;
-                $mail->Username = 'migzzuwu@gmail.com';
-                $mail->Password = 'xqav cuon wpxs spcv';
+                $mail->Username = $config['gmail_username'];
+                $mail->Password = $config['gmail_app_password'];
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
                 $mail->Port = 587;
                 if (!$mail->smtpConnect()) {
@@ -180,7 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 $mail->SMTPDebug = 2;
 
-                $mail->setFrom('migzzuwu@gmail.com', 'WaterWorld Admin');
+                $mail->setFrom($config['gmail_username'], 'Water World Admin');
                 $mail->addAddress($email, "$first_name $last_name");
 
                 $mail->isHTML(true);
