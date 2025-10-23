@@ -1,6 +1,19 @@
 <?php
 session_start();
 require_once 'connect.php';
+$config = require_once '../config/config.php'; // Adjust path (e.g., go up one directory)
+
+// Include PHPMailer manually (adjust path based on your structure)
+require_once 'phpmailer-master/src/Exception.php';
+require_once 'phpmailer-master/src/PHPMailer.php';
+require_once 'phpmailer-master/src/SMTP.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
+
+// Enable output buffering to handle SMTPDebug output
+ob_start();
 
 // NCR cities and barangays
 $ncr_cities = [
@@ -37,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $first_name = trim($_POST['first_name'] ?? '');
     $last_name = trim($_POST['last_name'] ?? '');
     $customer_contact = trim($_POST['customer_contact'] ?? '');
+    $email = trim($_POST['email'] ?? '');
     $street = trim($_POST['street'] ?? '');
     $barangay = trim($_POST['barangay'] ?? '');
     $city = trim($_POST['city'] ?? '');
@@ -50,6 +64,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($customer_contact) || !preg_match('/^09\d{9}$/', $customer_contact)) {
         $errors[] = "Valid contact number (e.g., 09XXXXXXXXX) is required.";
     }
+    if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "Valid email is required.";
+    }
     if (empty($street)) $errors[] = "Street is required.";
     if (empty($barangay) || !in_array($barangay, $ncr_cities[$city] ?? [])) {
         $errors[] = "Valid barangay is required.";
@@ -58,27 +75,131 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "Valid NCR city is required.";
     }
 
-    // Check for unique username
+    // Check for unique username and email, handle unverified accounts
     try {
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM customers WHERE username = ?");
-        $stmt->execute([$username]);
-        if ($stmt->fetchColumn() > 0) {
-            $errors[] = "Username already exists.";
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*) FROM accounts WHERE username = ? UNION 
+            SELECT COUNT(*) FROM customers WHERE email = ?
+        ");
+        $stmt->execute([$username, $email]);
+        $counts = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        $unverified_account = null;
+        if (in_array(1, $counts)) {
+            // Check if the account is unverified
+            $stmt = $pdo->prepare("SELECT account_id FROM accounts WHERE username = ? AND is_verified = 0");
+            $stmt->execute([$username]);
+            $unverified_account = $stmt->fetch(PDO::FETCH_ASSOC);
+        }
+
+        if ($unverified_account) {
+            // Resend OTP for unverified account
+            $otp = sprintf("%06d", mt_rand(100000, 999999));
+            $otp_expires = date('Y-m-d H:i:s', strtotime('+10 minutes'));
+            error_log("Resending OTP: OTP: $otp, Expires: $otp_expires, Account ID: " . $unverified_account['account_id']);
+
+            $stmt = $pdo->prepare("UPDATE accounts SET otp = ?, otp_expires = ? WHERE account_id = ?");
+            $stmt->execute([$otp, $otp_expires, $unverified_account['account_id']]);
+
+            $mail = new PHPMailer(true);
+            try {
+                $mail->isSMTP();
+                $mail->Host = 'smtp.gmail.com';
+                $mail->SMTPAuth = true;
+                $mail->Username = 'migzzuwu@gmail.com';
+                $mail->Password = 'xqav cuon wpxs spcv';
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                $mail->Port = 587;
+                if (!$mail->smtpConnect()) {
+                    $mail->Port = 465;
+                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+                }
+                $mail->SMTPDebug = 2;
+
+                $mail->setFrom('migzzuwu@gmail.com', 'WaterWorld Admin');
+                $mail->addAddress($email, "$first_name $last_name");
+
+                $mail->isHTML(true);
+                $mail->Subject = 'New OTP for Registration';
+                $mail->Body = "Hello $first_name,<br>A new OTP for registration is: <b>$otp</b><br>This OTP is valid for 10 minutes.";
+                $mail->AltBody = "Hello $first_name,\nA new OTP for registration is: $otp\nThis OTP is valid for 10 minutes.";
+
+                $mail->send();
+                $_SESSION['registered_email'] = $email;
+                ob_end_clean();
+                header("Location: verify_otp.php?success=New OTP sent to your email. Please verify.");
+                exit;
+            } catch (Exception $e) {
+                $errors[] = "Failed to resend OTP: " . $mail->ErrorInfo;
+            }
+        } elseif (in_array(1, $counts)) {
+            $errors[] = "Username or email already exists and is verified. Please log in or use a different email/username.";
         }
     } catch (PDOException $e) {
-        $errors[] = "Error checking username: " . $e->getMessage();
+        $errors[] = "Error checking username/email: " . $e->getMessage();
     }
 
-    if (empty($errors)) {
+    if (empty($errors) && !$unverified_account) {
+        // Generate OTP for new registration
+        $otp = sprintf("%06d", mt_rand(100000, 999999));
+        $otp_expires = date('Y-m-d H:i:s', strtotime('+10 minutes'));
+        error_log("Registration: OTP: $otp, Expires: $otp_expires");
+
         try {
+            $pdo->beginTransaction();
+
+            // Insert into customers
             $stmt = $pdo->prepare("
-                INSERT INTO customers (username, password, first_name, last_name, customer_contact, street, barangay, city, province, date_created)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Metro Manila', NOW())
+                INSERT INTO customers (first_name, last_name, customer_contact, email, street, barangay, city, province, date_created)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'Metro Manila', NOW())
             ");
-            $stmt->execute([$username, $password, $first_name, $last_name, $customer_contact, $street, $barangay, $city]);
-            header("Location: login.php?success=Registration successful! Please log in.");
-            exit;
+            $stmt->execute([$first_name, $last_name, $customer_contact, $email, $street, $barangay, $city]);
+            $customer_id = $pdo->lastInsertId();
+
+            // Insert into accounts with OTP
+            $stmt = $pdo->prepare("
+                INSERT INTO accounts (customer_id, username, password, otp, otp_expires, is_verified)
+                VALUES (?, ?, ?, ?, ?, 0)
+            ");
+            $stmt->execute([$customer_id, $username, $password, $otp, $otp_expires]);
+
+            $pdo->commit();
+
+            // Send OTP via PHPMailer
+            $mail = new PHPMailer(true);
+            try {
+                $mail->isSMTP();
+                $mail->Host = 'smtp.gmail.com';
+                $mail->SMTPAuth = true;
+                $mail->Username = $config['gmail_username'];
+                $mail->Password = $config['gmail_app_password'];
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                $mail->Port = 587;
+                if (!$mail->smtpConnect()) {
+                    $mail->Port = 465;
+                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+                }
+                $mail->SMTPDebug = 2;
+
+                $mail->setFrom($config['gmail_username'], 'Water World Admin');
+                $mail->addAddress($email, "$first_name $last_name");
+
+                $mail->isHTML(true);
+                $mail->Subject = 'Your OTP for Registration';
+                $mail->Body = "Hello $first_name,<br>Your OTP for registration is: <b>$otp</b><br>This OTP is valid for 10 minutes.";
+                $mail->AltBody = "Hello $first_name,\nYour OTP for registration is: $otp\nThis OTP is valid for 10 minutes.";
+
+                $mail->send();
+                $_SESSION['registered_email'] = $email;
+                ob_end_clean();
+                header("Location: verify_otp.php?success=OTP sent to your email. Please verify.");
+                exit;
+            } catch (Exception $e) {
+                $pdo->rollBack();
+                $errors[] = "Failed to send OTP: " . $mail->ErrorInfo;
+            }
         } catch (PDOException $e) {
+            $pdo->rollBack();
             $errors[] = "Registration failed: " . $e->getMessage();
         }
     }
@@ -122,7 +243,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-bottom: 5px;
             color: #555;
         }
-        input[type="text"], input[type="password"], select {
+        input[type="text"], input[type="password"], input[type="email"], select {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
@@ -162,12 +283,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             text-decoration: underline;
         }
         @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-            input[type="submit"] {
-                padding: 8px;
-            }
+            .container { padding: 15px; }
+            input[type="submit"] { padding: 8px; }
         }
     </style>
 </head>
@@ -208,6 +325,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="text" name="customer_contact" id="customer_contact" value="<?php echo isset($_POST['customer_contact']) ? htmlspecialchars($_POST['customer_contact']) : ''; ?>" required>
             </div>
             <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" name="email" id="email" value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>" required>
+            </div>
+            <div class="form-group">
                 <label for="street">Street</label>
                 <input type="text" name="street" id="street" value="<?php echo isset($_POST['street']) ? htmlspecialchars($_POST['street']) : ''; ?>" required>
             </div>
@@ -238,7 +359,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="submit" value="Register">
         </form>
         <div class="back-button">
-            <a href="index.php">Back to Home</a>
+            <a href="../index.php">Back to Home</a>
         </div>
     </div>
 
