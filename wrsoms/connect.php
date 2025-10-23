@@ -13,3 +13,5 @@ try {
     die("Connection failed: " . $e->getMessage());
 
 }
+$pdo->exec("SET time_zone = '-07:00';"); // Set to PST
+?>
