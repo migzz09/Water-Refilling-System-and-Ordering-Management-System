@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 12, 2025 at 02:35 PM
+-- Generation Time: Oct 23, 2025 at 12:52 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -18,8 +18,31 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `wrosms`
+-- Database: `wrsoms`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `accounts`
+--
+
+CREATE TABLE `accounts` (
+  `account_id` int(11) NOT NULL,
+  `customer_id` int(11) DEFAULT NULL,
+  `username` varchar(50) NOT NULL,
+  `password` varchar(50) NOT NULL,
+  `otp` varchar(6) DEFAULT NULL,
+  `otp_expires` timestamp NOT NULL DEFAULT (current_timestamp() + interval 10 minute),
+  `is_verified` tinyint(1) DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `accounts`
+--
+
+INSERT INTO `accounts` (`account_id`, `customer_id`, `username`, `password`, `otp`, `otp_expires`, `is_verified`) VALUES
+(1, 1, 'migzz09', 'testpassword', NULL, '2025-10-23 10:41:56', 1);
 
 -- --------------------------------------------------------
 
@@ -70,6 +93,13 @@ CREATE TABLE `batches` (
   `vehicle_type` enum('Tricycle','Car') NOT NULL,
   `batch_number` int(11) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `batches`
+--
+
+INSERT INTO `batches` (`batch_id`, `batch_date`, `batch_status_id`, `vehicle`, `notes`, `vehicle_type`, `batch_number`) VALUES
+(1, '2025-10-23 07:00:00', 1, 'Tricycle #398', 'Auto-created batch', 'Tricycle', 1);
 
 -- --------------------------------------------------------
 
@@ -132,18 +162,25 @@ INSERT INTO `containers` (`container_id`, `container_type`, `price`) VALUES
 
 CREATE TABLE `customers` (
   `customer_id` int(11) NOT NULL,
-  `username` varchar(50) NOT NULL,
-  `password` varchar(50) NOT NULL,
+  `account_id` int(11) DEFAULT NULL,
   `first_name` varchar(50) NOT NULL,
   `middle_name` varchar(50) DEFAULT NULL,
   `last_name` varchar(50) NOT NULL,
   `customer_contact` char(11) NOT NULL,
+  `email` varchar(100) DEFAULT NULL,
   `street` varchar(150) NOT NULL,
   `barangay` varchar(50) NOT NULL,
   `city` varchar(100) NOT NULL,
   `province` varchar(100) NOT NULL,
   `date_created` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `customers`
+--
+
+INSERT INTO `customers` (`customer_id`, `account_id`, `first_name`, `middle_name`, `last_name`, `customer_contact`, `email`, `street`, `barangay`, `city`, `province`, `date_created`) VALUES
+(1, NULL, 'testuser', NULL, 'testuser', '09663085914', 'jfaustino.a12345404@umak.edu.ph', 'Milkweed St', 'Rizal', 'Taguig', 'Metro Manila', '2025-10-23 10:39:00');
 
 -- --------------------------------------------------------
 
@@ -238,6 +275,13 @@ CREATE TABLE `orders` (
   `total_amount` decimal(10,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `orders`
+--
+
+INSERT INTO `orders` (`reference_id`, `customer_id`, `order_type_id`, `batch_id`, `order_date`, `delivery_date`, `order_status_id`, `total_amount`) VALUES
+('42271', 1, 1, 1, '2025-10-23 10:42:27', '2025-10-23', 1, 40.00);
+
 -- --------------------------------------------------------
 
 --
@@ -252,6 +296,13 @@ CREATE TABLE `order_details` (
   `quantity` int(11) NOT NULL,
   `subtotal` decimal(10,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `order_details`
+--
+
+INSERT INTO `order_details` (`order_detail_id`, `reference_id`, `batch_number`, `container_id`, `quantity`, `subtotal`) VALUES
+(1, '42271', 1, 1, 1, 40.00);
 
 -- --------------------------------------------------------
 
@@ -363,12 +414,19 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 
 --
+-- Indexes for table `accounts`
+--
+ALTER TABLE `accounts`
+  ADD PRIMARY KEY (`account_id`),
+  ADD UNIQUE KEY `unique_username` (`username`),
+  ADD KEY `customer_id` (`customer_id`);
+
+--
 -- Indexes for table `batches`
 --
 ALTER TABLE `batches`
   ADD PRIMARY KEY (`batch_id`),
-  ADD KEY `fk_batches_status` (`batch_status_id`),
-  ADD KEY `idx_batch_vehicle_type` (`vehicle_type`);
+  ADD KEY `batch_status_id` (`batch_status_id`);
 
 --
 -- Indexes for table `batch_employees`
@@ -397,14 +455,15 @@ ALTER TABLE `containers`
 ALTER TABLE `customers`
   ADD PRIMARY KEY (`customer_id`),
   ADD UNIQUE KEY `unique_customer_contact` (`customer_contact`),
-  ADD UNIQUE KEY `username` (`username`);
+  ADD UNIQUE KEY `email` (`email`),
+  ADD KEY `account_id` (`account_id`);
 
 --
 -- Indexes for table `customer_feedback`
 --
 ALTER TABLE `customer_feedback`
   ADD PRIMARY KEY (`feedback_id`),
-  ADD KEY `order_id` (`reference_id`),
+  ADD KEY `reference_id` (`reference_id`),
   ADD KEY `customer_id` (`customer_id`);
 
 --
@@ -444,7 +503,7 @@ ALTER TABLE `orders`
 --
 ALTER TABLE `order_details`
   ADD PRIMARY KEY (`order_detail_id`),
-  ADD KEY `order_id` (`reference_id`),
+  ADD KEY `reference_id` (`reference_id`),
   ADD KEY `container_id` (`container_id`);
 
 --
@@ -466,7 +525,7 @@ ALTER TABLE `order_types`
 --
 ALTER TABLE `payments`
   ADD PRIMARY KEY (`payment_id`),
-  ADD KEY `order_id` (`reference_id`),
+  ADD KEY `reference_id` (`reference_id`),
   ADD KEY `payment_method_id` (`payment_method_id`),
   ADD KEY `payment_status_id` (`payment_status_id`);
 
@@ -489,10 +548,16 @@ ALTER TABLE `payment_status`
 --
 
 --
+-- AUTO_INCREMENT for table `accounts`
+--
+ALTER TABLE `accounts`
+  MODIFY `account_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT for table `batches`
 --
 ALTER TABLE `batches`
-  MODIFY `batch_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `batch_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `batch_employees`
@@ -504,7 +569,7 @@ ALTER TABLE `batch_employees`
 -- AUTO_INCREMENT for table `batch_status`
 --
 ALTER TABLE `batch_status`
-  MODIFY `batch_status_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `batch_status_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `containers`
@@ -516,7 +581,7 @@ ALTER TABLE `containers`
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `customer_feedback`
@@ -546,7 +611,7 @@ ALTER TABLE `employees`
 -- AUTO_INCREMENT for table `order_details`
 --
 ALTER TABLE `order_details`
-  MODIFY `order_detail_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `order_detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `order_status`
@@ -583,10 +648,16 @@ ALTER TABLE `payment_status`
 --
 
 --
+-- Constraints for table `accounts`
+--
+ALTER TABLE `accounts`
+  ADD CONSTRAINT `accounts_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`customer_id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `batches`
 --
 ALTER TABLE `batches`
-  ADD CONSTRAINT `fk_batches_status` FOREIGN KEY (`batch_status_id`) REFERENCES `batch_status` (`batch_status_id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `batches_ibfk_1` FOREIGN KEY (`batch_status_id`) REFERENCES `batch_status` (`batch_status_id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `batch_employees`
@@ -596,11 +667,17 @@ ALTER TABLE `batch_employees`
   ADD CONSTRAINT `batch_employees_ibfk_2` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `customers`
+--
+ALTER TABLE `customers`
+  ADD CONSTRAINT `customers_ibfk_1` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`account_id`) ON DELETE SET NULL;
+
+--
 -- Constraints for table `customer_feedback`
 --
 ALTER TABLE `customer_feedback`
   ADD CONSTRAINT `customer_feedback_ibfk_1` FOREIGN KEY (`reference_id`) REFERENCES `orders` (`reference_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `customer_feedback_ibfk_2` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`customer_id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `customer_feedback_ibfk_2` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`customer_id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `deliveries`
@@ -613,17 +690,17 @@ ALTER TABLE `deliveries`
 -- Constraints for table `orders`
 --
 ALTER TABLE `orders`
-  ADD CONSTRAINT `fk_orders_batch` FOREIGN KEY (`batch_id`) REFERENCES `batches` (`batch_id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_orders_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`customer_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_orders_status` FOREIGN KEY (`order_status_id`) REFERENCES `order_status` (`status_id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_orders_type` FOREIGN KEY (`order_type_id`) REFERENCES `order_types` (`order_type_id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`customer_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `orders_ibfk_2` FOREIGN KEY (`order_type_id`) REFERENCES `order_types` (`order_type_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `orders_ibfk_3` FOREIGN KEY (`batch_id`) REFERENCES `batches` (`batch_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `orders_ibfk_4` FOREIGN KEY (`order_status_id`) REFERENCES `order_status` (`status_id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `order_details`
 --
 ALTER TABLE `order_details`
-  ADD CONSTRAINT `fk_order_details_container` FOREIGN KEY (`container_id`) REFERENCES `containers` (`container_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_order_details_order` FOREIGN KEY (`reference_id`) REFERENCES `orders` (`reference_id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `order_details_ibfk_1` FOREIGN KEY (`reference_id`) REFERENCES `orders` (`reference_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `order_details_ibfk_2` FOREIGN KEY (`container_id`) REFERENCES `containers` (`container_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `payments`
