@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Orders | Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        table th {
+            background-color: #007bff;
+            color: white;
+            vertical-align: middle;
+        }
+        table td {
+            vertical-align: middle;
+        }
+        .search-bar {
+            max-width: 400px;
+        }
+        .btn-archive {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-archive:hover {
+            background-color: #bb2d3b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold text-primary">Manage Orders</h2>
+            <a href="../admin_dashboard.php" class="btn btn-secondary">← Back to Dashboard</a>
+        </div>
+
+        <!-- Search Bar -->
+        <form class="mb-3" method="GET" action="">
+            <div class="input-group search-bar">
+                <input type="text" name="search" class="form-control" placeholder="Search orders..." 
+                       value="">
+                <button class="btn btn-primary" type="submit">Search</button>
+            </div>
+        </form>
+
+        <!-- Orders Table -->
+        <div class="card p-3">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Reference ID</th>
+                            <th>Customer Name</th>
+                            <th>Contact</th>
+                            <th>Order Date</th>
+                            <th>Delivery Date</th>
+                            <th>Total Amount</th>
+                            <th>Order Status</th>
+                            <th>Payment Status</th>
+                            <th>Delivery Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    
+                        
+                            
+                                <tr>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>₱</td>
+                                    <td>
+                                        <span class="badge bg-<?php 
+                                            echo ($row['order_status'] == 'Pending') ? 'warning' : 
+                                                 (($row['order_status'] == 'Dispatched') ? 'info' : 'success'); ?>">
+                                            
+                                        </span>
+                                    </td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>
+                                        <a href="?archive_id=" 
+                                           class="btn btn-archive btn-sm"
+                                           onclick="return confirm('Mark this order as Archived?')">
+                                           Archive
+                                        </a>
+                                    </td>
+                                </tr>
+                            
+                        
+                    
+                        <tr><td colspan="10" class="text-center text-muted">No orders found.</td></tr>
+                    
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

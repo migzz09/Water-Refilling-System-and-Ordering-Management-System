@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - WaterWorld Water Station</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../assets/css/design-system.css">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-lg);
+        }
+        
+        .login-container {
+            width: 100%;
+            max-width: 1000px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .login-left {
+            position: relative;
+            background-image: url('../assets/images/clear_blue_water.png');
+            background-size: cover;
+            background-position: center;
+            padding: var(--spacing-2xl);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .login-left::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, 
+                rgba(168, 216, 234, 0.85) 0%, 
+                rgba(180, 228, 206, 0.8) 100%
+            );
+            backdrop-filter: blur(2px);
+        }
+        
+        .login-left-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .login-logo {
+            width: 100px;
+            height: 100px;
+            margin-bottom: var(--spacing-lg);
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .login-logo svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+        }
+        
+        .login-left h2 {
+            color: var(--text-white);
+            font-size: 2rem;
+            margin-bottom: var(--spacing-md);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .login-left p {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 1.1rem;
+            line-height: 1.7;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        .login-right {
+            background: var(--bg-white);
+            padding: var(--spacing-2xl);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: var(--spacing-2xl);
+        }
+        
+        .login-header h1 {
+            font-size: 2rem;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-primary);
+        }
+        
+        .login-header p {
+            color: var(--text-secondary);
+        }
+        
+        .form-group {
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: var(--spacing-sm);
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .input-wrapper {
+            position: relative;
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: var(--spacing-md);
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: var(--text-light);
+            pointer-events: none;
+        }
+        
+        .input-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) 3rem;
+            font-size: 1rem;
+            color: var(--text-primary);
+            background: var(--bg-light);
+            border: 2px solid transparent;
+            border-radius: var(--radius-md);
+            transition: all var(--transition-base);
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            background: var(--bg-white);
+            box-shadow: 0 0 0 4px rgba(168, 216, 234, 0.1);
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: var(--spacing-md);
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: color var(--transition-base);
+        }
+        
+        .password-toggle:hover {
+            color: var(--primary-blue-dark);
+        }
+        
+        .password-toggle svg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .btn-login {
+            width: 100%;
+            margin-top: var(--spacing-lg);
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: var(--spacing-xl) 0;
+            color: var(--text-light);
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid rgba(168, 216, 234, 0.3);
+        }
+        
+        .divider span {
+            padding: 0 var(--spacing-md);
+            font-size: 0.9rem;
+        }
+        
+        .register-link {
+            text-align: center;
+            margin-top: var(--spacing-xl);
+            color: var(--text-secondary);
+        }
+        
+        .register-link a {
+            color: var(--primary-blue-dark);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all var(--transition-base);
+        }
+        
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-bottom: var(--spacing-xl);
+            font-size: 0.9rem;
+            transition: all var(--transition-base);
+        }
+        
+        .back-link:hover {
+            color: var(--primary-blue-dark);
+            transform: translateX(-4px);
+        }
+        
+        .back-icon {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .back-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        @media (max-width: 768px) {
+            .login-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .login-left {
+                min-height: 300px;
+            }
+            
+            .login-right {
+                padding: var(--spacing-xl);
+            }
+        }
+    </style>
+</head>
+<body class="water-bg">
+    <div class="login-container">
+        <div class="login-left">
+            <div class="login-left-content">
+                <div class="login-logo">
+                    <i class="fa fa-tint" style="font-size: 80px; color: white;"></i>
+                </div>
+                <h2>Welcome Back!</h2>
+                <p>Access your account to manage orders, track deliveries, and enjoy fresh water delivered to your door.</p>
+            </div>
+        </div>
+        
+        <div class="login-right">
+            <a href="../index.html" class="back-link">
+                <i class="fa fa-arrow-left"></i>
+                Back to Home
+            </a>
+            
+            <div class="login-header">
+                <h1>Sign In</h1>
+                <p>Enter your credentials to access your account</p>
+            </div>
+            
+            <div id="error-container" class="alert alert-error" style="display: none;">
+                <i class="fa fa-exclamation-triangle"></i>
+                <ul id="error-list" style="margin: 0; padding-left: 1.2rem;"></ul>
+            </div>
+
+            <div id="success-container" class="alert alert-success" style="display: none;">
+                <i class="fa fa-check-circle"></i>
+                <p id="success-message" style="margin: 0;"></p>
+            </div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label class="form-label" for="username">Username</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <i class="fa fa-user"></i>
+                        </span>
+                        <input 
+                            type="text" 
+                            name="username" 
+                            id="username" 
+                            class="form-input" 
+                            placeholder="Enter your username"
+                            required
+                            autocomplete="username"
+                        >
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <i class="fa fa-lock"></i>
+                        </span>
+                        <input 
+                            type="password" 
+                            name="password" 
+                            id="password" 
+                            class="form-input" 
+                            placeholder="Enter your password"
+                            required
+                            autocomplete="current-password"
+                        >
+                        <span class="password-toggle" id="password-toggle" onclick="togglePasswordVisibility()">
+                            <i class="fa fa-eye" id="eye-icon"></i>
+                        </span>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-login" id="submit-btn">
+                    <i class="fa fa-sign-in"></i>
+                    Sign In
+                </button>
+            </form>
+
+            <div class="divider">
+                <span>or</span>
+            </div>
+
+            <div class="register-link">
+                Don't have an account? <a href="register.html">Create one now</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/js/api-helper.js"></script>
+    <script src="../assets/js/login.js"></script>
+    <script>
+        // Toggle password visibility
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eye-icon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.className = 'fa fa-eye-slash';
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.className = 'fa fa-eye';
+            }
+        }
+    </script>
+</body>
+</html>

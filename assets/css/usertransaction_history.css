@@ -1,0 +1,251 @@
+/* WaterWorld - usertransaction_history Page Styles */
+
+* {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f9fbfc;
+            color: #333;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        header {
+            background: #ffffffcc;
+            backdrop-filter: blur(10px);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e5e5e5;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #008CBA;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            position: relative;
+            padding-bottom: 4px;
+            transition: color 0.3s;
+        }
+
+        nav ul li a::after {
+            content: "";
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background: #008CBA;
+            transition: width 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: #008CBA;
+        }
+
+        nav ul li a:hover::after {
+            width: 100%;
+        }
+
+        .welcome {
+            color: #008CBA;
+            font-size: 1rem;
+            font-weight: 500;
+            margin-left: 1rem;
+        }
+
+        .container {
+            padding: 2rem 5%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #008CBA;
+            margin-bottom: 2rem;
+        }
+
+        .search-bar {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .search-bar input {
+            padding: 0.75rem;
+            width: 60%;
+            max-width: 600px;
+            border: 1px solid #ccc;
+            border-radius: 30px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .search-bar input:focus {
+            border-color: #008CBA;
+            outline: none;
+        }
+
+        .transaction-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-height: 70vh;
+            overflow-y: auto;
+            padding-right: 1rem;
+        }
+
+        .date-header {
+            background: #f0f8fb;
+            padding: 0.5rem 1rem;
+            font-weight: bold;
+            color: #008CBA;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .transaction-item {
+            background: #ffffffcc;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.3s;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .transaction-item:hover {
+            background: #f0f8fb;
+        }
+
+        .transaction-details {
+            flex-grow: 1;
+        }
+
+        .transaction-type {
+            font-weight: bold;
+            color: #008CBA;
+            margin-bottom: 0.25rem;
+        }
+
+        .transaction-time {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .transaction-amount {
+            font-weight: bold;
+            color: #008CBA;
+        }
+
+        .receipt-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .receipt-content {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 10px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            border: 2px dashed #ccc;
+            clip-path: polygon(0 0, 100% 0, 100% 85%, 95% 100%, 5% 100%, 0 85%);
+            animation: slideIn 0.3s ease-out;
+            background-image: linear-gradient(to bottom, #fff, #f9fbfc);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .receipt-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #008CBA;
+        }
+
+        .receipt-details p {
+            display: flex;
+            justify-content: space-between;
+            margin: 0.75rem 0;
+        }
+
+        .receipt-details p strong {
+            color: #333;
+        }
+
+        .receipt-details .total {
+            font-weight: bold;
+            border-top: 1px dashed #ccc;
+            padding-top: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .back-btn {
+            display: block;
+            margin: 1rem auto 0;
+            padding: 0.5rem 1rem;
+            background: #008CBA;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .back-btn:hover {
+            background: #006b9a;
+        }
+
+        .close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #888;
+        }
+
+        .close:hover {
+            color: #333;
+        }

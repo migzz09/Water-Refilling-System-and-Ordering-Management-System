@@ -1,0 +1,8 @@
+/* WaterWorld - status Page Styles */
+
+body { background:#f8f9fa; font-family:Poppins, Arial, sans-serif; }
+    .container { margin-top:40px; margin-bottom:80px; max-width:1100px; }
+    .nav-tabs .nav-link.active { background:#0d6efd; color:#fff; }
+    .btn-custom { border-radius:18px; padding:4px 12px; }
+    .back-btn { position:fixed; top:20px; left:20px; }
+    .card { border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.06); }

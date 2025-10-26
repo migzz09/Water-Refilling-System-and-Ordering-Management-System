@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Your Order - WaterWorld</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../assets/css/design-system.css">
+    <style>
+        body {
+            min-height: 100vh;
+            background: var(--bg-light);
+            padding-top: 2rem;
+        }
+
+        .tracking-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 var(--spacing-lg);
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .page-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .tracking-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-2xl);
+            box-shadow: var(--shadow-md);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem 0.875rem 3rem;
+            border: 2px solid var(--bg-light);
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            transition: all var(--transition-base);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(74, 144, 164, 0.1);
+        }
+
+        .btn-track {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-sm);
+        }
+
+        .btn-track:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-track:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        #tracking-results {
+            display: none;
+        }
+
+        .results-header {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-teal) 100%);
+            color: white;
+            padding: var(--spacing-xl);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            margin: -2rem -2rem var(--spacing-xl);
+        }
+
+        .results-header h2 {
+            margin: 0 0 var(--spacing-sm);
+            font-size: 1.75rem;
+        }
+
+        .reference-id {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .info-section {
+            margin-bottom: var(--spacing-xl);
+            padding-bottom: var(--spacing-xl);
+            border-bottom: 1px solid var(--bg-light);
+        }
+
+        .info-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .info-section h3 {
+            color: var(--primary-blue-dark);
+            font-size: 1.25rem;
+            margin-bottom: var(--spacing-md);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-md);
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.375rem 0.875rem;
+            border-radius: var(--radius-full);
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background: #FFF4E6;
+            color: #D89B5E;
+        }
+
+        .status-processing {
+            background: #E8F4FD;
+            color: #4A90A4;
+        }
+
+        .status-completed {
+            background: #E8F5E9;
+            color: #5FA883;
+        }
+
+        .status-cancelled {
+            background: #FFEBEE;
+            color: #D47B7B;
+        }
+
+        .items-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .item {
+            padding: var(--spacing-md);
+            background: var(--bg-light);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-sm);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .item-details {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .item-quantity {
+            background: white;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            color: var(--primary-blue-dark);
+        }
+
+        .item-price {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary-blue-dark);
+        }
+
+        .total-amount {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-teal) 100%);
+            color: white;
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-md);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: var(--spacing-lg);
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all var(--transition-base);
+            margin-top: var(--spacing-xl);
+        }
+
+        .back-link:hover {
+            color: var(--primary-blue-dark);
+            transform: translateX(-4px);
+        }
+
+        .alert {
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-lg);
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-error {
+            background: #FFEBEE;
+            color: #D47B7B;
+            border-left: 4px solid #D47B7B;
+        }
+
+        @media (max-width: 768px) {
+            .page-header h1 {
+                font-size: 2rem;
+            }
+
+            .tracking-card {
+                padding: var(--spacing-lg);
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="tracking-container">
+        <div class="page-header">
+            <h1><i class="fa fa-search"></i> Track Your Order</h1>
+            <p>Enter your reference ID to check your order status</p>
+        </div>
+
+        <!-- Error Message -->
+        <div id="error-alert" class="alert alert-error">
+            <i class="fa fa-exclamation-triangle"></i>
+            <span id="error-message"></span>
+        </div>
+
+        <!-- Tracking Form -->
+        <div class="tracking-card">
+            <form id="tracking-form">
+                <div class="form-group">
+                    <label for="reference_id">
+                        <i class="fa fa-hashtag"></i> Reference ID
+                    </label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <i class="fa fa-barcode"></i>
+                        </span>
+                        <input 
+                            type="text" 
+                            id="reference_id" 
+                            name="reference_id" 
+                            class="form-input" 
+                            placeholder="Enter your order reference ID (e.g., WW20231027)"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-track" id="track-btn">
+                    <i class="fa fa-search"></i>
+                    <span>Track Order</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Tracking Results -->
+        <div id="tracking-results" class="tracking-card">
+            <div class="results-header">
+                <h2>Order Details</h2>
+                <div class="reference-id">#<span id="display-reference"></span></div>
+            </div>
+
+            <!-- Customer Information -->
+            <div class="info-section">
+                <h3><i class="fa fa-user"></i> Customer Information</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Name</span>
+                        <span class="info-value" id="customer-name"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Contact</span>
+                        <span class="info-value" id="customer-contact"></span>
+                    </div>
+                    <div class="info-item" style="grid-column: 1 / -1;">
+                        <span class="info-label">Address</span>
+                        <span class="info-value" id="customer-address"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Information -->
+            <div class="info-section">
+                <h3><i class="fa fa-shopping-cart"></i> Order Information</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Order Date</span>
+                        <span class="info-value" id="order-date"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Delivery Date</span>
+                        <span class="info-value" id="delivery-date"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Order Type</span>
+                        <span class="info-value" id="order-type"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Status</span>
+                        <span class="status-badge" id="order-status"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Items -->
+            <div class="info-section">
+                <h3><i class="fa fa-cube"></i> Order Items</h3>
+                <ul class="items-list" id="order-items"></ul>
+                <div class="total-amount">
+                    <span>Total Amount</span>
+                    <span id="total-amount">₱0.00</span>
+                </div>
+            </div>
+
+            <!-- Batch Information (if available) -->
+            <div class="info-section" id="batch-section" style="display: none;">
+                <h3><i class="fa fa-truck"></i> Batch Information</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Batch ID</span>
+                        <span class="info-value" id="batch-id"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Vehicle</span>
+                        <span class="info-value" id="batch-vehicle"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Vehicle Type</span>
+                        <span class="info-value" id="batch-vehicle-type"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Batch Status</span>
+                        <span class="status-badge" id="batch-status"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Information (if available) -->
+            <div class="info-section" id="payment-section" style="display: none;">
+                <h3><i class="fa fa-credit-card"></i> Payment Information</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Payment Status</span>
+                        <span class="status-badge" id="payment-status"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Method</span>
+                        <span class="info-value" id="payment-method"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Amount Paid</span>
+                        <span class="info-value" id="payment-amount"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Transaction Reference</span>
+                        <span class="info-value" id="payment-reference"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <a href="../index.html" class="back-link">
+            <i class="fa fa-arrow-left"></i>
+            Back to Home
+        </a>
+    </div>
+
+    <script src="../assets/js/api-helper.js"></script>
+    <script>
+        document.getElementById('tracking-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const referenceId = document.getElementById('reference_id').value.trim();
+            const trackBtn = document.getElementById('track-btn');
+            const errorAlert = document.getElementById('error-alert');
+            const results = document.getElementById('tracking-results');
+            
+            // Hide previous results and errors
+            errorAlert.classList.remove('show');
+            results.style.display = 'none';
+            
+            // Disable button and show loading
+            trackBtn.disabled = true;
+            trackBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> <span>Tracking...</span>';
+            
+            try {
+                const response = await fetch(`../api/orders/track.php?reference_id=${encodeURIComponent(referenceId)}`);
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    displayOrderDetails(result.data);
+                } else {
+                    showError(result.message || 'Order not found. Please check your reference ID.');
+                }
+            } catch (error) {
+                console.error('Tracking error:', error);
+                showError('Failed to track order. Please try again.');
+            } finally {
+                trackBtn.disabled = false;
+                trackBtn.innerHTML = '<i class="fa fa-search"></i> <span>Track Order</span>';
+            }
+        });
+        
+        function displayOrderDetails(data) {
+            // Display reference ID
+            document.getElementById('display-reference').textContent = data.reference_id;
+            
+            // Customer Information
+            document.getElementById('customer-name').textContent = `${data.first_name} ${data.last_name}`;
+            document.getElementById('customer-contact').textContent = data.customer_contact;
+            document.getElementById('customer-address').textContent = 
+                `${data.street}, ${data.barangay}, ${data.city}, ${data.province}`;
+            
+            // Order Information
+            document.getElementById('order-date').textContent = formatDate(data.order_date);
+            document.getElementById('delivery-date').textContent = formatDate(data.delivery_date);
+            document.getElementById('order-type').textContent = data.order_type || 'N/A';
+            
+            const statusBadge = document.getElementById('order-status');
+            statusBadge.textContent = data.order_status || 'Pending';
+            statusBadge.className = 'status-badge ' + getStatusClass(data.order_status);
+            
+            // Order Items
+            const itemsList = document.getElementById('order-items');
+            itemsList.innerHTML = '';
+            
+            if (data.items && data.items.length > 0) {
+                data.items.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'item';
+                    li.innerHTML = `
+                        <div class="item-details">
+                            <span class="item-quantity">${item.quantity}x</span>
+                            <span>${item.container_type}</span>
+                        </div>
+                        <span class="item-price">₱${parseFloat(item.subtotal).toFixed(2)}</span>
+                    `;
+                    itemsList.appendChild(li);
+                });
+            }
+            
+            document.getElementById('total-amount').textContent = `₱${parseFloat(data.total_amount).toFixed(2)}`;
+            
+            // Batch Information
+            if (data.batch && data.batch.batch_id) {
+                document.getElementById('batch-section').style.display = 'block';
+                document.getElementById('batch-id').textContent = data.batch.batch_id;
+                document.getElementById('batch-vehicle').textContent = data.batch.vehicle_plate || 'N/A';
+                document.getElementById('batch-vehicle-type').textContent = data.batch.vehicle_type || 'N/A';
+                
+                const batchStatus = document.getElementById('batch-status');
+                batchStatus.textContent = data.batch.batch_status || 'Pending';
+                batchStatus.className = 'status-badge ' + getStatusClass(data.batch.batch_status);
+            }
+            
+            // Payment Information
+            if (data.payment && data.payment.payment_id) {
+                document.getElementById('payment-section').style.display = 'block';
+                
+                const paymentStatus = document.getElementById('payment-status');
+                paymentStatus.textContent = data.payment.payment_status || 'Pending';
+                paymentStatus.className = 'status-badge ' + getStatusClass(data.payment.payment_status);
+                
+                document.getElementById('payment-method').textContent = data.payment.payment_method || 'N/A';
+                document.getElementById('payment-amount').textContent = 
+                    data.payment.amount_paid ? `₱${parseFloat(data.payment.amount_paid).toFixed(2)}` : 'N/A';
+                document.getElementById('payment-reference').textContent = data.payment.transaction_reference || 'N/A';
+            }
+            
+            // Show results
+            document.getElementById('tracking-results').style.display = 'block';
+            document.getElementById('tracking-results').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function showError(message) {
+            const errorAlert = document.getElementById('error-alert');
+            document.getElementById('error-message').textContent = message;
+            errorAlert.classList.add('show');
+            errorAlert.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        }
+        
+        function getStatusClass(status) {
+            if (!status) return 'status-pending';
+            const statusLower = status.toLowerCase();
+            if (statusLower.includes('pending')) return 'status-pending';
+            if (statusLower.includes('processing') || statusLower.includes('progress')) return 'status-processing';
+            if (statusLower.includes('completed') || statusLower.includes('delivered')) return 'status-completed';
+            if (statusLower.includes('cancelled')) return 'status-cancelled';
+            return 'status-pending';
+        }
+    </script>
+</body>
+</html>

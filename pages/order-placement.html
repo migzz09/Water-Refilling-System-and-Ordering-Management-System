@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Place Your Order - WaterWorld</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../assets/css/design-system.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f9fbfc;
+            color: #333;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        header {
+            background: #ffffffcc;
+            backdrop-filter: blur(10px);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e5e5e5;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #008CBA;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            position: relative;
+            padding-bottom: 4px;
+            transition: color 0.3s;
+        }
+
+        nav ul li a::after {
+            content: "";
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background: #008CBA;
+            transition: width 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: #008CBA;
+        }
+
+        nav ul li a:hover::after {
+            width: 100%;
+        }
+
+        .welcome {
+            color: #008CBA;
+            font-size: 1rem;
+            font-weight: 500;
+            margin-left: 1rem;
+        }
+
+        section {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 1s ease;
+        }
+
+        section.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .order {
+            padding: 4rem 5%;
+            text-align: center;
+        }
+
+        .order h1 {
+            font-size: 2.2rem;
+            margin-bottom: 1rem;
+            color: #008CBA;
+            animation: slideDown 1.5s ease forwards;
+        }
+
+        .form-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            max-width: 800px;
+            margin: 2rem auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .form-container h3 {
+            grid-column: 1 / -1;
+            color: #008CBA;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .form-container label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: 500;
+            color: #333;
+            text-align: left;
+        }
+
+        .form-container input,
+        .form-container select {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-container input:focus,
+        .form-container select:focus {
+            border-color: #008CBA;
+            outline: none;
+        }
+
+        .form-container input[readonly] {
+            background: #f0f0f0;
+        }
+
+        .form-container .radio-group {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-container button {
+            grid-column: 1 / -1;
+            background: #008CBA;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.3s;
+        }
+
+        .form-container button:hover {
+            background: #005f80;
+            transform: scale(1.05);
+        }
+
+        .batch-info {
+            grid-column: 1 / -1;
+            background-color: #e7f3ff;
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #008CBA;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .success {
+            color: #2e7d32;
+            margin: 1rem 0;
+            font-weight: 500;
+            text-align: center;
+            grid-column: 1 / -1;
+        }
+
+        .error {
+            color: #d32f2f;
+            margin: 1rem 0;
+            font-weight: 500;
+            text-align: center;
+            grid-column: 1 / -1;
+        }
+
+        .error ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            animation: slideUp 0.5s ease forwards;
+        }
+
+        .modal-content h2 {
+            color: #008CBA;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+
+        .modal-content .cart-item {
+            border-bottom: 1px solid #e5e5e5;
+            padding: 1rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-content .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .modal-content .cart-total {
+            font-weight: bold;
+            color: #008CBA;
+            margin-top: 1rem;
+            text-align: right;
+        }
+
+        .modal-content .warning {
+            color: #d32f2f;
+            font-weight: 500;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .modal-content button {
+            background: #008CBA;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            display: block;
+            margin: 1rem auto;
+            transition: background 0.3s, transform 0.3s;
+        }
+
+        .modal-content button:hover {
+            background: #005f80;
+            transform: scale(1.05);
+        }
+
+        .back-button {
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .back-button a {
+            color: #008CBA;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .back-button a:hover {
+            color: #005f80;
+            text-decoration: underline;
+        }
+
+        footer {
+            background: #008CBA;
+            color: white;
+            text-align: center;
+            padding: 2rem 5%;
+            margin-top: 2rem;
+        }
+
+        footer .socials {
+            margin: 1rem 0;
+        }
+
+        footer .socials a {
+            margin: 0 10px;
+            color: white;
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+        }
+
+        footer .socials a:hover {
+            color: #cceeff;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">WaterWorld</div>
+        <nav>
+            <ul>
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="order-placement.html">Order</a></li>
+                <li><a href="order-tracking.html">Track</a></li>
+                <li><a href="usertransaction-history.html">History</a></li>
+                <li><a href="#" onclick="logout(); return false;">Logout</a></li>
+                <li class="welcome">Welcome, !</li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="order show">
+        <h1>Place Your Order</h1>
+
+        
+            <p class="success"></p>
+        
+        
+            <div class="error">
+                <ul>
+                    
+                        <li></li>
+                    
+                </ul>
+            </div>
+        
+
+        <div class="form-container">
+            <form method="POST" action="">
+                <h3>Customer Details</h3>
+                <div class="radio-group">
+                    <label><input type="radio" name="address_option" value="account" onclick="toggleAddressFields()" > Use my account address</label>
+                    <label><input type="radio" name="address_option" value="manual" checked onclick="toggleAddressFields()"> Enter new address</label>
+                </div>
+                <label for="first_name">First Name</label>
+                <input type="text" name="first_name" id="first_name" value="" required >
+
+                <label for="middle_name">Middle Name (Optional)</label>
+                <input type="text" name="middle_name" id="middle_name">
+
+                <label for="last_name">Last Name</label>
+                <input type="text" name="last_name" id="last_name" value="" required >
+
+                <label for="customer_contact">Contact Number (e.g., 09XXXXXXXXX)</label>
+                <input type="text" name="customer_contact" id="customer_contact" value="" required >
+
+                <label for="street">Street</label>
+                <input type="text" name="street" id="street" value="" required >
+
+                <label for="city">City</label>
+                <select name="city" id="city" required onchange="updateBarangays()" >
+                    <option value="">Select City</option>
+                    
+                        <option value="" ></option>
+                    
+                </select>
+
+                <label for="barangay">Barangay</label>
+                <select name="barangay" id="barangay" required >
+                    <option value="">Select Barangay</option>
+                    
+                        
+                            <option value="" ></option>
+                        
+                    
+                </select>
+
+                <label for="province">Province</label>
+                <input type="text" name="province" id="province" value="Metro Manila" readonly>
+
+                <h3>Order Details</h3>
+                <label for="order_type_id">Order Type</label>
+                <select name="order_type_id" required>
+                    <option value="">Select Order Type</option>
+                    
+                        <option value=""></option>
+                    
+                </select>
+
+                <label for="container_id">Container</label>
+                <select name="container_id" required>
+                    <option value="">Select Container</option>
+                    
+                        <option value="">
+                            
+                        </option>
+                    
+                </select>
+
+                <label for="quantity">Quantity (Containers)</label>
+                <input type="number" name="quantity" min="1" required>
+                <div class="batch-info">
+                    <strong>Note:</strong> Tricycle (Taguig only): Max 5 containers per batch | Car (Outside Taguig): Max 10 containers per batch<br>
+                    Maximum 3 batches per vehicle type per day. Orders exceeding capacity will be moved to next available batch.<br>
+                    <strong>Inventory:</strong> Refill orders do not deduct from stock. Purchase New Container/s and Both orders deduct from available stock.
+                </div>
+
+                <label for="delivery_date">Delivery Date</label>
+                <input type="date" name="delivery_date" required>
+
+                <button type="submit" name="add_order">Add Order</button>
+            </form>
+        </div>
+
+        <div id="receiptModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h2>Your Order Summary</h2>
+                <div class="cart-item">
+                    <span><strong>Item:</strong> <span id="modal-item"></span></span>
+                    <span>₱<span id="modal-price"></span></span>
+                </div>
+                <div class="cart-total">
+                    <span>Total: ₱<span id="modal-total"></span></span>
+                </div>
+                <p><strong>Reference ID:</strong> <span id="modal-ref"></span></p>
+                <p><strong>Customer Name:</strong> <span id="modal-name"></span></p>
+                <p><strong>Contact Number:</strong> <span id="modal-contact"></span></p>
+                <p><strong>Address:</strong> <span id="modal-address"></span></p>
+                <p><strong>Order Type:</strong> <span id="modal-type"></span></p>
+                <p><strong>Order Date:</strong> <span id="modal-order-date"></span></p>
+                <p><strong>Delivery Date:</strong> <span id="modal-delivery-date"></span></p>
+                <p><strong>Vehicle Type:</strong> <span id="modal-vehicle"></span></p>
+                <p><strong>Batch Number:</strong> <span id="modal-batch"></span></p>
+                <p class="warning">Please take a screenshot of this receipt for your records!</p>
+                <form method="POST" action="">
+                    <button type="submit" name="close_receipt">Confirm Order</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="back-button">
+            <a href="../index.html">Back to Home</a>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2025 WaterWorld Water Station. All rights reserved.</p>
+        <div class="socials">
+            <a href="https://www.facebook.com/yourwaterworld" target="_blank"><i class="fa fa-facebook"></i> Facebook</a>
+            <a href="https://www.google.com/maps/place/Water+World/@14.5602872,121.0613366,17z" target="_blank"><i class="fa fa-map-marker"></i> Location</a>
+            <a href="mailto:hello@waterworld.ph"><i class="fa fa-envelope"></i> Email</a>
+        </div>
+    </footer>
+
+    <script>
+        const sections = document.querySelectorAll("section");
+
+        const revealOnScroll = () => {
+            const triggerBottom = window.innerHeight * 0.85;
+            sections.forEach(section => {
+                const sectionTop = section.getBoundingClientRect().top;
+                if (sectionTop < triggerBottom) {
+                    section.classList.add("show");
+                }
+            });
+        };
+
+        window.addEventListener("scroll", revealOnScroll);
+        revealOnScroll();
+
+        // Load cities from API
+        let cities = {};
+        
+        async function loadCities() {
+            try {
+                const response = await fetch('../api/common/cities.php');
+                const result = await response.json();
+                if (result.success) {
+                    cities = result.data;
+                }
+            } catch (error) {
+                console.error('Error loading cities:', error);
+            }
+        }
+
+        function updateBarangays() {
+            const citySelect = document.getElementById('city');
+            const barangaySelect = document.getElementById('barangay');
+            const selectedCity = citySelect.value;
+
+            barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+
+            if (selectedCity && cities[selectedCity]) {
+                cities[selectedCity].forEach(barangay => {
+                    const option = document.createElement('option');
+                    option.value = barangay;
+                    option.textContent = barangay;
+                    barangaySelect.appendChild(option);
+                });
+            }
+        }
+
+        function toggleAddressFields() {
+            const addressOption = document.querySelector('input[name="address_option"]:checked').value;
+            const fields = ['first_name', 'last_name', 'customer_contact', 'street', 'city', 'barangay', 'province'];
+            const userData = {
+                first_name: '',
+                last_name: '',
+                customer_contact: '',
+                street: '',
+                city: '',
+                barangay: '',
+                province: 'Metro Manila'
+            };
+
+            fields.forEach(field => {
+                const element = document.getElementById(field);
+                if (addressOption === 'account' && userData[field]) {
+                    element.value = userData[field];
+                    if (field === 'city' || field === 'barangay') {
+                        element.disabled = true;
+                    } else if (field !== 'middle_name') {
+                        element.readOnly = true;
+                    }
+                } else {
+                    if (field !== 'province' && field !== 'middle_name') {
+                        element.value = '';
+                        element.readOnly = false;
+                        element.disabled = false;
+                    }
+                }
+            });
+
+            if (addressOption === 'account' && userData['city']) {
+                updateBarangays();
+                document.getElementById('barangay').value = userData['barangay'] || '';
+            }
+        }
+
+        window.onload = function() {
+            loadCities();
+            toggleAddressFields();
+        };
+
+        // Logout function
+        async function logout() {
+            try {
+                const response = await fetch('../api/auth/logout.php', {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                if (result.success) {
+                    window.location.href = '../index.html';
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+                window.location.href = '../index.html';
+            }
+        }
+    </script>
+</body>
+</html>

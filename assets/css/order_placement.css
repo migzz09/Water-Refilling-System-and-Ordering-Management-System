@@ -1,0 +1,341 @@
+/* WaterWorld Water Station - Order Placement Page Styles */
+
+* {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f9fbfc;
+            color: #333;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        header {
+            background: #ffffffcc;
+            backdrop-filter: blur(10px);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e5e5e5;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #008CBA;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            position: relative;
+            padding-bottom: 4px;
+            transition: color 0.3s;
+        }
+
+        nav ul li a::after {
+            content: "";
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background: #008CBA;
+            transition: width 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: #008CBA;
+        }
+
+        nav ul li a:hover::after {
+            width: 100%;
+        }
+
+        .welcome {
+            color: #008CBA;
+            font-size: 1rem;
+            font-weight: 500;
+            margin-left: 1rem;
+        }
+
+        section {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 1s ease;
+        }
+
+        section.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .order {
+            padding: 4rem 5%;
+            text-align: center;
+        }
+
+        .order h1 {
+            font-size: 2.2rem;
+            margin-bottom: 1rem;
+            color: #008CBA;
+            animation: slideDown 1.5s ease forwards;
+        }
+
+        .form-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            max-width: 800px;
+            margin: 2rem auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .form-container h3 {
+            grid-column: 1 / -1;
+            color: #008CBA;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .form-container label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: 500;
+            color: #333;
+            text-align: left;
+        }
+
+        .form-container input,
+        .form-container select {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-container input:focus,
+        .form-container select:focus {
+            border-color: #008CBA;
+            outline: none;
+        }
+
+        .form-container input[readonly] {
+            background: #f0f0f0;
+        }
+
+        .form-container .radio-group {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-container button {
+            grid-column: 1 / -1;
+            background: #008CBA;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.3s;
+        }
+
+        .form-container button:hover {
+            background: #005f80;
+            transform: scale(1.05);
+        }
+
+        .batch-info {
+            grid-column: 1 / -1;
+            background-color: #e7f3ff;
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #008CBA;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .success {
+            color: #2e7d32;
+            margin: 1rem 0;
+            font-weight: 500;
+            text-align: center;
+            grid-column: 1 / -1;
+        }
+
+        .error {
+            color: #d32f2f;
+            margin: 1rem 0;
+            font-weight: 500;
+            text-align: center;
+            grid-column: 1 / -1;
+        }
+
+        .error ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            animation: slideUp 0.5s ease forwards;
+        }
+
+        .modal-content h2 {
+            color: #008CBA;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+
+        .modal-content .cart-item {
+            border-bottom: 1px solid #e5e5e5;
+            padding: 1rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-content .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .modal-content .cart-total {
+            font-weight: bold;
+            color: #008CBA;
+            margin-top: 1rem;
+            text-align: right;
+        }
+
+        .modal-content .warning {
+            color: #d32f2f;
+            font-weight: 500;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .modal-content button {
+            background: #008CBA;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            display: block;
+            margin: 1rem auto;
+            transition: background 0.3s, transform 0.3s;
+        }
+
+        .modal-content button:hover {
+            background: #005f80;
+            transform: scale(1.05);
+        }
+
+        .back-button {
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .back-button a {
+            color: #008CBA;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .back-button a:hover {
+            color: #005f80;
+            text-decoration: underline;
+        }
+
+        footer {
+            background: #008CBA;
+            color: white;
+            text-align: center;
+            padding: 2rem 5%;
+            margin-top: 2rem;
+        }
+
+        footer .socials {
+            margin: 1rem 0;
+        }
+
+        footer .socials a {
+            margin: 0 10px;
+            color: white;
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+        }
+
+        footer .socials a:hover {
+            color: #cceeff;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }

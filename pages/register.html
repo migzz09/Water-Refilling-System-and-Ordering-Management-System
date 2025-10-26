@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - WaterWorld Water Station</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../assets/css/design-system.css">
+    <link rel="stylesheet" href="../assets/css/register.css">
+    <!-- Keeping inline styles for now - can be removed after testing -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #f9fbfc;
+            color: #333;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        header {
+            background: #ffffffcc;
+            backdrop-filter: blur(10px);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e5e5e5;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #008CBA;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+        nav ul li a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            position: relative;
+            padding-bottom: 4px;
+            transition: color 0.3s;
+        }
+        nav ul li a::after {
+            content: "";
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background: #008CBA;
+            transition: width 0.3s;
+        }
+        nav ul li a:hover {
+            color: #008CBA;
+        }
+        nav ul li a:hover::after {
+            width: 100%;
+        }
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: linear-gradient(rgba(0, 140, 186, 0.6), rgba(0, 140, 186, 0.6)),
+                        url('assets/images/clear_blue_water.png') no-repeat center/cover;
+            color: white;
+            padding: 4rem 5%;
+            position: relative;
+        }
+        .auth-section {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            max-width: 1100px;
+            width: 100%;
+            margin: 2rem auto;
+            position: relative;
+            z-index: 20;
+        }
+        .auth-section h2 {
+            color: #008CBA;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+        .form-columns {
+            display: flex;
+            gap: 2.5rem;
+            flex-wrap: wrap;
+        }
+        .form-column {
+            flex: 1;
+            min-width: 450px;
+        }
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+            font-weight: 500;
+        }
+        .form-group input[type="text"],
+        .form-group input[type="password"],
+        .form-group input[type="email"],
+        .form-group select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .form-group input[type="text"]:focus,
+        .form-group input[type="password"]:focus,
+        .form-group input[type="email"]:focus,
+        .form-group select:focus {
+            border-color: #008CBA;
+            box-shadow: 0 0 5px rgba(0, 140, 186, 0.3);
+            outline: none;
+        }
+        .password-wrapper {
+            position: relative;
+        }
+        .password-wrapper input[type="password"],
+        .password-wrapper input[type="text"] {
+            padding-right: 2.5rem;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            width: 20px;
+            height: 20px;
+            fill: #555;
+        }
+        .form-group input[type="submit"] {
+            width: 100%;
+            padding: 0.9rem;
+            background: linear-gradient(90deg, #008CBA, #00aaff);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.3s, background 0.3s;
+        }
+        .form-group input[type="submit"]:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(90deg, #0077b3, #0099e6);
+        }
+        .auth-section .error {
+            color: #d32f2f;
+            background: #ffebee;
+            padding: 0.8rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        .auth-section .success {
+            color: #2e7d32;
+            background: #e8f5e9;
+            padding: 0.8rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        .otp-section {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 3rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            min-height: 450px;
+            width: 100%;
+            margin: 1rem auto;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 30;
+            display: none;
+        }
+        .otp-section.active {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .otp-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            fill: none;
+            stroke: #555;
+            transition: stroke 0.3s;
+        }
+        .otp-close:hover {
+            stroke: #008CBA;
+        }
+        .otp-columns {
+            display: flex;
+            gap: 2.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .otp-column {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .otp-icon {
+            max-width: 100px;
+            margin: 0 auto 1.5rem;
+            display: block;
+        }
+        .otp-section h2 {
+            color: #008CBA;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+        .otp-message {
+            color: #555;
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .otp-inputs {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+        .otp-inputs input {
+            width: 40px;
+            height: 40px;
+            text-align: center;
+            font-size: 1.2rem;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .otp-inputs input:focus {
+            border-color: #008CBA;
+            box-shadow: 0 0 5px rgba(0, 140, 186, 0.3);
+            outline: none;
+        }
+        .otp-timer {
+            color: #555;
+            font-size: 0.9rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .otp-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+        .otp-buttons input[type="submit"],
+        .otp-buttons button {
+            width: 150px;
+            padding: 0.9rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.3s, background 0.3s;
+        }
+        .otp-buttons input[type="submit"] {
+            background: linear-gradient(90deg, #008CBA, #00aaff);
+            color: #fff;
+        }
+        .otp-buttons input[type="submit"]:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(90deg, #0077b3, #0099e6);
+        }
+        .otp-buttons button {
+            background: linear-gradient(90deg, #4CAF50, #66BB6A);
+            color: #fff;
+        }
+        .otp-buttons button:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(90deg, #43A047, #5cb85c);
+        }
+        .otp-buttons button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        footer {
+            background: #008CBA;
+            color: white;
+            text-align: center;
+            padding: 2rem 5%;
+            margin-top: 2rem;
+            position: relative;
+            z-index: 10;
+        }
+        footer .socials {
+            margin: 1rem 0;
+        }
+        footer .socials a {
+            margin: 0 10px;
+            color: white;
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+        }
+        footer .socials a:hover {
+            color: #cceeff;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+<header style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 5%;">
+    <div class="logo" style="display: flex; align-items: center;">
+        <img src="../assets/images/ww_logo.png" alt="WaterWorld Logo" style="height: 2.5rem; margin-right: 0.75rem;">
+        WaterWorld
+    </div>
+    <nav style="display: flex; align-items: center;">
+        <ul style="display: flex; list-style: none; gap: 1.5rem; align-items: center; margin: 0; padding: 0;">
+            <li><a href="../index.html" style="text-decoration: none; color: #333; font-weight: 500;">Home</a></li>
+            <li><a href="order-tracking.html" style="text-decoration: none; color: #333; font-weight: 500;">Track</a></li>
+            <li><a href="login.html" style="text-decoration: none; color: #333; font-weight: 500;">Login</a></li>
+        </ul>
+    </nav>
+</header>
+
+<section class="hero">
+    <div class="auth-section">
+        <h2>Register</h2>
+        
+            <div class="success" style="display: none;"></div>
+        
+        
+            <div class="error" style="display: none;">
+                <ul>
+                    
+                        <li></li>
+                    
+                </ul>
+            </div>
+        
+        <form method="POST" id="form-element" name="register_form">
+            <div class="form-columns">
+                <div class="form-column">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" name="username" id="username" value="" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" name="password" id="password" required>
+                            <svg class="password-toggle" onclick="togglePassword()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="first_name">First Name</label>
+                        <input type="text" name="first_name" id="first_name" value="" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="last_name">Last Name</label>
+                        <input type="text" name="last_name" id="last_name" value="" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="customer_contact">Contact Number (e.g., 09XXXXXXXXX)</label>
+                        <input type="text" name="customer_contact" id="customer_contact" value="" required>
+                    </div>
+                </div>
+                <div class="form-column">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" name="email" id="email" value="" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="street">Street</label>
+                        <input type="text" name="street" id="street" value="" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="city">City</label>
+                        <select name="city" id="city" required onchange="updateBarangays()">
+                            <option value="">Select City</option>
+                            
+                                <option value="" >
+                                    
+                                </option>
+                            
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="barangay">Barangay</label>
+                        <select name="barangay" id="barangay" required>
+                            <option value="">Select Barangay</option>
+                            
+                                
+                                    <option value="" >
+                                        
+                                    </option>
+                                
+                            
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <input type="submit" name="register_submit" value="Register">
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <!-- OTP Verification Popup -->
+        <div id="otp-form" class="otp-section">
+            <svg class="otp-close" onclick="closeOTPForm()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            <div class="otp-columns">
+                <div class="otp-column">
+                    <img src="../assets/images/verify_otp.png" alt="OTP Icon" class="otp-icon">
+                    <h2>Verify Your OTP</h2>
+                    <p class="otp-message">OTP sent to <span id="otp-email"></span></p>
+                    
+                        <div class="success" style="display: none;"></div>
+                    
+                </div>
+                <div class="otp-column">
+                    <form method="POST" id="form-element">
+                        <div class="form-group">
+                            <label for="otp">Enter OTP</label>
+                            <div class="otp-inputs">
+                                <input type="text" maxlength="1" pattern="[0-9]" class="otp-digit" required oninput="moveToNext(this, 0)">
+                                <input type="text" maxlength="1" pattern="[0-9]" class="otp-digit" required oninput="moveToNext(this, 1)" onkeydown="moveToPrev(this, 0)">
+                                <input type="text" maxlength="1" pattern="[0-9]" class="otp-digit" required oninput="moveToNext(this, 2)" onkeydown="moveToPrev(this, 1)">
+                                <input type="text" maxlength="1" pattern="[0-9]" class="otp-digit" required oninput="moveToNext(this, 3)" onkeydown="moveToPrev(this, 2)">
+                                <input type="text" maxlength="1" pattern="[0-9]" class="otp-digit" required oninput="moveToNext(this, 4)" onkeydown="moveToPrev(this, 3)">
+                                <input type="text" maxlength="1" pattern="[0-9]" class="otp-digit" required oninput="moveToNext(this, 5)" onkeydown="moveToPrev(this, 4)">
+                                <input type="hidden" name="otp" id="otp-hidden">
+                            </div>
+                        </div>
+                        <div class="otp-timer" id="otp-timer">Resend OTP in 60s</div>
+                        
+                            <div class="error" style="display: none;">
+                                <ul>
+                                    
+                                        <li></li>
+                                    
+                                </ul>
+                            </div>
+                        
+                        <div class="otp-buttons">
+                            <button type="button" id="resend-otp" disabled>Resend OTP</button>
+                            <input type="submit" name="otp_submit" value="Verify OTP">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <p>&copy; 2025 WaterWorld Water Station. All rights reserved.</p>
+    <div class="socials" style="display: flex; gap: 20px; justify-content: center;">
+        <a href="https://web.facebook.com/yourwaterworld" aria-label="Facebook" target="_blank">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/>
+            </svg>
+        </a>
+        <a href="https://www.google.com/maps/place/Water+World/@14.5602872,121.0613366,17z/data=!3m1!4b1!4m6!3m5!1s0x3397c863ae316b73:0xada9b9c65212f757!8m2!3d14.560282!4d121.0639115!16s%2Fg%2F11hcw7cmvx?entry=ttu&g_ep=EgoyMDI1MTAxNC4wIKXMDSoASAFQAw%3D%3D" aria-label="Google Maps" target="_blank">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25-.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/>
+            </svg>
+        </a>
+        <a href="https://mail.google.com/mail/?view=cm&fs=1&to=yourwaterworld@gmail.com&su=Contact%20WaterWorld" aria-label="Email WaterWorld" target="_blank">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+            </svg>
+        </a>
+    </div>
+</footer>
+
+<!-- External JavaScript -->
+<script src="../assets/js/register.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,185 @@
+/* BODY */
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background-image: url('pexels-photo-304664.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: #2c3e50;
+    line-height: 1.6;
+}
+
+/* HEADER TITLE */
+.header-title {
+    background: linear-gradient(135deg, #add8e6 0%, #87ceeb 100%);
+    padding: 25px 30px;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #003366;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    margin: 20px auto;
+    letter-spacing: 1.2px;
+    max-width: 1200px;
+    backdrop-filter: blur(10px);
+}
+
+/* H2 - MAIN HEADER */
+h2 {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #003366;
+    text-align: center;
+    margin: 40px auto 30px auto;
+    padding: 20px 40px;
+    letter-spacing: 1px;
+    line-height: 1.3;
+    background: linear-gradient(135deg, #007acc 0%, #00aaff 100%);
+    color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    max-width: fit-content;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+/* H2 Underline Decoration */
+h2::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 4px;
+    background: linear-gradient(90deg, #00aaff, #add8e6);
+    border-radius: 2px;
+}
+
+/* Hover Effect for h2 */
+h2:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.25);
+}
+
+/* H3 */
+h3 {
+    text-align: center;
+    color: #007acc;
+    font-size: 1.3rem;
+    margin: 25px 0;
+    font-weight: 500;
+    padding: 0 20px;
+    font-style: italic;
+    letter-spacing: 0.3px;
+}
+
+/* TABLE */
+.table-container {
+    max-width: 1200px;
+    margin: 0 auto 40px auto;
+    overflow-x: auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    background: white;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+th, td {
+    padding: 14px 18px;
+    border-bottom: 1px solid #e8ecef;
+    text-align: left;
+}
+
+th {
+    background: linear-gradient(135deg, #0077cc 0%, #005fa3 100%);
+    color: white;
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+tr:nth-child(even) {
+    background-color: #f8fafc;
+}
+
+tr:hover {
+    background-color: #f0f8ff;
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 119, 204, 0.1);
+}
+
+/* HEADER ACTIONS */
+.header-actions {
+    text-align: right;
+    margin: 20px 30px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+}
+
+.dashboard-button {
+    background: linear-gradient(135deg, #007BFF 0%, #0056b3 100%);
+    color: white;
+    padding: 12px 24px;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+    font-family: 'Segoe UI', sans-serif;
+    letter-spacing: 0.5px;
+}
+
+.dashboard-button:hover {
+    background: linear-gradient(135deg, #0056b3 0%, #004494 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .header-title {
+        font-size: 2rem;
+        padding: 20px;
+        margin: 15px 10px;
+    }
+    
+    h2 {
+        font-size: 1.5rem;
+        margin: 25px 10px;
+        padding: 15px 20px;
+    }
+    
+    .table-container {
+        margin: 0 10px 30px 10px;
+        border-radius: 8px;
+    }
+    
+    th, td {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+    }
+    
+    .header-actions {
+        margin: 15px 20px;
+        justify-content: center;
+    }
+}

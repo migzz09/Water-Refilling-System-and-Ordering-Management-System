@@ -1,0 +1,188 @@
+/* WaterWorld - daily_report Page Styles */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background: #F7FAFC;
+    color: #1A202C;
+    min-height: 100vh;
+    display: flex;
+    overflow-x: hidden;
+}
+
+.sidebar {
+    width: 64px;
+    background: #1A202C;
+    color: #E2E8F0;
+    position: fixed;
+    height: 100vh;
+    padding: 24px 0;
+    transition: width 0.3s ease;
+    z-index: 1000;
+}
+
+.sidebar:hover, .sidebar:focus-within {
+    width: 240px;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #3B82F6;
+    text-align: center;
+    margin-bottom: 32px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    background: transparent;
+    padding: 8px;
+}
+
+.logo-img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    background: transparent;
+}
+
+.logo-text {
+    font-size: 20px;
+    font-weight: 600;
+    color: #3B82F6;
+}
+
+.sidebar:hover .logo-container, .sidebar:focus-within .logo-container {
+    opacity: 1;
+}
+
+.sidebar ul {
+    list-style: none;
+}
+
+.sidebar ul li {
+    padding: 16px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.sidebar ul li:hover, .sidebar ul li:focus {
+    background: #2D3748;
+}
+
+.sidebar ul li.active {
+    background: #3B82F6;
+    color: #FFFFFF;
+    position: relative;
+}
+
+.sidebar ul li a, .sidebar ul li button {
+    color: inherit;
+    text-decoration: none;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    display: block;
+    text-align: center;
+    background: none;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+}
+
+.sidebar:hover ul li a, .sidebar:focus-within ul li a,
+.sidebar:hover ul li button, .sidebar:focus-within ul li button {
+    opacity: 1;
+    text-align: left;
+}
+
+.content {
+    margin-left: 64px;
+    padding: 24px;
+    width: calc(100% - 64px);
+    background: #FFFFFF;
+    min-height: 100vh;
+    transition: margin-left 0.3s ease, width 0.3s ease;
+}
+
+.sidebar:hover ~ .content, .sidebar:focus-within ~ .content {
+    margin-left: 240px;
+    width: calc(100% - 240px);
+}
+
+/* Report Sidebar */
+.sidebar-report {
+    position: fixed;
+    top: 0;
+    left: -250px;
+    width: 250px;
+    height: 100%;
+    background: #2c3e50;
+    color: #fff;
+    transition: 0.3s;
+    padding-top: 60px;
+    overflow-y: auto;
+    z-index: 1050;
+}
+.sidebar-report.active {
+    left: 0;
+}
+.sidebar-report ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.sidebar-report ul li {
+    padding: 10px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.sidebar-report ul li a {
+    color: #fff;
+    text-decoration: none;
+    display: block;
+}
+.sidebar-report ul li a:hover {
+    background: #34495e;
+}
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #fff;
+}
+
+.card{border:none;border-radius:.75rem;box-shadow:0 6px 18px rgba(38,78,118,.06)}
+.stat{font-size:1.6rem;font-weight:700}
+.small-muted{color:#6b7280;font-size:.95rem}
+.table thead th{border-bottom:2px solid #e6eef8}
+.stat-sub{font-size:.875rem;color:#6b7280}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        padding-bottom: 16px;
+    }
+    .sidebar:hover, .sidebar:focus-within {
+        width: 100%;
+    }
+    .content {
+        margin-left: 0;
+        width: 100%;
+        padding: 16px;
+    }
+    .sidebar:hover ~ .content, .sidebar:focus-within ~ .content {
+        margin-left: 0;
+        width: 100%;
+    }
+}

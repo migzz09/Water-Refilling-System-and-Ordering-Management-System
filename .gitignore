@@ -1,0 +1,38 @@
+# Database
+*.sql
+*.sqlite
+*.db
+
+# Configuration
+config/connect.php
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+*.tmp
+
+# Dependencies
+vendor/
+node_modules/
+
+# Legacy files
+php-legacy/
+
+# Temporary files
+*.bak
+*.cache
+temp/
+tmp/

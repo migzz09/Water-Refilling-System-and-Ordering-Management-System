@@ -1,0 +1,189 @@
+/* WaterWorld - admin Page Styles */
+
+body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            width: 90%;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        h1, h2, h3 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        .form-container, .table-container {
+            background-color: #fff;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+        .form-container label {
+            display: block;
+            margin: 8px 0 4px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .form-container input, .form-container select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            box-sizing: border-box;
+            font-size: 12px;
+        }
+        .form-container button {
+            background-color: #007bff;
+            color: #fff;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .form-container button:hover {
+            background-color: #0056b3;
+        }
+        .success, .error {
+            text-align: center;
+            margin: 10px 0;
+            padding: 8px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .table-wrapper {
+            width: 100%;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            font-size: 12px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        th:nth-child(1) { width: 10%; } /* Order Ref */
+        th:nth-child(2) { width: 15%; } /* Order Date */
+        th:nth-child(3) { width: 10%; } /* Total Amount */
+        th:nth-child(4) { width: 10%; } /* Order Status */
+        th:nth-child(5) { width: 10%; } /* Payment Status */
+        th:nth-child(6) { width: 10%; } /* Delivery Status */
+        th:nth-child(7) { width: 10%; } /* Batch Status */
+        th:nth-child(8) { width: 15%; } /* Customer */
+        th:nth-child(9) { width: 20%; } /* Actions */
+        .action-buttons form {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .action-buttons label {
+            font-size: 10px;
+            font-weight: bold;
+            margin: 2px 0;
+        }
+        .action-buttons select {
+            padding: 4px;
+            border-radius: 3px;
+            font-size: 10px;
+            width: 100%;
+        }
+        .action-buttons button {
+            padding: 4px 8px;
+            font-size: 10px;
+        }
+        .pagination {
+            text-align: center;
+            margin: 15px 0;
+        }
+        .pagination a, .pagination span {
+            display: inline-block;
+            margin: 0 5px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            text-decoration: none;
+            color: #007bff;
+            font-size: 12px;
+        }
+        .pagination a:hover {
+            background-color: #007bff;
+            color: #fff;
+        }
+        .pagination .current {
+            background-color: #007bff;
+            color: #fff;
+            border-color: #007bff;
+        }
+        .pagination .disabled {
+            color: #999;
+            cursor: not-allowed;
+        }
+        .back-button {
+            text-align: center;
+            margin: 15px 0;
+        }
+        .back-button a {
+            color: #007bff;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .back-button a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+                width: 95%;
+            }
+            th, td {
+                font-size: 10px;
+                padding: 6px;
+            }
+            .action-buttons label {
+                font-size: 9px;
+                margin: 1px 0;
+            }
+            .action-buttons select, .action-buttons button {
+                font-size: 9px;
+                padding: 3px;
+            }
+            h1, h2, h3 {
+                font-size: 16px;
+            }
+            .pagination a, .pagination span {
+                padding: 6px 10px;
+                font-size: 10px;
+            }
+        }
