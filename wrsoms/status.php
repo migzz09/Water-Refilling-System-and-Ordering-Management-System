@@ -1,16 +1,31 @@
 <?php
-// status.php
 require_once 'connect.php';
 session_start();
 
-// Helpers
-function redirect_tab($tab, $msg = null, $err = null) {
-    $url = "status.php?tab={$tab}";
-    if ($msg) $url .= "&msg=" . urlencode($msg);
-    if ($err) $url .= "&err=" . urlencode($err);
-    header("Location: $url");
-    exit;
+// Detect AJAX/fetch request
+$isAjax = (
+    !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+    strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
+);
+
+// Smart redirect — behaves normally when opened directly,
+// returns JSON when called via fetch()
+function smart_redirect($tab, $msg = null, $err = null) {
+    global $isAjax;
+    if ($isAjax) {
+        header('Content-Type: application/json');
+        echo json_encode(['ok' => empty($err), 'msg' => $msg, 'err' => $err]);
+        exit;
+    } else {
+        $url = "status.php?tab={$tab}";
+        if ($msg) $url .= "&msg=" . urlencode($msg);
+        if ($err) $url .= "&err=" . urlencode($err);
+        header("Location: $url");
+        exit;
+    }
 }
+
+// Check unique status names
 function unique_check($pdo, $table, $name, $exclude_id = null) {
     $primary = "{$table}_id";
     if ($exclude_id) {
@@ -25,64 +40,56 @@ function unique_check($pdo, $table, $name, $exclude_id = null) {
     return $stmt->fetchColumn() == 0;
 }
 
-// Handle Add
+/* ----------------------- HANDLE ADD ----------------------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_status'])) {
     $table = $_POST['table'] ?? '';
     $status_name = trim($_POST['status_name'] ?? '');
-    if ($status_name === '') {
-        redirect_tab($table, null, 'Status name cannot be empty.');
-    }
-    if (!unique_check($pdo, $table, $status_name)) {
-        redirect_tab($table, null, 'This status already exists.');
-    }
-    $sql = "INSERT INTO {$table} (status_name) VALUES (:name)";
-    $stmt = $pdo->prepare($sql);
+    if ($status_name === '') smart_redirect($table, null, 'Status name cannot be empty.');
+    if (!unique_check($pdo, $table, $status_name)) smart_redirect($table, null, 'This status already exists.');
     try {
+        $stmt = $pdo->prepare("INSERT INTO {$table} (status_name) VALUES (:name)");
         $stmt->execute(['name' => $status_name]);
-        redirect_tab($table, 'Added successfully.');
+        smart_redirect($table, 'Added successfully.');
     } catch (PDOException $e) {
-        redirect_tab($table, null, 'Database error while adding.');
+        smart_redirect($table, null, 'Database error while adding.');
     }
 }
 
-// Handle Edit
+/* ----------------------- HANDLE EDIT ----------------------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_status'])) {
     $table = $_POST['table'] ?? '';
     $id = $_POST['id'] ?? '';
     $status_name = trim($_POST['status_name'] ?? '');
+    $valid_tables = ['batch_status', 'delivery_status', 'payment_status'];
+    if (!in_array($table, $valid_tables)) smart_redirect('batch_status', null, 'Invalid table specified.');
+    if ($status_name === '') smart_redirect($table, null, 'Status name cannot be empty.');
+    if (!unique_check($pdo, $table, $status_name, $id)) smart_redirect($table, null, 'Another status with this name exists.');
+
     $primary = "{$table}_id";
-    if ($status_name === '') {
-        redirect_tab($table, null, 'Status name cannot be empty.');
-    }
-    if (!unique_check($pdo, $table, $status_name, $id)) {
-        redirect_tab($table, null, 'Another status with this name exists.');
-    }
-    $sql = "UPDATE {$table} SET status_name = :name WHERE {$primary} = :id";
-    $stmt = $pdo->prepare($sql);
     try {
+        $stmt = $pdo->prepare("UPDATE {$table} SET status_name = :name WHERE {$primary} = :id");
         $stmt->execute(['name' => $status_name, 'id' => $id]);
-        redirect_tab($table, 'Updated successfully.');
+        smart_redirect($table, 'Updated successfully.');
     } catch (PDOException $e) {
-        redirect_tab($table, null, 'Database error while updating.');
+        smart_redirect($table, null, 'Database error while updating.');
     }
 }
 
-// Handle Delete (GET with confirmation)
+/* ----------------------- HANDLE DELETE ----------------------- */
 if (isset($_GET['delete']) && isset($_GET['table'])) {
     $table = $_GET['table'];
     $id = $_GET['delete'];
     $primary = "{$table}_id";
-    $sql = "DELETE FROM {$table} WHERE {$primary} = :id";
-    $stmt = $pdo->prepare($sql);
     try {
+        $stmt = $pdo->prepare("DELETE FROM {$table} WHERE {$primary} = :id");
         $stmt->execute(['id' => $id]);
-        redirect_tab($table, 'Deleted successfully.');
+        smart_redirect($table, 'Deleted successfully.');
     } catch (PDOException $e) {
-        redirect_tab($table, null, 'Database error while deleting.');
+        smart_redirect($table, null, 'Database error while deleting.');
     }
 }
 
-// UI helpers
+/* ----------------------- UI SETUP ----------------------- */
 $tab = $_GET['tab'] ?? 'batch_status';
 $msg = $_GET['msg'] ?? null;
 $err = $_GET['err'] ?? null;
@@ -102,32 +109,33 @@ function render_table($pdo, $table, $label) {
                     <td>{$i}</td>
                     <td>{$name}</td>
                     <td>
-                      <button class='btn btn-sm btn-warning btn-custom me-1' data-bs-toggle='modal' data-bs-target='#editModal{$table}{$id}'>Edit</button>
-                      <a href='status.php?delete={$id}&table={$table}' class='btn btn-sm btn-danger btn-custom' onclick='return confirm(\"Delete this record?\")'>Delete</a>
+                      <button class='btn btn-sm btn-warning me-1' data-bs-toggle='modal' data-bs-target='#editModal{$table}{$id}'>Edit</button>
+                      <a href='status.php?delete={$id}&table={$table}' class='btn btn-sm btn-danger' onclick='return confirm(\"Delete this record?\")'>Delete</a>
                     </td>
                  </tr>";
 
-        // edit modal
+        // Edit modal
         $out .= "
         <div class='modal fade' id='editModal{$table}{$id}' tabindex='-1' aria-hidden='true'>
           <div class='modal-dialog'>
             <div class='modal-content'>
-              <form method='POST' action='status.php?tab={$table}'>
+              <form method='POST' action='status.php'>
                 <div class='modal-header'>
                   <h5 class='modal-title'>Edit {$label} Status</h5>
                   <button type='button' class='btn-close' data-bs-dismiss='modal'></button>
                 </div>
                 <div class='modal-body'>
-                  <input type='hidden' name='id' value='{$id}'>
+                  <input type='hidden' name='edit_status' value='1'>
                   <input type='hidden' name='table' value='{$table}'>
+                  <input type='hidden' name='id' value='{$id}'>
                   <div class='mb-3'>
                     <label class='form-label'>Status Name</label>
-                    <input type='text' name='status_name' class='form-control' value=\"".htmlspecialchars($row['status_name'], ENT_QUOTES)."\" required>
+                    <input type='text' name='status_name' class='form-control' value=\"{$name}\" required>
                   </div>
                 </div>
                 <div class='modal-footer'>
                   <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Cancel</button>
-                  <button type='submit' name='edit_status' class='btn btn-primary'>Save</button>
+                  <button type='submit' class='btn btn-primary'>Save</button>
                 </div>
               </form>
             </div>
@@ -139,8 +147,8 @@ function render_table($pdo, $table, $label) {
 
     $out .= "</tbody></table></div>";
 
-    // add form
-    $out .= "<form method='POST' class='mt-3 d-flex gap-2 justify-content-center' action='status.php?tab={$table}'>
+    // Add form
+    $out .= "<form method='POST' class='mt-3 d-flex gap-2 justify-content-center' action='status.php'>
               <input type='hidden' name='table' value='{$table}'>
               <input type='text' name='status_name' class='form-control w-50' placeholder='Enter new status' required>
               <button type='submit' name='add_status' class='btn btn-success'>Add New</button>
@@ -198,28 +206,5 @@ function render_table($pdo, $table, $label) {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-// preserve tab selection when linking with ?tab=table
-(function(){
-  const params = new URLSearchParams(window.location.search);
-  const tab = params.get('tab');
-  if(tab){
-    const mapping = {
-      'batch_status':'#batch',
-      'delivery_status':'#delivery',
-      'payment_status':'#payment'
-    };
-    const selector = mapping[tab];
-    if(selector){
-      const tabEl = document.querySelector('a[href="'+selector+'"]');
-      if(tabEl){
-        const bs = bootstrap.Tab.getOrCreateInstance(tabEl);
-        bs.show();
-      }
-    }
-  }
-})();
-</script>
 </body>
 </html>
-
