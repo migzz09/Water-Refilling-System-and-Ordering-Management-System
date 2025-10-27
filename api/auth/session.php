@@ -12,10 +12,12 @@ try {
         echo json_encode([
             'success' => true,
             'authenticated' => true,
-            'data' => [
+            'user' => [
                 'customer_id' => $_SESSION['customer_id'],
                 'username' => $_SESSION['username'] ?? null,
-                'email' => $_SESSION['email'] ?? null
+                'email' => $_SESSION['email'] ?? null,
+                'first_name' => $_SESSION['first_name'] ?? null,
+                'last_name' => $_SESSION['last_name'] ?? null
             ],
             'message' => 'User is authenticated'
         ]);
@@ -24,7 +26,7 @@ try {
         echo json_encode([
             'success' => true,
             'authenticated' => false,
-            'data' => null,
+            'user' => null,
             'message' => 'User is not authenticated'
         ]);
     }
@@ -32,6 +34,7 @@ try {
     http_response_code(500);
     echo json_encode([
         'success' => false,
+        'authenticated' => false,
         'message' => 'Error checking session: ' . $e->getMessage()
     ]);
 }

@@ -46,15 +46,41 @@
                     </a>
                 </div>
                 
-                <div class="nav-actions">
-                    <a href="pages/login.html" class="btn btn-outline btn-sm">
+                <div class="nav-actions" id="navActions">
+                    <a href="pages/login.html" class="btn btn-outline btn-sm" id="loginBtn">
                         <i class="fa fa-sign-in"></i>
                         Login
                     </a>
-                    <a href="pages/register.html" class="btn btn-primary btn-sm">
+                    <a href="pages/register.html" class="btn btn-primary btn-sm" id="registerBtn">
                         <i class="fa fa-user-plus"></i>
                         Register
                     </a>
+                    <div class="user-menu" id="userMenu" style="display: none;">
+                        <button class="btn btn-outline btn-sm profile-btn" onclick="toggleUserDropdown()">
+                            <i class="fa fa-user-circle"></i>
+                            <span id="userName">Profile</span>
+                            <i class="fa fa-chevron-down"></i>
+                        </button>
+                        <div class="user-dropdown" id="userDropdown" style="display: none;">
+                            <a href="pages/order-placement.html" class="dropdown-item">
+                                <i class="fa fa-shopping-cart"></i>
+                                Place Order
+                            </a>
+                            <a href="pages/usertransaction-history.html" class="dropdown-item">
+                                <i class="fa fa-history"></i>
+                                Order History
+                            </a>
+                            <a href="pages/order-tracking.html" class="dropdown-item">
+                                <i class="fa fa-search"></i>
+                                Track Order
+                            </a>
+                            <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
+                            <a href="#" onclick="logout()" class="dropdown-item">
+                                <i class="fa fa-sign-out"></i>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

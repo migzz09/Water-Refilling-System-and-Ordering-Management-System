@@ -6,13 +6,15 @@
  */
 session_start();
 require_once '../../config/connect.php';
-require_once '../../config/config.php';
 require_once '../../vendor/PHPMailer/src/Exception.php';
 require_once '../../vendor/PHPMailer/src/PHPMailer.php';
 require_once '../../vendor/PHPMailer/src/SMTP.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+
+// Load email configuration
+$config = require '../../config/config.php';
 
 header('Content-Type: application/json');
 
@@ -65,12 +67,30 @@ if (!empty($errors)) {
 }
 
 try {
-    // Check if username or email already exists
-    $stmt = $pdo->prepare("SELECT customer_id FROM accounts WHERE username = ? OR email = ?");
-    $stmt->execute([$username, $email]);
+    // Check if username already exists
+    $stmt = $pdo->prepare("SELECT account_id FROM accounts WHERE username = ?");
+    $stmt->execute([$username]);
     if ($stmt->fetch()) {
         http_response_code(400);
-        echo json_encode(['success' => false, 'errors' => ['Username or email already exists.']]);
+        echo json_encode(['success' => false, 'errors' => ['Username already exists.']]);
+        exit;
+    }
+
+    // Check if email already exists
+    $stmt = $pdo->prepare("SELECT customer_id FROM customers WHERE email = ?");
+    $stmt->execute([$email]);
+    if ($stmt->fetch()) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'errors' => ['Email already exists.']]);
+        exit;
+    }
+
+    // Check if contact already exists
+    $stmt = $pdo->prepare("SELECT customer_id FROM customers WHERE customer_contact = ?");
+    $stmt->execute([$contact]);
+    if ($stmt->fetch()) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'errors' => ['Contact number already exists.']]);
         exit;
     }
 
@@ -83,16 +103,16 @@ try {
     // Send OTP via email
     $mail = new PHPMailer(true);
     $mail->isSMTP();
-    $mail->Host = SMTP_HOST;
+    $mail->Host = 'smtp.gmail.com';
     $mail->SMTPAuth = true;
-    $mail->Username = SMTP_USER;
-    $mail->Password = SMTP_PASS;
+    $mail->Username = $config['gmail_username'];
+    $mail->Password = $config['gmail_app_password'];
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-    $mail->Port = SMTP_PORT;
-    $mail->setFrom(SMTP_USER, 'WaterWorld Water Station');
+    $mail->Port = 587;
+    $mail->setFrom($config['gmail_username'], 'WaterWorld Water Station');
     $mail->addAddress($email, "$firstName $lastName");
-    $mail->Subject = 'Your OTP Code';
-    $mail->Body = "Your OTP code is: $otp\n\nThis code will expire in 5 minutes.";
+    $mail->Subject = 'Your OTP Code - WaterWorld';
+    $mail->Body = "Hello $firstName,\n\nYour OTP code is: $otp\n\nThis code will expire in 5 minutes.\n\nThank you,\nWaterWorld Water Station";
     $mail->send();
 
     echo json_encode([
@@ -101,6 +121,19 @@ try {
         'data' => ['email' => $email]
     ]);
 } catch (Exception $e) {
+    error_log("Registration error: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Registration failed: ' . $e->getMessage()]);
+    echo json_encode([
+        'success' => false, 
+        'message' => 'Registration failed. Please try again.',
+        'error' => $e->getMessage()
+    ]);
+} catch (PDOException $e) {
+    error_log("Database error: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Database error. Please try again.',
+        'error' => $e->getMessage()
+    ]);
 }

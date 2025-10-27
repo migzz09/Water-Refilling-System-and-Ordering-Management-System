@@ -2,6 +2,67 @@
  * WaterWorld Water Station - Homepage Scripts
  */
 
+// Check authentication status on page load
+async function checkAuthStatus() {
+  try {
+    const result = await API.checkAuth();
+    
+    if (result.authenticated) {
+      // User is logged in - show profile menu
+      document.getElementById('loginBtn').style.display = 'none';
+      document.getElementById('registerBtn').style.display = 'none';
+      document.getElementById('userMenu').style.display = 'block';
+      
+      // Set user name if available
+      if (result.user && result.user.username) {
+        document.getElementById('userName').textContent = result.user.username;
+      }
+    } else {
+      // User is not logged in - show login/register buttons
+      document.getElementById('loginBtn').style.display = 'inline-flex';
+      document.getElementById('registerBtn').style.display = 'inline-flex';
+      document.getElementById('userMenu').style.display = 'none';
+    }
+  } catch (error) {
+    console.error('Error checking auth status:', error);
+    // On error, show login/register buttons
+    document.getElementById('loginBtn').style.display = 'inline-flex';
+    document.getElementById('registerBtn').style.display = 'inline-flex';
+    document.getElementById('userMenu').style.display = 'none';
+  }
+}
+
+// Toggle user dropdown menu
+function toggleUserDropdown() {
+  const dropdown = document.getElementById('userDropdown');
+  dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+  const userMenu = document.getElementById('userMenu');
+  const dropdown = document.getElementById('userDropdown');
+  
+  if (userMenu && dropdown && !userMenu.contains(event.target)) {
+    dropdown.style.display = 'none';
+  }
+});
+
+// Logout function
+async function logout() {
+  try {
+    const result = await API.post('/auth/logout.php', {});
+    if (result.success) {
+      // Redirect to home page
+      window.location.href = '/WRSOMS/index.html';
+    }
+  } catch (error) {
+    console.error('Logout error:', error);
+    // Force redirect anyway
+    window.location.href = '/WRSOMS/index.html';
+  }
+}
+
 // Reveal sections on scroll
 const sections = document.querySelectorAll("section");
 
@@ -52,6 +113,11 @@ function togglePassword() {
     `;
   }
 }
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+  checkAuthStatus();
+});
 
 // Initialize scroll reveal
 window.addEventListener("scroll", revealOnScroll);

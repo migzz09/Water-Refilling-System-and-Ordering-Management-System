@@ -361,19 +361,13 @@
 <section class="hero">
     <div class="auth-section">
         <h2>Register</h2>
-        
-            <div class="success" style="display: none;"></div>
-        
-        
-            <div class="error" style="display: none;">
-                <ul>
-                    
-                        <li></li>
-                    
-                </ul>
-            </div>
-        
-        <form method="POST" id="form-element" name="register_form">
+        <div id="success-container" class="success" style="display: none;">
+            <p id="success-message"></p>
+        </div>
+        <div id="error-container" class="error" style="display: none;">
+            <ul id="error-list"></ul>
+        </div>
+        <form method="POST" id="registration-form" name="register_form">
             <div class="form-columns">
                 <div class="form-column">
                     <div class="form-group">
@@ -399,8 +393,8 @@
                         <input type="text" name="last_name" id="last_name" value="" required>
                     </div>
                     <div class="form-group">
-                        <label for="customer_contact">Contact Number (e.g., 09XXXXXXXXX)</label>
-                        <input type="text" name="customer_contact" id="customer_contact" value="" required>
+                        <label for="contact">Contact Number (e.g., 09XXXXXXXXX)</label>
+                        <input type="text" name="contact" id="contact" value="" pattern="[0-9]{11}" maxlength="11" placeholder="09XXXXXXXXX" required>
                     </div>
                 </div>
                 <div class="form-column">
@@ -416,27 +410,16 @@
                         <label for="city">City</label>
                         <select name="city" id="city" required onchange="updateBarangays()">
                             <option value="">Select City</option>
-                            
-                                <option value="" >
-                                    
-                                </option>
-                            
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="barangay">Barangay</label>
                         <select name="barangay" id="barangay" required>
                             <option value="">Select Barangay</option>
-                            
-                                
-                                    <option value="" >
-                                        
-                                    </option>
-                                
-                            
                         </select>
                     </div>
                     <div class="form-group">
+                        <input type="hidden" name="province" id="province" value="Metro Manila">
                         <input type="submit" name="register_submit" value="Register">
                     </div>
                 </div>
@@ -515,6 +498,7 @@
 </footer>
 
 <!-- External JavaScript -->
+<script src="../assets/js/api-helper.js"></script>
 <script src="../assets/js/register.js"></script>
 
 </body>

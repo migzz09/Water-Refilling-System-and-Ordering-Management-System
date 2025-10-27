@@ -49,15 +49,16 @@ if ($otp !== $_SESSION['registration_otp']) {
 try {
     $data = $_SESSION['registration_data'];
     
-    // Insert customer
+    // Insert customer with email
     $stmt = $pdo->prepare("
-        INSERT INTO customers (first_name, last_name, customer_contact, street, barangay, city, province)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO customers (first_name, last_name, customer_contact, email, street, barangay, city, province)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ");
     $stmt->execute([
         $data['firstName'],
         $data['lastName'],
         $data['contact'],
+        $data['email'],
         $data['street'],
         $data['barangay'],
         $data['city'],
@@ -67,10 +68,10 @@ try {
 
     // Insert account
     $stmt = $pdo->prepare("
-        INSERT INTO accounts (customer_id, username, password, email, is_verified)
-        VALUES (?, ?, ?, ?, 1)
+        INSERT INTO accounts (customer_id, username, password, is_verified)
+        VALUES (?, ?, ?, 1)
     ");
-    $stmt->execute([$customerId, $data['username'], $data['password'], $data['email']]);
+    $stmt->execute([$customerId, $data['username'], $data['password']]);
 
     // Clear registration session data
     unset($_SESSION['registration_otp']);
@@ -82,6 +83,11 @@ try {
         'message' => 'Account verified successfully. You can now log in.'
     ]);
 } catch (PDOException $e) {
+    error_log("Verification error: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Verification failed: ' . $e->getMessage()]);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Verification failed. Please try again.',
+        'error' => $e->getMessage()
+    ]);
 }

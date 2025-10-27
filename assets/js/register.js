@@ -20,6 +20,14 @@ async function loadCities() {
 // Populate city dropdown
 function populateCityDropdown() {
     const citySelect = document.getElementById('city');
+    const barangaySelect = document.getElementById('barangay');
+    
+    // Initially disable barangay dropdown
+    if (barangaySelect) {
+        barangaySelect.disabled = true;
+    }
+    
+    // Populate cities
     Object.keys(ncrCities).forEach(city => {
         const option = document.createElement('option');
         option.value = city;
@@ -34,8 +42,18 @@ function updateBarangays() {
     const barangaySelect = document.getElementById('barangay');
     const selectedCity = citySelect.value;
 
+    // Clear barangay dropdown
     barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
-    if (selectedCity && ncrCities[selectedCity]) {
+    
+    // Disable barangay if no city selected
+    if (!selectedCity) {
+        barangaySelect.disabled = true;
+        return;
+    }
+    
+    // Enable and populate barangays for selected city only
+    barangaySelect.disabled = false;
+    if (ncrCities[selectedCity]) {
         ncrCities[selectedCity].forEach(barangay => {
             const option = document.createElement('option');
             option.value = barangay;
@@ -63,7 +81,8 @@ async function handleRegistration(e) {
         last_name: document.getElementById('last_name').value.trim(),
         street: document.getElementById('street').value.trim(),
         barangay: document.getElementById('barangay').value,
-        city: document.getElementById('city').value
+        city: document.getElementById('city').value,
+        province: 'Metro Manila'
     };
 
     try {
@@ -71,8 +90,10 @@ async function handleRegistration(e) {
         
         if (result.success) {
             displaySuccess(result.message);
+            // Store email for OTP verification
+            sessionStorage.setItem('registration_email', formData.email);
             // Show OTP form
-            setTimeout(() => showOTPForm(), 1000);
+            setTimeout(() => showOTPForm(formData.email), 1000);
         } else {
             displayErrors(result.errors || [result.message]);
         }
@@ -113,8 +134,15 @@ function togglePassword() {
 }
 
 // Show OTP form modal
-function showOTPForm() {
+function showOTPForm(email) {
     console.log("Showing OTP form");
+    const otpEmailSpan = document.getElementById('otp-email');
+    if (otpEmailSpan && email) {
+        otpEmailSpan.textContent = email;
+    } else if (otpEmailSpan) {
+        const storedEmail = sessionStorage.getItem('registration_email');
+        otpEmailSpan.textContent = storedEmail || '';
+    }
     document.getElementById('otp-form').classList.add('active');
     startOTPTimer();
 }

@@ -2,14 +2,53 @@
 
 A modern, full-stack water refilling station ordering and management system built with HTML5, CSS3, JavaScript, PHP, and MySQL.
 
+[![PHP Version](https://img.shields.io/badge/PHP-8.0%2B-blue)](https://www.php.net/)
+[![MySQL](https://img.shields.io/badge/MySQL-5.7%2B-orange)](https://www.mysql.com/)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-## Design System
+## ✨ Features
 
-- **Framework**: Modern HTML5/CSS3/JavaScript
-- **Icons**: Font Awesome 4.7.0
-- **Colors**: Darker water-themed palette
-- **Typography**: Inter (body), Poppins (headings)
-- **Theme**: Professional teal and aqua tones
+- 🔐 **User Authentication** - Secure login/registration with OTP email verification
+- 🛒 **Order Management** - Place, track, and manage water delivery orders
+- 📦 **Batch Processing** - Organize deliveries into batches for efficient routing
+- 👥 **Customer Management** - Track customer information and order history
+- 📊 **Admin Dashboard** - Comprehensive analytics and order management
+- 📱 **Responsive Design** - Works seamlessly on desktop and mobile devices
+- 🎨 **Modern UI/UX** - Clean, water-themed design with smooth animations
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- PHP 8.0 or higher
+- MySQL 5.7 or higher
+- Composer
+- Web server (Apache/Nginx)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/migzz09/WRSOMS.git
+   cd WRSOMS
+   ```
+
+2. **Install dependencies**
+   ```bash
+   composer install
+   ```
+
+3. **Configure database**
+   - Create a MySQL database named `wrsoms`
+   - Import the schema: `mysql -u root -p wrsoms < db/wrsoms.sql`
+   - Update database credentials in `config/connect.php`
+
+4. **Configure email (for OTP)**
+   - Copy `config/config.php.example` to `config/config.php`
+   - Add your Gmail credentials for OTP functionality
+
+5. **Start your web server**
+   - Access the application at `http://localhost/WRSOMS`
 
 ## 📁 Project Structure
 

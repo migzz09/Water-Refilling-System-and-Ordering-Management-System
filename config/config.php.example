@@ -1,0 +1,9 @@
+<?php
+/**
+ * Email Configuration
+ * Copy this file to config.php and update with your credentials
+ */
+return [
+    'gmail_username' => 'your_email@gmail.com',
+    'gmail_app_password' => 'your_16_char_app_password',
+];

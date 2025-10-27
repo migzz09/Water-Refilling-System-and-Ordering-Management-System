@@ -1,11 +1,9 @@
-# Database
-*.sql
-*.sqlite
-*.db
+# Composer
+/vendor/
+composer.lock
 
-# Configuration
-config/connect.php
-.env
+# Configuration (contains sensitive data)
+config/config.php
 
 # IDE
 .vscode/
@@ -21,18 +19,42 @@ desktop.ini
 
 # Logs
 *.log
-logs/
-*.tmp
-
-# Dependencies
-vendor/
-node_modules/
-
-# Legacy files
-php-legacy/
+error.log
+access.log
 
 # Temporary files
-*.bak
+*.tmp
+*.temp
 *.cache
-temp/
-tmp/
+*.bak
+*.backup
+
+# Node modules (if added later)
+node_modules/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Database dumps (keep schema only)
+# *.sql
+# backup/
+
+# Setup scripts (local only)
+SETUP_COMPLETE.md
+CHECKLIST.md
+QUICK_REFERENCE.md
+SETUP_GUIDE.md
+setup.bat
+setup.ps1
+
+# Legacy PHP files (not needed for API version)
+php-legacy/
+
+# PHPStorm
+.phpintel/
+
+# Test files
+test/
+tests/
