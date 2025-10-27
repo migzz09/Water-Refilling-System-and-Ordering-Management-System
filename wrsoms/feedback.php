@@ -1,607 +1,375 @@
 <?php
 session_start();
-
-// Include connect.php to set up $pdo
 require_once 'connect.php';
 
-// Check if user is logged in
-if (!isset($_SESSION['customer_id']) || !isset($_SESSION['username'])) {
-    header('Location: login.php');
-    exit();
+// Redirect to login if not logged in
+$is_logged_in = isset($_SESSION['customer_id']) && isset($_SESSION['username']);
+if (!$is_logged_in) {
+    header('Location: index.php#login');
+    exit;
 }
 
-$customer_id = $_SESSION['customer_id'];
+// Handle feedback submission
+$feedback_errors = [];
+$feedback_success = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['feedback_submit'])) {
+    $feedback_text = trim($_POST['feedback_text'] ?? '');
+    $rating = isset($_POST['rating']) ? (int)$_POST['rating'] : null;
+    $reference_id = trim($_POST['reference_id'] ?? '');
 
-// Fetch all feedback for delivered orders for the customer
-$sql = "
-    SELECT 
-        o.order_date, 
-        o.total_amount, 
-        od.quantity, 
-        cont.container_type, 
-        cont.price AS container_price, 
-        od.subtotal,
-        ds.status_name AS delivery_status,
-        ot.order_type_id AS order_type_id,
-        f.rating,
-        f.comment,
-        f.feedback_date
-    FROM feedback f
-    LEFT JOIN orders o ON f.reference_id = o.reference_id
-    LEFT JOIN order_details od ON o.reference_id = od.reference_id
-    LEFT JOIN containers cont ON od.container_id = cont.container_id
-    LEFT JOIN batches b ON o.batch_id = b.batch_id
-    LEFT JOIN deliveries d ON b.batch_id = d.batch_id
-    LEFT JOIN delivery_status ds ON d.delivery_status_id = ds.delivery_status_id
-    LEFT JOIN order_types ot ON o.order_type_id = ot.order_type_id
-    WHERE o.customer_id = :customer_id
-    AND (ds.delivery_status_id = 3 OR ds.status_name = 'Delivered')
-    ORDER BY f.feedback_date DESC
-";
-
-$stmt = $pdo->prepare($sql);
-$stmt->execute(['customer_id' => $customer_id]);
-$default_feedback = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Handle AJAX search request
-if (isset($_GET['search'])) {
-    $search_query = trim($_GET['search']);
-    $sql = "
-        SELECT 
-            o.order_date, 
-            o.total_amount, 
-            od.quantity, 
-            cont.container_type, 
-            cont.price AS container_price, 
-            od.subtotal,
-            ds.status_name AS delivery_status,
-            ot.order_type_id AS order_type_id,
-            f.rating,
-            f.comment,
-            f.feedback_date
-        FROM feedback f
-        LEFT JOIN orders o ON f.reference_id = o.reference_id
-        LEFT JOIN order_details od ON o.reference_id = od.reference_id
-        LEFT JOIN containers cont ON od.container_id = cont.container_id
-        LEFT JOIN batches b ON o.batch_id = b.batch_id
-        LEFT JOIN deliveries d ON b.batch_id = d.batch_id
-        LEFT JOIN delivery_status ds ON d.delivery_status_id = ds.delivery_status_id
-        LEFT JOIN order_types ot ON o.order_type_id = ot.order_type_id
-        WHERE o.customer_id = :customer_id
-        AND (ds.delivery_status_id = 3 OR ds.status_name = 'Delivered')
-    ";
-
-    $params = ['customer_id' => $customer_id];
-
-    if (!empty($search_query)) {
-        $search_length = strlen($search_query);
-        $conditions = [];
-        for ($i = 0; $i < $search_length; $i++) {
-            $digit = $search_query[$i];
-            if (is_numeric($digit)) {
-                $position = $i + 1;
-                $conditions[] = "SUBSTRING(o.reference_id FROM $position FOR 1) = :digit_$i";
-                $params["digit_$i"] = $digit;
+    if (empty($feedback_text)) {
+        $feedback_errors[] = "Feedback cannot be empty.";
+    } elseif ($rating < 1 || $rating > 5) {
+        $feedback_errors[] = "Rating must be between 1 and 5.";
+    } elseif (empty($reference_id)) {
+        $feedback_errors[] = "Please select an order.";
+    } else {
+        try {
+            // Verify the reference_id belongs to the customer
+            $stmt = $pdo->prepare("SELECT reference_id FROM orders WHERE reference_id = ? AND customer_id = ?");
+            $stmt->execute([$reference_id, $_SESSION['customer_id']]);
+            if (!$stmt->fetch()) {
+                $feedback_errors[] = "Invalid order selected.";
+            } else {
+                $stmt = $pdo->prepare("
+                    INSERT INTO customer_feedback (reference_id, customer_id, rating, feedback_text, feedback_date)
+                    VALUES (?, ?, ?, ?, NOW())
+                ");
+                $stmt->execute([$reference_id, $_SESSION['customer_id'], $rating, $feedback_text]);
+                $feedback_success = "Thank you for your feedback!";
             }
-        }
-        if (!empty($conditions)) {
-            $sql .= " AND (" . implode(" OR ", $conditions) . ")";
+        } catch (PDOException $e) {
+            $feedback_errors[] = "Error submitting feedback: " . $e->getMessage();
+            error_log("Error submitting feedback: " . $e->getMessage());
         }
     }
+}
 
-    $sql .= " ORDER BY f.feedback_date DESC";
-
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
-    $feedback = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // Return JSON response for AJAX
-    header('Content-Type: application/json');
-    echo json_encode(['feedback' => $feedback]);
-    exit;
+// Fetch customer's past orders for feedback form
+$customer_orders = [];
+try {
+    $stmt = $pdo->prepare("
+        SELECT reference_id, order_date 
+        FROM orders 
+        WHERE customer_id = ? 
+        ORDER BY order_date DESC
+    ");
+    $stmt->execute([$_SESSION['customer_id']]);
+    $customer_orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    error_log("Error fetching customer orders: " . $e->getMessage());
 }
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Feedback History - WaterWorld</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: #f9fbfc;
-            color: #333;
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
-
-        header {
-            background: #ffffffcc;
-            backdrop-filter: blur(10px);
-            padding: 1rem 5%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #e5e5e5;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #008CBA;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        nav ul {
-            list-style: none;
-            display: flex;
-            gap: 1.5rem;
-        }
-
-        nav ul li a {
-            text-decoration: none;
-            color: #333;
-            font-weight: 500;
-            position: relative;
-            padding-bottom: 4px;
-            transition: color 0.3s;
-        }
-
-        nav ul li a::after {
-            content: "";
-            position: absolute;
-            width: 0;
-            height: 2px;
-            bottom: 0;
-            left: 0;
-            background: #008CBA;
-            transition: width 0.3s;
-        }
-
-        nav ul li a:hover {
-            color: #008CBA;
-        }
-
-        nav ul li a:hover::after {
-            width: 100%;
-        }
-
-        .welcome {
-            color: #008CBA;
-            font-size: 1rem;
-            font-weight: 500;
-            margin-left: 1rem;
-        }
-
-        .container {
-            padding: 2rem 5%;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .title {
-            text-align: center;
-            font-size: 2rem;
-            font-weight: bold;
-            color: #008CBA;
-            margin-bottom: 2rem;
-        }
-
-        .search-bar {
-            margin-bottom: 2rem;
-            text-align: center;
-        }
-
-        .search-bar input {
-            padding: 0.75rem;
-            width: 60%;
-            max-width: 600px;
-            border: 1px solid #ccc;
-            border-radius: 30px;
-            font-size: 1rem;
-            transition: border-color 0.3s;
-        }
-
-        .search-bar input:focus {
-            border-color: #008CBA;
-            outline: none;
-        }
-
-        .feedback-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            max-height: 70vh;
-            overflow-y: auto;
-            padding-right: 1rem;
-        }
-
-        .date-header {
-            background: #f0f8fb;
-            padding: 0.5rem 1rem;
-            font-weight: bold;
-            color: #008CBA;
-            border-bottom: 1px solid #e5e5e5;
-        }
-
-        .feedback-item {
-            background: #ffffffcc;
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: background 0.3s;
-            border-bottom: 1px solid #e5e5e5;
-        }
-
-        .feedback-item:hover {
-            background: #f0f8fb;
-        }
-
-        .feedback-details {
-            flex-grow: 1;
-        }
-
-        .feedback-type {
-            font-weight: bold;
-            color: #008CBA;
-            margin-bottom: 0.25rem;
-        }
-
-        .feedback-time {
-            font-size: 0.8rem;
-            color: #666;
-        }
-
-        .feedback-rating {
-            font-weight: bold;
-            color: #008CBA;
-            display: flex;
-            align-items: center;
-        }
-
-        .feedback-rating .star {
-            color: #ffcc00;
-            font-size: 1rem;
-            margin-right: 0.2rem;
-        }
-
-        .feedback-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .feedback-content {
-            background: #fff;
-            padding: 2rem;
-            border-radius: 10px;
-            max-width: 400px;
-            width: 90%;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            position: relative;
-            font-size: 0.9rem;
-            line-height: 1.5;
-            border: 2px dashed #ccc;
-            clip-path: polygon(0 0, 100% 0, 100% 85%, 95% 100%, 5% 100%, 0 85%);
-            animation: slideIn 0.3s ease-out;
-            background-image: linear-gradient(to bottom, #fff, #f9fbfc);
-        }
-
-        @keyframes slideIn {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .feedback-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 1.5rem;
-            color: #008CBA;
-        }
-
-        .feedback-details p {
-            display: flex;
-            justify-content: space-between;
-            margin: 0.75rem 0;
-        }
-
-        .feedback-details p strong {
-            color: #333;
-        }
-
-        .feedback-details .comment {
-            margin-top: 1rem;
-            padding: 0.5rem;
-            background: #f9f9f9;
-            border-radius: 5px;
-            word-wrap: break-word;
-        }
-
-        .feedback-details .total {
-            font-weight: bold;
-            border-top: 1px dashed #ccc;
-            padding-top: 0.75rem;
-            margin-top: 1rem;
-        }
-
-        .back-btn {
-            display: block;
-            margin: 1rem auto 0;
-            padding: 0.5rem 1rem;
-            background: #008CBA;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .back-btn:hover {
-            background: #006b9a;
-        }
-
-        .close {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: #888;
-        }
-
-        .close:hover {
-            color: #333;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback - WaterWorld Water Station</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      background-color: #f9fbfc;
+      color: #333;
+      line-height: 1.6;
+    }
+    header {
+      background: #ffffffcc;
+      backdrop-filter: blur(10px);
+      padding: 1rem 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #e5e5e5;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #008CBA;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      display: flex;
+      align-items: center;
+    }
+    .logo img {
+      height: 2.5rem;
+      margin-right: 0.75rem;
+    }
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+    }
+    nav ul li a {
+      text-decoration: none;
+      color: #333;
+      font-weight: 500;
+      position: relative;
+      padding-bottom: 4px;
+      transition: color 0.3s;
+    }
+    nav ul li a::after {
+      content: "";
+      position: absolute;
+      width: 0;
+      height: 2px;
+      bottom: 0;
+      left: 0;
+      background: #008CBA;
+      transition: width 0.3s;
+    }
+    nav ul li a:hover {
+      color: #008CBA;
+    }
+    nav ul li a:hover::after {
+      width: 100%;
+    }
+    .dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: white;
+      border: 1px solid #e5e5e5;
+      border-radius: 5px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      min-width: 220px;
+      z-index: 1000;
+      margin-top: 5px;
+    }
+    .profile:hover .dropdown {
+      display: block;
+    }
+    .dropdown a, .dropdown .welcome {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      text-decoration: none;
+      color: #333;
+      font-size: 0.9rem;
+      font-weight: 400;
+      transition: background 0.3s;
+    }
+    .dropdown a:hover {
+      background: #f0f0f0;
+    }
+    .dropdown a img {
+      height: 1.8rem;
+      width: 1.8rem;
+      margin-right: 8px;
+    }
+    .welcome {
+      color: #008CBA;
+      font-weight: 500;
+    }
+    .feedback-container {
+      max-width: 600px;
+      margin: 3rem auto;
+      padding: 2rem;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .feedback-container h1 {
+      font-size: 2rem;
+      color: #008CBA;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .feedback-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .feedback-form select,
+    .feedback-form textarea {
+      padding: 0.8rem;
+      border: 2px solid #e5e5e5;
+      border-radius: 8px;
+      font-size: 1rem;
+      width: 100%;
+    }
+    .feedback-form textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+    .feedback-form select:focus,
+    .feedback-form textarea:focus {
+      border-color: #008CBA;
+      outline: none;
+    }
+    .rating-stars {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .rating-star {
+      font-size: 2rem;
+      color: #ccc;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .rating-star.selected,
+    .rating-star:hover,
+    .rating-star:hover ~ .rating-star {
+      color: #f5c518;
+    }
+    .feedback-message {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .feedback-message.success {
+      color: #4CAF50;
+    }
+    .feedback-message.error {
+      color: #d32f2f;
+    }
+    .submit-btn {
+      background: linear-gradient(90deg, #008CBA, #00aaff);
+      color: white;
+      border: none;
+      padding: 1rem;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+    .submit-btn:hover {
+      transform: translateY(-2px);
+    }
+    footer {
+      background: #008CBA;
+      color: white;
+      text-align: center;
+      padding: 2rem 5%;
+      margin-top: 3rem;
+    }
+    @media (max-width: 768px) {
+      .feedback-container {
+        margin: 2rem 1rem;
+        padding: 1.5rem;
+      }
+    }
+  </style>
 </head>
 <body>
-
-    <header>
-        <div class="logo">WaterWorld</div>
-        <nav>
-            <ul>
-                <li><a href="index.php">Home</a></li>
-                <li><a href="order_placement.php">Order</a></li>
-                <li><a href="order_tracking.php">Track</a></li>
-                <li><a href="usertransaction_history.php">History</a></li>
-                <li><a href="feedback.php">Feedback</a></li>
-                <li><a href="logout.php">Logout</a></li>
-                <li class="welcome">Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?>!</li>
-            </ul>
-        </nav>
-    </header>
-
-    <div class="container">
-        <div class="search-bar">
-            <input type="text" id="searchInput" placeholder="Type a digit to filter reference IDs" value="">
+<header>
+  <div class="logo">
+    <img src="images/ww_logo.png" alt="WaterWorld Logo">
+    WaterWorld
+  </div>
+  <nav>
+    <ul>
+      <li><a href="index.php">Home</a></li>
+      <li><a href="product.php">Products</a></li>
+      <li><a href="order_tracking.php">Track</a></li>
+      <li><a href="feedback.php">Feedback</a></li>
+      <li class="profile" style="position: relative;">
+        <div style="display: flex; align-items: center; cursor: pointer;" onclick="toggleDropdown(this)">
+          <img src="images/profile_pic.png" alt="Profile" style="height: 2.5rem; width: 2.5rem;">
         </div>
-        <div class="title">Feedback History</div>
-        <section class="feedback-list">
-            <?php if (empty($default_feedback)): ?>
-                <p>No feedback found.</p>
-            <?php else: ?>
-                <?php
-                    $currentDate = '';
-                ?>
-                <?php foreach ($default_feedback as $feedback): ?>
-                    <?php
-                        $feedbackDate = date('Y-m-d', strtotime($feedback['feedback_date']));
-                        $dateHeader = date('F d, Y', strtotime($feedback['feedback_date']));
-                        $time = date('h:i a', strtotime($feedback['feedback_date']));
-                        $transactionType = '';
-                        switch ($feedback['order_type_id']) {
-                            case 1:
-                                $transactionType = 'Refill';
-                                break;
-                            case 2:
-                                $transactionType = 'Buy Container';
-                                break;
-                            case 3:
-                                $transactionType = 'Refill and Buy Container';
-                                break;
-                            default:
-                                $transactionType = 'Unknown';
-                        }
-                        if ($currentDate !== $feedbackDate) {
-                            echo '<div class="date-header">' . htmlspecialchars($dateHeader) . '</div>';
-                            $currentDate = $feedbackDate;
-                        }
-                    ?>
-                    <div class="feedback-item" onclick="showFeedback('<?php echo htmlspecialchars(json_encode($feedback)); ?>')">
-                        <div class="feedback-details">
-                            <div class="feedback-type"><?php echo htmlspecialchars($transactionType); ?></div>
-                            <div class="feedback-time"><?php echo $time; ?></div>
-                        </div>
-                        <div class="feedback-rating">
-                            <?php for ($i = 0; $i < $feedback['rating']; $i++): ?>
-                                <span class="star">★</span>
-                            <?php endfor; ?>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
-        </section>
-
-        <div id="feedback-modal" class="feedback-modal">
-            <div class="feedback-content">
-                <span class="close" onclick="closeFeedback()">&times;</span>
-                <div class="feedback-title">Feedback Details</div>
-                <div class="feedback-details">
-                    <p><strong>Type:</strong> <span id="feedback-type"></span></p>
-                    <p><strong>Amount:</strong> <span id="feedback-amount"></span></p>
-                    <p><strong>Feedback Date:</strong> <span id="feedback-date"></span></p>
-                    <p><strong>Container Type:</strong> <span id="feedback-container-type"></span></p>
-                    <p><strong>Quantity:</strong> <span id="feedback-quantity"></span></p>
-                    <p><strong>Price per Container:</strong> <span id="feedback-container-price"></span></p>
-                    <p><strong>Subtotal:</strong> <span id="feedback-subtotal"></span></p>
-                    <p><strong>Rating:</strong> <span id="feedback-rating"></span></p>
-                    <p class="comment"><strong>Comment:</strong> <span id="feedback-comment"></span></p>
-                    <p class="total"><strong>Total Amount:</strong> <span id="feedback-total"></span></p>
-                    <p><strong>Status:</strong> <span id="feedback-status"></span></p>
-                </div>
-                <button class="back-btn" onclick="goBack()">Back</button>
-            </div>
+        <div class="dropdown">
+          <div class="welcome">Welcome <?php echo htmlspecialchars($_SESSION['username']); ?>!</div>
+          <a href="user_settings.php">
+            <img src="images/user_settings.png" alt="Settings">
+            User Settings
+          </a>
+          <a href="usertransaction_history.php">
+            <img src="images/usertransaction_history.png" alt="History">
+            Transaction History
+          </a>
+          <a href="logout.php">
+            <img src="images/logout.png" alt="Logout">
+            Logout
+          </a>
         </div>
-    </div>
+      </li>
+    </ul>
+  </nav>
+</header>
 
-    <script>
-        const searchInput = document.getElementById('searchInput');
-        const feedbackList = document.querySelector('.feedback-list');
-        const feedbackModal = document.getElementById('feedback-modal');
-        const feedbackType = document.getElementById('feedback-type');
-        const feedbackAmount = document.getElementById('feedback-amount');
-        const feedbackDate = document.getElementById('feedback-date');
-        const feedbackContainerType = document.getElementById('feedback-container-type');
-        const feedbackQuantity = document.getElementById('feedback-quantity');
-        const feedbackContainerPrice = document.getElementById('feedback-container-price');
-        const feedbackSubtotal = document.getElementById('feedback-subtotal');
-        const feedbackRating = document.getElementById('feedback-rating');
-        const feedbackComment = document.getElementById('feedback-comment');
-        const feedbackTotal = document.getElementById('feedback-total');
-        const feedbackStatus = document.getElementById('feedback-status');
+<div class="feedback-container">
+  <h1>Submit Feedback</h1>
+  <form class="feedback-form" method="POST">
+    <?php if (!empty($feedback_success)): ?>
+      <div class="feedback-message success"><?php echo htmlspecialchars($feedback_success); ?></div>
+    <?php endif; ?>
+    <?php if (!empty($feedback_errors)): ?>
+      <div class="feedback-message error">
+        <?php foreach ($feedback_errors as $error): ?>
+          <p><?php echo htmlspecialchars($error); ?></p>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+    <?php if (empty($customer_orders)): ?>
+      <div class="feedback-message error">No orders found. Please place an order to submit feedback.</div>
+    <?php else: ?>
+      <label for="reference_id">Select Order</label>
+      <select name="reference_id" id="reference_id" required>
+        <option value="">Select an order</option>
+        <?php foreach ($customer_orders as $order): ?>
+          <option value="<?php echo htmlspecialchars($order['reference_id']); ?>">
+            Order #<?php echo htmlspecialchars($order['reference_id']); ?> (<?php echo date('M d, Y', strtotime($order['order_date'])); ?>)
+          </option>
+        <?php endforeach; ?>
+      </select>
+      <label for="feedback_text">Your Feedback</label>
+      <textarea name="feedback_text" id="feedback_text" placeholder="Enter your feedback here" required></textarea>
+      <label>Rating</label>
+      <div class="rating-stars" id="ratingStars">
+        <span class="rating-star" data-value="1">★</span>
+        <span class="rating-star" data-value="2">★</span>
+        <span class="rating-star" data-value="3">★</span>
+        <span class="rating-star" data-value="4">★</span>
+        <span class="rating-star" data-value="5">★</span>
+      </div>
+      <input type="hidden" name="rating" id="ratingInput" value="0">
+      <input type="hidden" name="feedback_submit" value="1">
+      <button type="submit" class="submit-btn">Submit Feedback</button>
+    <?php endif; ?>
+  </form>
+</div>
 
-        searchInput.addEventListener('input', function() {
-            const searchQuery = this.value.trim();
-            fetch(`feedback.php?search=${encodeURIComponent(searchQuery)}`)
-                .then(response => response.json())
-                .then(data => {
-                    feedbackList.innerHTML = '';
-                    if (data.feedback.length === 0) {
-                        feedbackList.innerHTML = '<p>No feedback found.</p>';
-                    } else {
-                        let currentDate = '';
-                        data.feedback.forEach(feedback => {
-                            const feedbackDate = new Date(feedback.feedback_date).toISOString().split('T')[0];
-                            const dateHeader = new Date(feedback.feedback_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-                            const time = new Date(feedback.feedback_date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
-                            let transactionType = '';
-                            switch (feedback.order_type_id) {
-                                case 1:
-                                    transactionType = 'Refill';
-                                    break;
-                                case 2:
-                                    transactionType = 'Buy Container';
-                                    break;
-                                case 3:
-                                    transactionType = 'Refill and Buy Container';
-                                    break;
-                                default:
-                                    transactionType = 'Unknown';
-                            }
-                            if (currentDate !== feedbackDate) {
-                                feedbackList.innerHTML += `<div class="date-header">${dateHeader}</div>`;
-                                currentDate = feedbackDate;
-                            }
-                            const item = document.createElement('div');
-                            item.className = 'feedback-item';
-                            item.onclick = () => showFeedback(JSON.stringify(feedback));
-                            item.innerHTML = `
-                                <div class="feedback-details">
-                                    <div class="feedback-type">${transactionType}</div>
-                                    <div class="feedback-time">${time}</div>
-                                </div>
-                                <div class="feedback-rating">
-                                    ${'★'.repeat(feedback.rating)}
-                                </div>
-                            `;
-                            feedbackList.appendChild(item);
-                        });
-                    }
-                })
-                .catch(error => console.error('Error fetching data:', error));
-        });
+<footer>
+  <p>&copy; 2025 WaterWorld Water Station. All rights reserved.</p>
+</footer>
 
-        function showFeedback(feedbackData) {
-            const feedback = JSON.parse(feedbackData);
-            let receiptTypeText = '';
-            switch (feedback.order_type_id) {
-                case 1:
-                    receiptTypeText = 'Refill';
-                    break;
-                case 2:
-                    receiptTypeText = 'Buy Container';
-                    break;
-                case 3:
-                    receiptTypeText = 'Refill and Buy Container';
-                    break;
-                default:
-                    receiptTypeText = 'Unknown';
-            }
-            feedbackType.textContent = receiptTypeText;
-            feedbackAmount.textContent = `₱${parseFloat(feedback.total_amount).toFixed(2)}`;
-            feedbackDate.textContent = new Date(feedback.feedback_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            feedbackContainerType.textContent = feedback.container_type;
-            feedbackQuantity.textContent = feedback.quantity;
-            feedbackContainerPrice.textContent = `₱${parseFloat(feedback.container_price).toFixed(2)}`;
-            feedbackSubtotal.textContent = `₱${parseFloat(feedback.subtotal).toFixed(2)}`;
-            feedbackRating.textContent = '★'.repeat(feedback.rating);
-            feedbackComment.textContent = feedback.comment || 'No comment provided';
-            feedbackTotal.textContent = `₱${parseFloat(feedback.total_amount).toFixed(2)}`;
-            feedbackStatus.textContent = feedback.delivery_status;
-            feedbackList.style.display = 'none';
-            feedbackModal.style.display = 'flex';
+<script>
+function toggleDropdown(element) {
+  const dropdown = element.querySelector('.dropdown');
+  dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Rating star functionality
+  const stars = document.querySelectorAll('.rating-star');
+  const ratingInput = document.getElementById('ratingInput');
+  
+  stars.forEach(star => {
+    star.addEventListener('click', function() {
+      const value = parseInt(this.getAttribute('data-value'));
+      ratingInput.value = value;
+      stars.forEach(s => {
+        s.classList.remove('selected');
+        if (parseInt(s.getAttribute('data-value')) <= value) {
+          s.classList.add('selected');
         }
-
-        function goBack() {
-            feedbackModal.style.display = 'none';
-            feedbackList.style.display = 'flex';
-        }
-
-        function closeFeedback() {
-            feedbackModal.style.display = 'none';
-            feedbackList.style.display = 'flex';
-        }
-
-        // Close feedback modal when clicking outside
-        window.addEventListener('click', function(event) {
-            if (event.target === feedbackModal) {
-                closeFeedback();
-            }
-        });
-
-        // Close feedback modal with Escape key
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape' && feedbackModal.style.display === 'flex') {
-                closeFeedback();
-            }
-        });
-
-        // Reveal on scroll animation
-        const sections = document.querySelectorAll("section");
-        const revealOnScroll = () => {
-            const triggerBottom = window.innerHeight * 0.85;
-            sections.forEach(section => {
-                const sectionTop = section.getBoundingClientRect().top;
-                if (sectionTop < triggerBottom) {
-                    section.classList.add("show");
-                }
-            });
-        };
-        window.addEventListener("scroll", revealOnScroll);
-        revealOnScroll();
-    </script>
-
+      });
+    });
+  });
+});
+</script>
 </body>
 </html>
