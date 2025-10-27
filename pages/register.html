@@ -79,7 +79,7 @@
             justify-content: center;
             text-align: center;
             background: linear-gradient(rgba(0, 140, 186, 0.6), rgba(0, 140, 186, 0.6)),
-                        url('assets/images/clear_blue_water.png') no-repeat center/cover;
+                        url('../assets/images/Water World Facade.jpg') no-repeat center/cover;
             color: white;
             padding: 4rem 5%;
             position: relative;
@@ -434,14 +434,17 @@
             </svg>
             <div class="otp-columns">
                 <div class="otp-column">
-                    <img src="../assets/images/verify_otp.png" alt="OTP Icon" class="otp-icon">
+                    <div style="font-size: 4rem; text-align: center; margin: 0 auto 1.5rem;">🔐</div>
                     <h2>Verify Your OTP</h2>
                     <p class="otp-message">OTP sent to <span id="otp-email"></span></p>
-                    
-                        <div class="success" style="display: none;"></div>
-                    
                 </div>
                 <div class="otp-column">
+                    <div id="otp-success-container" class="success" style="display: none;">
+                        <p id="otp-success-message"></p>
+                    </div>
+                    <div id="otp-error-container" class="error" style="display: none;">
+                        <ul id="otp-error-list"></ul>
+                    </div>
                     <form method="POST" id="form-element">
                         <div class="form-group">
                             <label for="otp">Enter OTP</label>
@@ -456,15 +459,6 @@
                             </div>
                         </div>
                         <div class="otp-timer" id="otp-timer">Resend OTP in 60s</div>
-                        
-                            <div class="error" style="display: none;">
-                                <ul>
-                                    
-                                        <li></li>
-                                    
-                                </ul>
-                            </div>
-                        
                         <div class="otp-buttons">
                             <button type="button" id="resend-otp" disabled>Resend OTP</button>
                             <input type="submit" name="otp_submit" value="Verify OTP">

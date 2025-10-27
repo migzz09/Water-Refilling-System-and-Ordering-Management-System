@@ -104,12 +104,63 @@ async function handleRegistration(e) {
     }
 }
 
+// Handle OTP form submission
+async function handleOTPVerification(e) {
+    e.preventDefault();
+    hideOTPMessages();
+    
+    const form = e.target;
+    const submitBtn = form.querySelector('[type="submit"]');
+    setButtonLoading(submitBtn, true);
+    
+    // Get OTP from hidden field
+    const otp = document.getElementById('otp-hidden').value;
+    
+    if (!otp || otp.length !== 6) {
+        displayErrors(['Please enter complete 6-digit OTP.'], 'otp-error-container', 'otp-error-list');
+        setButtonLoading(submitBtn, false);
+        return;
+    }
+    
+    try {
+        const result = await API.post('/auth/verify-otp.php', { otp });
+        
+        if (result.success) {
+            displaySuccess(result.message, 'otp-success-container', 'otp-success-message');
+            // Redirect to login after success
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 2000);
+        } else {
+            displayErrors(result.errors || [result.message], 'otp-error-container', 'otp-error-list');
+        }
+    } catch (error) {
+        displayErrors(['OTP verification failed. Please try again.'], 'otp-error-container', 'otp-error-list');
+    } finally {
+        setButtonLoading(submitBtn, false);
+    }
+}
+
+// Hide OTP messages
+function hideOTPMessages() {
+    const errorContainer = document.getElementById('otp-error-container');
+    const successContainer = document.getElementById('otp-success-container');
+    
+    if (errorContainer) errorContainer.style.display = 'none';
+    if (successContainer) successContainer.style.display = 'none';
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     loadCities();
-    const form = document.getElementById('registration-form');
-    if (form) {
-        form.addEventListener('submit', handleRegistration);
+    const regForm = document.getElementById('registration-form');
+    if (regForm) {
+        regForm.addEventListener('submit', handleRegistration);
+    }
+    
+    const otpForm = document.getElementById('form-element');
+    if (otpForm) {
+        otpForm.addEventListener('submit', handleOTPVerification);
     }
 });
 
@@ -179,15 +230,7 @@ function combineOTP() {
         }
         otp += digits[i].value;
     }
-    console.log('Combined OTP:', otp, 'Length:', otp.length);
     document.getElementById('otp-hidden').value = otp;
-    
-    // Debug OTP to server
-    fetch('register.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'debug_otp=' + encodeURIComponent(otp)
-    });
 }
 
 // Start OTP countdown timer
@@ -209,23 +252,32 @@ function startOTPTimer() {
     }, 1000);
 
     // Resend OTP handler
-    resendButton.onclick = () => {
+    resendButton.onclick = async () => {
         if (!resendButton.disabled) {
-            console.log("Resending OTP");
-            fetch('register.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'resend_otp=true'
-            })
-            .then(response => response.text())
-            .then(data => {
-                console.log('Resend OTP response:', data);
-                window.location.reload();
-            })
-            .catch(error => {
+            resendButton.disabled = true;
+            const email = sessionStorage.getItem('registration_email');
+            
+            if (!email) {
+                timerElement.textContent = 'No email found. Please register again.';
+                return;
+            }
+            
+            try {
+                // Get stored registration data and resend
+                const result = await API.post('/auth/resend-otp.php', { email });
+                
+                if (result.success) {
+                    timerElement.textContent = 'OTP resent successfully!';
+                    startOTPTimer(); // Restart timer
+                } else {
+                    timerElement.textContent = 'Failed to resend OTP.';
+                    resendButton.disabled = false;
+                }
+            } catch (error) {
                 console.error('Resend OTP error:', error);
-                document.getElementById('otp-timer').textContent = 'Failed to resend OTP. Please try again.';
-            });
+                timerElement.textContent = 'Failed to resend OTP. Please try again.';
+                resendButton.disabled = false;
+            }
         }
     };
 }

@@ -175,6 +175,49 @@
     background-size: cover;
 }
 
+/* Product Page Hero - Smaller variant */
+.hero.product-hero {
+    min-height: 60vh;
+    padding: 6rem 0 4rem;
+    /* Ensure background is visible */
+    background: url('../images/Water World Facade.jpg') no-repeat center center;
+    background-size: cover;
+}
+
+.hero.product-hero::before {
+    /* Ensure overlay is visible */
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(44, 95, 111, 0.75);
+    z-index: 0;
+}
+
+.hero.product-hero .hero-content {
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+}
+
+.hero.product-hero .hero-title {
+    font-size: 2.75rem !important;
+    margin-bottom: var(--spacing-md);
+    color: var(--text-white);
+}
+
+.hero.product-hero .hero-description {
+    font-size: 1.15rem;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.hero.product-hero .hero-badge {
+    color: var(--primary-blue-dark);
+}
+
 .hero::before {
     content: '';
     position: absolute;
@@ -312,6 +355,10 @@
     width: calc(100% + 1.3px);
     height: 80px;
     color: var(--bg-light);
+}
+
+.hero.product-hero .hero-wave svg {
+    height: 60px;
 }
 
 /* Section Styles */
