@@ -1,0 +1,263 @@
+/* Checkout page styles */
+.checkout-container {
+  max-width: 800px;
+  margin: 3rem auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.checkout-container h1 {
+  font-size: 2rem;
+  color: var(--primary-color);
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+/* Cart Summary */
+.cart-summary {
+  background: #f9fbfc;
+  padding: 1.5rem;
+  border-radius: 10px;
+  margin-bottom: 2rem;
+}
+
+.cart-summary h3 {
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+.cart-items {
+  margin-bottom: 1rem;
+}
+
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.cart-item:last-child {
+  border-bottom: none;
+}
+
+.cart-item-details {
+  flex: 1;
+}
+
+.cart-item-title {
+  font-weight: 500;
+}
+
+.cart-item-subtitle {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.cart-item-price {
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.cart-total {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 1rem;
+  border-top: 2px solid #e5e5e5;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+/* Form Sections */
+section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f9fbfc;
+  border-radius: 10px;
+}
+
+section h3 {
+  color: var(--primary-color);
+  margin-bottom: 1.5rem;
+}
+
+.form-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.input-group,
+.select-group {
+  margin-bottom: 1rem;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 0.8rem;
+  border: 2px solid #e5e5e5;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+input:focus,
+select:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.note {
+  color: #666;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+/* Payment Options */
+.payment-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.payment-option {
+  position: relative;
+}
+
+.payment-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+}
+
+.payment-option label {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  background: white;
+  border: 2px solid #e5e5e5;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.payment-option input[type="radio"]:checked + label {
+  border-color: var(--primary-color);
+  background: #e3f2fd;
+}
+
+.payment-icon {
+  margin-right: 1rem;
+  font-size: 1.5rem;
+  color: var(--primary-color);
+}
+
+/* Vehicle Info */
+#vehicleInfo {
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+/* Modals */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 15px;
+  padding: 2rem;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal h2 {
+  color: var(--primary-color);
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+/* Receipt Styles */
+.receipt {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+}
+
+.receipt-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.receipt-header img {
+  height: 50px;
+  margin-bottom: 1rem;
+}
+
+.receipt-details {
+  border-top: 2px solid #e5e5e5;
+  border-bottom: 2px solid #e5e5e5;
+  padding: 1.5rem 0;
+  margin-bottom: 1.5rem;
+}
+
+.receipt-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .checkout-container {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+
+  .form-container {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-options {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-content {
+    width: 95%;
+    padding: 1.5rem;
+  }
+}

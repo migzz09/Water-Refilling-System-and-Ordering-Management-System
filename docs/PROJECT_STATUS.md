@@ -76,7 +76,7 @@ WRSOMS/
 ├── 📁 pages/                  # HTML pages
 │   ├── login.html
 │   ├── register.html
-│   ├── order-placement.html
+│   ├── product.html
 │   ├── order-tracking.html
 │   └── ... (12 pages total)
 │
@@ -111,7 +111,7 @@ WRSOMS/
 1. `index.html` - Homepage
 2. `pages/login.html` - User login
 3. `pages/register.html` - User registration
-4. `pages/order-placement.html` - Place orders
+4. `pages/product.html` - Browse products and place orders
 5. `pages/order-tracking.html` - Track orders
 
 ### Admin Pages (7+)

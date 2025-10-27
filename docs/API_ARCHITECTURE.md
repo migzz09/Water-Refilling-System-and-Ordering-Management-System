@@ -31,7 +31,7 @@ WRSOMS/
 ├── pages/
 │   ├── login.html ⭐
 │   ├── register.html ⭐
-│   ├── order-placement.html ⭐
+│   ├── product.html ⭐
 │   └── ... (all HTML)
 │
 ├── api/ ⭐ NEW - PHP endpoints
@@ -171,7 +171,7 @@ $stmt = $pdo->prepare("SELECT ...");
 
 ### New Way
 
-**order-placement.html** (Frontend)
+**product.html** (Frontend)
 ```html
 <!DOCTYPE html>
 <html>
@@ -295,7 +295,7 @@ try {
 - [ ] Create session check API
 
 ### Phase 3: Order APIs
-- [ ] Convert order_placement.php → order-placement.html + api
+- [x] Convert order_placement.php → product.html + api
 - [ ] Convert order_tracking.php → order-tracking.html + api
 - [ ] Create order management APIs
 

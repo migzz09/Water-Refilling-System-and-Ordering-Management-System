@@ -102,7 +102,7 @@ WRSOMS/
 │   ├── login.html                # User login page
 │   ├── register.html             # User registration page
 │   ├── verify-otp.html           # OTP verification page
-│   ├── order-placement.html      # Place new order page
+│   ├── product.html             # Product catalog and ordering page
 │   ├── order-tracking.html       # Track order status page
 │   ├── usertransaction-history.html # Order history page
 │   └── 📁 admin/                  # Admin pages
