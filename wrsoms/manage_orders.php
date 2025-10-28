@@ -22,6 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $delivery_status = $_POST['delivery_status_id'];
     $batch_status = $_POST['batch_status_id'];
 
+    // Update the individual order + related tables
     $pdo->prepare("UPDATE orders SET order_status_id = ? WHERE reference_id = ?")->execute([$order_status, $ref]);
     $pdo->prepare("UPDATE payments SET payment_status_id = ? WHERE reference_id = ?")->execute([$payment_status, $ref]);
     $pdo->prepare("
@@ -37,6 +38,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
         SET b.batch_status_id = ?
         WHERE o.reference_id = ?
     ")->execute([$batch_status, $ref]);
+
+    // Fetch the batch ID of the order
+    $stmt = $pdo->prepare("SELECT batch_id FROM orders WHERE reference_id = ?");
+    $stmt->execute([$ref]);
+    $batch_id = $stmt->fetchColumn();
+
+    // If batch status is "Delivered" (usually ID = 3), set all orders in that batch to Delivered
+    if ($batch_status == 3 && $batch_id) {
+        $pdo->prepare("UPDATE orders SET order_status_id = 3 WHERE batch_id = ?")->execute([$batch_id]);
+    }
 
     echo "<script>alert('Statuses updated successfully!');window.location='manage_orders.php';</script>";
     exit;
@@ -61,14 +72,14 @@ if ($search !== '') {
 }
 
 // ---------------------------------------------------------------------------
-// Fetch active orders
+// Fetch active orders grouped by batch
 $sql = "
 SELECT 
     o.reference_id, o.order_date, o.delivery_date, o.total_amount,
     os.status_name AS order_status, o.order_status_id,
     p.payment_status_id, ps.status_name AS payment_status,
     d.delivery_status_id, ds.status_name AS delivery_status,
-    b.batch_id, b.batch_status_id, bs.status_name AS batch_status,
+    b.batch_id, b.batch_number, b.batch_status_id, bs.status_name AS batch_status,
     b.vehicle_type, b.vehicle,
     CONCAT(c.first_name, ' ', COALESCE(c.middle_name,''), ' ', c.last_name) AS customer_name,
     c.customer_contact
@@ -82,7 +93,7 @@ LEFT JOIN batch_status bs ON b.batch_status_id = bs.batch_status_id
 LEFT JOIN deliveries d ON b.batch_id = d.batch_id
 LEFT JOIN delivery_status ds ON d.delivery_status_id = ds.delivery_status_id
 $where
-ORDER BY o.order_date DESC
+ORDER BY b.vehicle_type, b.batch_number, o.order_date DESC
 ";
 
 $stmt = $pdo->prepare($sql);
@@ -104,14 +115,19 @@ body { background: #f8f9fb; }
 .status-cancelled { background-color: #dc3545; }
 .status-processing { background-color: #0d6efd; }
 .status-delivered { background-color: #20c997; }
+.batch-header {
+  background: #e9ecef;
+  padding: 10px;
+  border-radius: 6px;
+  margin-top: 25px;
+}
+.batch-header h5 { margin: 0; }
 </style>
 </head>
 <body class="p-3">
 <div class="container-fluid">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3>Manage Orders</h3>
-    <div>
-    </div>
   </div>
 
   <div class="card p-3 mb-3">
@@ -128,84 +144,100 @@ body { background: #f8f9fb; }
     <?php if (empty($orders)): ?>
       <p class="text-muted text-center">No active orders found.</p>
     <?php else: ?>
-    <div class="table-responsive">
-      <table class="table table-hover align-middle">
-        <thead class="table-light">
-          <tr>
-            <th>Ref ID</th>
-            <th>Customer</th>
-            <th>Contact</th>
-            <th>Order Date</th>
-            <th>Delivery Date</th>
-            <th>Total</th>
-            <th>Order</th>
-            <th>Payment</th>
-            <th>Delivery</th>
-            <th>Batch</th>
-            <th>Vehicle</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php foreach ($orders as $row): ?>
-          <tr>
-            <form method="POST">
-              <input type="hidden" name="reference_id" value="<?= htmlspecialchars($row['reference_id']) ?>">
-              <td><strong><?= htmlspecialchars($row['reference_id']) ?></strong></td>
-              <td><?= htmlspecialchars($row['customer_name']) ?></td>
-              <td><?= htmlspecialchars($row['customer_contact']) ?></td>
-              <td><?= date("M d, Y H:i", strtotime($row['order_date'])) ?></td>
-              <td><?= $row['delivery_date'] ? date("M d, Y", strtotime($row['delivery_date'])) : '-' ?></td>
-              <td>₱<?= number_format($row['total_amount'], 2) ?></td>
-
-              <!-- Order -->
-              <td>
-                <select name="order_status_id" class="form-select form-select-sm">
-                  <?php foreach ($orderStatuses as $st): ?>
-                    <option value="<?= $st['status_id'] ?>" <?= $st['status_id']==$row['order_status_id']?'selected':'' ?>><?= htmlspecialchars($st['status_name']) ?></option>
-                  <?php endforeach; ?>
-                </select>
-              </td>
-
-              <!-- Payment -->
-              <td>
-                <select name="payment_status_id" class="form-select form-select-sm">
-                  <?php foreach ($paymentStatuses as $st): ?>
-                    <option value="<?= $st['payment_status_id'] ?>" <?= $st['payment_status_id']==$row['payment_status_id']?'selected':'' ?>><?= htmlspecialchars($st['status_name']) ?></option>
-                  <?php endforeach; ?>
-                </select>
-              </td>
-
-              <!-- Delivery -->
-              <td>
-                <select name="delivery_status_id" class="form-select form-select-sm">
-                  <?php foreach ($deliveryStatuses as $st): ?>
-                    <option value="<?= $st['delivery_status_id'] ?>" <?= $st['delivery_status_id']==$row['delivery_status_id']?'selected':'' ?>><?= htmlspecialchars($st['status_name']) ?></option>
-                  <?php endforeach; ?>
-                </select>
-              </td>
-
-              <!-- Batch -->
-              <td>
-                <select name="batch_status_id" class="form-select form-select-sm">
+      <div class="table-responsive">
+        <?php
+        $current_batch = null;
+        foreach ($orders as $row):
+          // New batch header
+          if ($current_batch !== $row['batch_id']):
+            if ($current_batch !== null) echo "</tbody></table>";
+            $current_batch = $row['batch_id'];
+        ?>
+            <div class="batch-header d-flex justify-content-between align-items-center">
+              <div>
+                <h5>Batch #<?= htmlspecialchars($row['batch_number']) ?> — <?= htmlspecialchars($row['vehicle_type']) ?></h5>
+                <small>Current Batch Status: <strong><?= htmlspecialchars($row['batch_status']) ?></strong></small>
+              </div>
+              <form method="POST" class="d-flex align-items-center">
+                <input type="hidden" name="reference_id" value="<?= htmlspecialchars($row['reference_id']) ?>">
+                <select name="batch_status_id" class="form-select form-select-sm me-2">
                   <?php foreach ($batchStatuses as $st): ?>
                     <option value="<?= $st['batch_status_id'] ?>" <?= $st['batch_status_id']==$row['batch_status_id']?'selected':'' ?>><?= htmlspecialchars($st['status_name']) ?></option>
                   <?php endforeach; ?>
                 </select>
-              </td>
+                <input type="hidden" name="order_status_id" value="<?= $row['order_status_id'] ?>">
+                <input type="hidden" name="payment_status_id" value="<?= $row['payment_status_id'] ?>">
+                <input type="hidden" name="delivery_status_id" value="<?= $row['delivery_status_id'] ?>">
+                <button name="update_status" class="btn btn-sm btn-primary">Update Batch</button>
+              </form>
+            </div>
+            <table class="table table-hover align-middle mt-2">
+              <thead class="table-light">
+                <tr>
+                  <th>Ref ID</th>
+                  <th>Customer</th>
+                  <th>Contact</th>
+                  <th>Order Date</th>
+                  <th>Delivery Date</th>
+                  <th>Total</th>
+                  <th>Order</th>
+                  <th>Payment</th>
+                  <th>Delivery</th>
+                  <th>Vehicle</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+        <?php endif; ?>
 
-              <td><?= htmlspecialchars($row['vehicle'] ?: '-') ?></td>
+        <tr>
+          <form method="POST">
+            <input type="hidden" name="reference_id" value="<?= htmlspecialchars($row['reference_id']) ?>">
+            <td><strong><?= htmlspecialchars($row['reference_id']) ?></strong></td>
+            <td><?= htmlspecialchars($row['customer_name']) ?></td>
+            <td><?= htmlspecialchars($row['customer_contact']) ?></td>
+            <td><?= date("M d, Y H:i", strtotime($row['order_date'])) ?></td>
+            <td><?= $row['delivery_date'] ? date("M d, Y", strtotime($row['delivery_date'])) : '-' ?></td>
+            <td>₱<?= number_format($row['total_amount'], 2) ?></td>
 
-              <td class="text-nowrap">
-                <button name="update_status" class="btn btn-success btn-sm"> Save</button>
-                <a href="?archive=<?= urlencode($row['reference_id']) ?>" class="btn btn-outline-danger btn-sm" onclick="return confirm('Archive this order?')"> Archive</a>
-              </td>
-            </form>
-          </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
-    </div>
+            <!-- Order -->
+            <td>
+              <select name="order_status_id" class="form-select form-select-sm">
+                <?php foreach ($orderStatuses as $st): ?>
+                  <option value="<?= $st['status_id'] ?>" <?= $st['status_id']==$row['order_status_id']?'selected':'' ?>><?= htmlspecialchars($st['status_name']) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </td>
+
+            <!-- Payment -->
+            <td>
+              <select name="payment_status_id" class="form-select form-select-sm">
+                <?php foreach ($paymentStatuses as $st): ?>
+                  <option value="<?= $st['payment_status_id'] ?>" <?= $st['payment_status_id']==$row['payment_status_id']?'selected':'' ?>><?= htmlspecialchars($st['status_name']) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </td>
+
+            <!-- Delivery -->
+            <td>
+              <select name="delivery_status_id" class="form-select form-select-sm">
+                <?php foreach ($deliveryStatuses as $st): ?>
+                  <option value="<?= $st['delivery_status_id'] ?>" <?= $st['delivery_status_id']==$row['delivery_status_id']?'selected':'' ?>><?= htmlspecialchars($st['status_name']) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </td>
+
+            <td><?= htmlspecialchars($row['vehicle'] ?: '-') ?></td>
+
+            <td class="text-nowrap">
+              <button name="update_status" class="btn btn-success btn-sm">Save</button>
+              <a href="?archive=<?= urlencode($row['reference_id']) ?>" class="btn btn-outline-danger btn-sm" onclick="return confirm('Archive this order?')">Archive</a>
+            </td>
+          </form>
+        </tr>
+        <?php endforeach; ?>
+        </tbody></table>
+      </div>
     <?php endif; ?>
   </div>
 </div>
