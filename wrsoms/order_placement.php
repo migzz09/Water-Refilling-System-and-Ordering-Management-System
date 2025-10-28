@@ -220,6 +220,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_order'])) {
             $stmt = $pdo->prepare("INSERT INTO orders (reference_id, customer_id, order_type_id, batch_id, order_date, delivery_date, order_status_id, total_amount) VALUES (?, ?, ?, ?, NOW(), ?, 1, ?)");
             $stmt->execute([$reference_id, $customer_id, $order_type_id, $batch_id, $delivery_date, $subtotal]);
 
+            // --- PayMongo Integration ---
+            require 'paymongo_config.php';
+
+            $amount = $total_amount; // or whatever variable holds the order total
+            $description = "Payment for Order #$reference_id"; // reference_id = your order ID or unique ref
+
+            $data = [
+                'data' => [
+                    'attributes' => [
+                        'amount' => $amount * 100, // centavos
+                        'payment_method_allowed' => ['gcash', 'paymaya'],
+                        'currency' => 'PHP',
+                        'description' => $description,
+                        'statement_descriptor' => 'Water World Payment'
+                    ]
+                ]
+            ];
+
+$ch = curl_init(PAYMONGO_API_URL . "payment_intents");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_USERPWD, PAYMONGO_SECRET_KEY . ":");
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+
+$response = curl_exec($ch);
+curl_close($ch);
+
+$intent = json_decode($response, true);
+$client_key = $intent['data']['attributes']['client_key'] ?? null;
+
+if ($client_key) {
+    // Redirect to payment selection (GCash / PayMaya)
+    header("Location: pay_redirect.php?client_key=" . urlencode($client_key) . "&order_id=" . urlencode($reference_id));
+    exit;
+} else {
+    echo "<p>Error: Unable to create PayMongo payment intent.</p>";
+}
+
+
             // Insert into order_details table
             $stmt = $pdo->prepare("INSERT INTO order_details (reference_id, batch_number, container_id, quantity, subtotal) VALUES (?, ?, ?, ?, ?)");
             $stmt->execute([$reference_id, $batch_number, $container_id, $quantity, $subtotal]);
