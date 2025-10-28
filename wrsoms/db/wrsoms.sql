@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 12, 2025 at 02:35 PM
+-- Generation Time: Oct 27, 2025 at 05:02 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -18,8 +18,32 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `wrosms`
+-- Database: `wrsoms`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `accounts`
+--
+
+CREATE TABLE `accounts` (
+  `account_id` int(11) NOT NULL,
+  `customer_id` int(11) DEFAULT NULL,
+  `username` varchar(50) NOT NULL,
+  `password` varchar(50) NOT NULL,
+  `otp` varchar(6) DEFAULT NULL,
+  `otp_expires` timestamp NOT NULL DEFAULT (current_timestamp() + interval 10 minute),
+  `is_verified` tinyint(1) DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `accounts`
+--
+
+INSERT INTO `accounts` (`account_id`, `customer_id`, `username`, `password`, `otp`, `otp_expires`, `is_verified`) VALUES
+(1, 1, 'user2', 'password123', NULL, '2025-10-27 09:27:21', 1),
+(2, 2, 'migzz09', 'password123', '274751', '2025-10-27 21:59:55', 0);
 
 -- --------------------------------------------------------
 
@@ -49,7 +73,7 @@ CREATE TABLE `admin_management_view` (
 ,`city` varchar(100)
 ,`province` varchar(100)
 ,`quantity` int(11)
-,`container_type` enum('Round','Rectangular')
+,`container_type` enum('Round','Slim')
 ,`container_price` decimal(10,2)
 ,`subtotal` decimal(10,2)
 ,`assigned_employees` mediumtext
@@ -70,6 +94,15 @@ CREATE TABLE `batches` (
   `vehicle_type` enum('Tricycle','Car') NOT NULL,
   `batch_number` int(11) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `batches`
+--
+
+INSERT INTO `batches` (`batch_id`, `batch_date`, `batch_status_id`, `vehicle`, `notes`, `vehicle_type`, `batch_number`) VALUES
+(2, '2025-10-27 07:00:00', 1, 'Car #320', 'Auto-created batch', 'Car', 1),
+(3, '2025-10-27 07:00:00', 1, 'Tricycle #538', 'Auto-created batch', 'Tricycle', 1),
+(4, '2025-10-27 07:00:00', 1, 'Tricycle #338', 'Auto-created batch', 'Tricycle', 2);
 
 -- --------------------------------------------------------
 
@@ -111,7 +144,7 @@ INSERT INTO `batch_status` (`batch_status_id`, `status_name`) VALUES
 
 CREATE TABLE `containers` (
   `container_id` int(11) NOT NULL,
-  `container_type` enum('Round','Rectangular') NOT NULL,
+  `container_type` enum('Round','Slim') NOT NULL,
   `price` decimal(10,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -121,8 +154,7 @@ CREATE TABLE `containers` (
 
 INSERT INTO `containers` (`container_id`, `container_type`, `price`) VALUES
 (1, 'Round', 40.00),
-(2, 'Rectangular', 30.00),
-(3, 'Round', 60.00);
+(2, 'Slim', 30.00);
 
 -- --------------------------------------------------------
 
@@ -132,18 +164,26 @@ INSERT INTO `containers` (`container_id`, `container_type`, `price`) VALUES
 
 CREATE TABLE `customers` (
   `customer_id` int(11) NOT NULL,
-  `username` varchar(50) NOT NULL,
-  `password` varchar(50) NOT NULL,
+  `account_id` int(11) DEFAULT NULL,
   `first_name` varchar(50) NOT NULL,
   `middle_name` varchar(50) DEFAULT NULL,
   `last_name` varchar(50) NOT NULL,
   `customer_contact` char(11) NOT NULL,
+  `email` varchar(100) DEFAULT NULL,
   `street` varchar(150) NOT NULL,
   `barangay` varchar(50) NOT NULL,
   `city` varchar(100) NOT NULL,
   `province` varchar(100) NOT NULL,
   `date_created` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `customers`
+--
+
+INSERT INTO `customers` (`customer_id`, `account_id`, `first_name`, `middle_name`, `last_name`, `customer_contact`, `email`, `street`, `barangay`, `city`, `province`, `date_created`) VALUES
+(1, NULL, 'user2', NULL, 'user2', '09663085902', 'jfaustino.a12345404@umak.edu.ph', 'Milkweed-', 'Rizal', 'Taguig', 'Metro Manila', '2025-10-27 09:25:08'),
+(2, NULL, 'user4', NULL, 'user4', '09663085909', 'migzzuwu@gmail.com', 'Milkweed-', 'Rizal', 'Taguig', 'Metro Manila', '2025-10-27 13:49:55');
 
 -- --------------------------------------------------------
 
@@ -160,6 +200,13 @@ CREATE TABLE `customer_feedback` (
   `feedback_date` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `customer_feedback`
+--
+
+INSERT INTO `customer_feedback` (`feedback_id`, `reference_id`, `customer_id`, `rating`, `feedback_text`, `feedback_date`) VALUES
+(1, '15769', 1, 4, 'good', '2025-10-27 11:28:51');
+
 -- --------------------------------------------------------
 
 --
@@ -173,6 +220,13 @@ CREATE TABLE `deliveries` (
   `delivery_date` timestamp NOT NULL DEFAULT current_timestamp(),
   `notes` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `deliveries`
+--
+
+INSERT INTO `deliveries` (`delivery_id`, `batch_id`, `delivery_status_id`, `delivery_date`, `notes`) VALUES
+(1, 2, 3, '2025-10-27 10:07:09', 'Auto-created for order update');
 
 -- --------------------------------------------------------
 
@@ -224,6 +278,27 @@ INSERT INTO `employees` (`employee_id`, `first_name`, `middle_name`, `last_name`
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `inventory`
+--
+
+CREATE TABLE `inventory` (
+  `container_id` int(11) NOT NULL,
+  `container_type` varchar(50) NOT NULL,
+  `stock` int(11) NOT NULL DEFAULT 0 CHECK (`stock` >= 0),
+  `last_updated` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `inventory`
+--
+
+INSERT INTO `inventory` (`container_id`, `container_type`, `stock`, `last_updated`) VALUES
+(1, 'Round', 99, '2025-10-27 10:05:50'),
+(2, 'Slim', 94, '2025-10-27 12:37:50');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `orders`
 --
 
@@ -238,6 +313,18 @@ CREATE TABLE `orders` (
   `total_amount` decimal(10,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `orders`
+--
+
+INSERT INTO `orders` (`reference_id`, `customer_id`, `order_type_id`, `batch_id`, `order_date`, `delivery_date`, `order_status_id`, `total_amount`) VALUES
+('023901', 1, 1, 2, '2025-10-27 09:46:31', '2025-10-27', 1, 40.00),
+('13620', 1, 1, 3, '2025-10-27 15:28:24', '2025-10-27', 1, 40.00),
+('15769', 1, 2, 4, '2025-10-27 10:37:56', '2025-10-27', 1, 150.00),
+('294199', 1, 2, 2, '2025-10-27 10:05:50', '2025-10-27', 3, 40.00),
+('322533', 1, 1, 2, '2025-10-27 12:37:50', '2025-10-27', 1, 70.00),
+('732977', 1, 1, 3, '2025-10-27 10:34:28', '2025-10-27', 1, 70.00);
+
 -- --------------------------------------------------------
 
 --
@@ -249,9 +336,25 @@ CREATE TABLE `order_details` (
   `reference_id` varchar(6) NOT NULL,
   `batch_number` int(11) NOT NULL DEFAULT 1,
   `container_id` int(11) DEFAULT NULL,
+  `water_type_id` int(11) DEFAULT NULL,
+  `order_type_id` int(11) DEFAULT NULL,
   `quantity` int(11) NOT NULL,
   `subtotal` decimal(10,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `order_details`
+--
+
+INSERT INTO `order_details` (`order_detail_id`, `reference_id`, `batch_number`, `container_id`, `water_type_id`, `order_type_id`, `quantity`, `subtotal`) VALUES
+(1, '023901', 1, 1, 2, 1, 1, 40.00),
+(2, '294199', 1, 1, 3, 2, 1, 40.00),
+(3, '732977', 1, 2, 2, 1, 1, 30.00),
+(4, '732977', 1, 1, 3, 1, 1, 40.00),
+(5, '15769', 2, 2, 1, 2, 5, 150.00),
+(6, '322533', 1, 1, 1, 1, 1, 40.00),
+(7, '322533', 1, 2, 3, 2, 1, 30.00),
+(8, '13620', 1, 1, 3, 1, 1, 40.00);
 
 -- --------------------------------------------------------
 
@@ -282,7 +385,7 @@ INSERT INTO `order_status` (`status_id`, `status_name`) VALUES
 
 CREATE TABLE `order_types` (
   `order_type_id` int(11) NOT NULL,
-  `type_name` enum('Refill','Purchase New Container/s','Both') NOT NULL
+  `type_name` enum('Refill','Purchase New Container/s') NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -291,8 +394,7 @@ CREATE TABLE `order_types` (
 
 INSERT INTO `order_types` (`order_type_id`, `type_name`) VALUES
 (1, 'Refill'),
-(2, 'Purchase New Container/s'),
-(3, 'Both');
+(2, 'Purchase New Container/s');
 
 -- --------------------------------------------------------
 
@@ -309,6 +411,13 @@ CREATE TABLE `payments` (
   `amount_paid` decimal(10,2) NOT NULL,
   `transaction_reference` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `payments`
+--
+
+INSERT INTO `payments` (`payment_id`, `reference_id`, `payment_method_id`, `payment_status_id`, `payment_date`, `amount_paid`, `transaction_reference`) VALUES
+(1, '294199', 1, 2, '2025-10-27 10:07:12', 40.00, NULL);
 
 -- --------------------------------------------------------
 
@@ -352,6 +461,27 @@ INSERT INTO `payment_status` (`payment_status_id`, `status_name`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `water_types`
+--
+
+CREATE TABLE `water_types` (
+  `water_type_id` int(11) NOT NULL,
+  `type_name` varchar(50) NOT NULL,
+  `description` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `water_types`
+--
+
+INSERT INTO `water_types` (`water_type_id`, `type_name`, `description`) VALUES
+(1, 'Purified Water', 'Clean and safe drinking water through advanced filtration'),
+(2, 'Alkaline Water', 'pH-balanced water for better hydration'),
+(3, 'Mineral Water', 'Naturally enriched with essential minerals');
+
+-- --------------------------------------------------------
+
+--
 -- Structure for view `admin_management_view`
 --
 DROP TABLE IF EXISTS `admin_management_view`;
@@ -363,12 +493,19 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 
 --
+-- Indexes for table `accounts`
+--
+ALTER TABLE `accounts`
+  ADD PRIMARY KEY (`account_id`),
+  ADD UNIQUE KEY `unique_username` (`username`),
+  ADD KEY `customer_id` (`customer_id`);
+
+--
 -- Indexes for table `batches`
 --
 ALTER TABLE `batches`
   ADD PRIMARY KEY (`batch_id`),
-  ADD KEY `fk_batches_status` (`batch_status_id`),
-  ADD KEY `idx_batch_vehicle_type` (`vehicle_type`);
+  ADD KEY `batch_status_id` (`batch_status_id`);
 
 --
 -- Indexes for table `batch_employees`
@@ -397,14 +534,15 @@ ALTER TABLE `containers`
 ALTER TABLE `customers`
   ADD PRIMARY KEY (`customer_id`),
   ADD UNIQUE KEY `unique_customer_contact` (`customer_contact`),
-  ADD UNIQUE KEY `username` (`username`);
+  ADD UNIQUE KEY `email` (`email`),
+  ADD KEY `account_id` (`account_id`);
 
 --
 -- Indexes for table `customer_feedback`
 --
 ALTER TABLE `customer_feedback`
   ADD PRIMARY KEY (`feedback_id`),
-  ADD KEY `order_id` (`reference_id`),
+  ADD KEY `reference_id` (`reference_id`),
   ADD KEY `customer_id` (`customer_id`);
 
 --
@@ -429,6 +567,12 @@ ALTER TABLE `employees`
   ADD PRIMARY KEY (`employee_id`);
 
 --
+-- Indexes for table `inventory`
+--
+ALTER TABLE `inventory`
+  ADD PRIMARY KEY (`container_id`);
+
+--
 -- Indexes for table `orders`
 --
 ALTER TABLE `orders`
@@ -444,8 +588,10 @@ ALTER TABLE `orders`
 --
 ALTER TABLE `order_details`
   ADD PRIMARY KEY (`order_detail_id`),
-  ADD KEY `order_id` (`reference_id`),
-  ADD KEY `container_id` (`container_id`);
+  ADD KEY `reference_id` (`reference_id`),
+  ADD KEY `container_id` (`container_id`),
+  ADD KEY `order_details_ibfk_3` (`water_type_id`),
+  ADD KEY `order_details_ibfk_4` (`order_type_id`);
 
 --
 -- Indexes for table `order_status`
@@ -466,7 +612,7 @@ ALTER TABLE `order_types`
 --
 ALTER TABLE `payments`
   ADD PRIMARY KEY (`payment_id`),
-  ADD KEY `order_id` (`reference_id`),
+  ADD KEY `reference_id` (`reference_id`),
   ADD KEY `payment_method_id` (`payment_method_id`),
   ADD KEY `payment_status_id` (`payment_status_id`);
 
@@ -485,14 +631,27 @@ ALTER TABLE `payment_status`
   ADD UNIQUE KEY `status_name` (`status_name`);
 
 --
+-- Indexes for table `water_types`
+--
+ALTER TABLE `water_types`
+  ADD PRIMARY KEY (`water_type_id`),
+  ADD UNIQUE KEY `type_name` (`type_name`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
+
+--
+-- AUTO_INCREMENT for table `accounts`
+--
+ALTER TABLE `accounts`
+  MODIFY `account_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `batches`
 --
 ALTER TABLE `batches`
-  MODIFY `batch_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `batch_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `batch_employees`
@@ -504,7 +663,7 @@ ALTER TABLE `batch_employees`
 -- AUTO_INCREMENT for table `batch_status`
 --
 ALTER TABLE `batch_status`
-  MODIFY `batch_status_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `batch_status_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `containers`
@@ -516,19 +675,19 @@ ALTER TABLE `containers`
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `customer_feedback`
 --
 ALTER TABLE `customer_feedback`
-  MODIFY `feedback_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `feedback_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `deliveries`
 --
 ALTER TABLE `deliveries`
-  MODIFY `delivery_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `delivery_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `delivery_status`
@@ -546,7 +705,7 @@ ALTER TABLE `employees`
 -- AUTO_INCREMENT for table `order_details`
 --
 ALTER TABLE `order_details`
-  MODIFY `order_detail_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `order_detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `order_status`
@@ -564,7 +723,7 @@ ALTER TABLE `order_types`
 -- AUTO_INCREMENT for table `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `payment_methods`
@@ -579,14 +738,26 @@ ALTER TABLE `payment_status`
   MODIFY `payment_status_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
+-- AUTO_INCREMENT for table `water_types`
+--
+ALTER TABLE `water_types`
+  MODIFY `water_type_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `accounts`
+--
+ALTER TABLE `accounts`
+  ADD CONSTRAINT `accounts_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`customer_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `batches`
 --
 ALTER TABLE `batches`
-  ADD CONSTRAINT `fk_batches_status` FOREIGN KEY (`batch_status_id`) REFERENCES `batch_status` (`batch_status_id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `batches_ibfk_1` FOREIGN KEY (`batch_status_id`) REFERENCES `batch_status` (`batch_status_id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `batch_employees`
@@ -596,11 +767,17 @@ ALTER TABLE `batch_employees`
   ADD CONSTRAINT `batch_employees_ibfk_2` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `customers`
+--
+ALTER TABLE `customers`
+  ADD CONSTRAINT `customers_ibfk_1` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`account_id`) ON DELETE SET NULL;
+
+--
 -- Constraints for table `customer_feedback`
 --
 ALTER TABLE `customer_feedback`
   ADD CONSTRAINT `customer_feedback_ibfk_1` FOREIGN KEY (`reference_id`) REFERENCES `orders` (`reference_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `customer_feedback_ibfk_2` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`customer_id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `customer_feedback_ibfk_2` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`customer_id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `deliveries`
@@ -610,20 +787,28 @@ ALTER TABLE `deliveries`
   ADD CONSTRAINT `deliveries_ibfk_2` FOREIGN KEY (`delivery_status_id`) REFERENCES `delivery_status` (`delivery_status_id`) ON DELETE SET NULL;
 
 --
+-- Constraints for table `inventory`
+--
+ALTER TABLE `inventory`
+  ADD CONSTRAINT `inventory_ibfk_1` FOREIGN KEY (`container_id`) REFERENCES `containers` (`container_id`);
+
+--
 -- Constraints for table `orders`
 --
 ALTER TABLE `orders`
-  ADD CONSTRAINT `fk_orders_batch` FOREIGN KEY (`batch_id`) REFERENCES `batches` (`batch_id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_orders_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`customer_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_orders_status` FOREIGN KEY (`order_status_id`) REFERENCES `order_status` (`status_id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_orders_type` FOREIGN KEY (`order_type_id`) REFERENCES `order_types` (`order_type_id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`customer_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `orders_ibfk_2` FOREIGN KEY (`order_type_id`) REFERENCES `order_types` (`order_type_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `orders_ibfk_3` FOREIGN KEY (`batch_id`) REFERENCES `batches` (`batch_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `orders_ibfk_4` FOREIGN KEY (`order_status_id`) REFERENCES `order_status` (`status_id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `order_details`
 --
 ALTER TABLE `order_details`
-  ADD CONSTRAINT `fk_order_details_container` FOREIGN KEY (`container_id`) REFERENCES `containers` (`container_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_order_details_order` FOREIGN KEY (`reference_id`) REFERENCES `orders` (`reference_id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `order_details_ibfk_1` FOREIGN KEY (`reference_id`) REFERENCES `orders` (`reference_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `order_details_ibfk_2` FOREIGN KEY (`container_id`) REFERENCES `containers` (`container_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `order_details_ibfk_3` FOREIGN KEY (`water_type_id`) REFERENCES `water_types` (`water_type_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `order_details_ibfk_4` FOREIGN KEY (`order_type_id`) REFERENCES `order_types` (`order_type_id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `payments`

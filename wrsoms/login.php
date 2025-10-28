@@ -17,7 +17,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "Username and password are required.";
     } else {
         try {
-            $stmt = $pdo->prepare("SELECT customer_id, username, password FROM customers WHERE username = ?");
+            $stmt = $pdo->prepare("
+                SELECT a.customer_id, a.username, a.password, a.is_verified
+                FROM accounts a
+                WHERE a.username = ? AND a.is_verified = 1
+            ");
             $stmt->execute([$username]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -27,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header("Location: index.php");
                 exit;
             } else {
-                $errors[] = "Invalid username or password.";
+                $errors[] = "Invalid username, password, or account not verified.";
             }
         } catch (PDOException $e) {
             $errors[] = "Login failed: " . $e->getMessage();

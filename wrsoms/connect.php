@@ -4,7 +4,7 @@ $host = 'localhost';
 $port = '3306';
 $dbname = 'wrsoms';
 $username = 'root';
-$password = 'your_password'; // Replace with your phpMyAdmin password
+$password = ''; // Replace with your phpMyAdmin password
 
 try {
     $pdo = new PDO("mysql:host=$host;port=$port;dbname=$dbname", $username, $password);
@@ -13,3 +13,5 @@ try {
     die("Connection failed: " . $e->getMessage());
 
 }
+$pdo->exec("SET time_zone = '-07:00';"); // Set to PST
+?>

@@ -275,9 +275,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_order'])) {
             ];
 
             // Clear the cart and temp address
-            //$_SESSION['cart'] = [];
-            //unset($_SESSION['cart']);
-            //unset($_SESSION['temp_address']);
+            $_SESSION['cart'] = [];
+            unset($_SESSION['cart']);
+            unset($_SESSION['temp_address']);
 
             $success = "Order placed successfully in Batch #$batch_number ($vehicle_type)!";
 
@@ -836,11 +836,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['close_receipt'])) {
         </div>
 
         <!-- Receipt Modal -->
-        <?php 
-$show_receipt_modal = isset($_SESSION['receipt_data']) && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_order']);
-?>
-<div id="receiptModal" class="modal" style="display: <?php echo $show_receipt_modal ? 'flex' : 'none'; ?>;">
-
+        <div id="receiptModal" class="modal" style="display: <?php echo isset($_SESSION['receipt_data']) ? 'flex' : 'none'; ?>;">
             <div class="modal-content">
                 <h2>Your Order Summary</h2>
                 <?php if (isset($_SESSION['receipt_data']) && !empty($_SESSION['receipt_data']['items'])): ?>
@@ -863,10 +859,9 @@ $show_receipt_modal = isset($_SESSION['receipt_data']) && $_SERVER['REQUEST_METH
                 <p><strong>Vehicle Type:</strong> <?php echo isset($_SESSION['receipt_data']) ? htmlspecialchars($_SESSION['receipt_data']['vehicle_type']) : ''; ?></p>
                 <p><strong>Batch Number:</strong> Batch #<?php echo isset($_SESSION['receipt_data']) ? htmlspecialchars($_SESSION['receipt_data']['batch_number']) : ''; ?></p>
                 <p class="warning">Please take a screenshot of this receipt for your records!</p>
-                <form method="POST" action="create_payment.php">
-    <input type="hidden" name="confirm_payment" value="1">
-    <button type="submit" class="place-order-btn">Proceed to Payment</button>
-</form>
+                <form method="POST" action="">
+                    <button type="submit" name="close_receipt">Confirm Order</button>
+                </form>
             </div>
         </div>
 

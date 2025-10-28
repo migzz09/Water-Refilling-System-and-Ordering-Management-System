@@ -686,8 +686,7 @@ try {
         </div>
         <ul>
             <li class="active"><button type="button" onclick="showDashboard()">Dashboard</button></li>
-            <li><button type="button" onclick="showManageOrders()">Manage Orders</button></li>
-            <li><button type="button" onclick="showArchivedOrders()">Archived Orders</button></li>
+            <li><a href="manage_orders.php">Manage Orders</a></li>
             <li><a href="status.php">Manage Status</a></li>
             <li><button type="button" onclick="showDailyReport()">Daily Report</button></li>
             <li><button type="button" onclick="toggleFeedbackPanel()">Feedback</button></li>
@@ -918,80 +917,6 @@ try {
                     console.error('Error fetching daily report:', error);
                     document.getElementById('mainContent').innerHTML = '<p>Error loading daily report. Please try again.</p>';
                 });
-        }
-
-        function showManageOrders(searchQuery = '') {
-    const url = searchQuery
-        ? 'manage_orders.php?search=' + encodeURIComponent(searchQuery)
-        : 'manage_orders.php';
-
-    fetch(url)
-        .then(response => response.text())
-        .then(data => {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(data, 'text/html');
-            const content = doc.querySelector('.container-fluid')?.outerHTML || '<p>Unable to load Manage Orders.</p>';
-            document.getElementById('mainContent').innerHTML = content;
-
-            const searchForm = document.querySelector('#mainContent form[method="get"]');
-            if (searchForm) {
-                searchForm.addEventListener('submit', function (e) {
-                    e.preventDefault();
-                    const query = this.querySelector('input[name="search"]').value;
-                    showManageOrders(query);
-                });
-            }
-
-            const clearBtn = document.querySelector('#mainContent a.btn-link');
-            if (clearBtn) {
-                clearBtn.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    showManageOrders();
-                });
-            }
-
-            const activeItem = document.querySelector('.sidebar li.active');
-            if (activeItem) activeItem.classList.remove('active');
-            document.querySelector('.sidebar li button[onclick="showManageOrders()"]').parentElement.classList.add('active');
-        })
-        .catch(error => {
-            console.error('Error loading Manage Orders:', error);
-            document.getElementById('mainContent').innerHTML = '<p>Error loading Manage Orders page.</p>';
-        });
-}
-
-        function showArchivedOrders() {
-        fetch('archived_orders.php')
-            .then(response => response.text())
-            .then(data => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(data, 'text/html');
-                const content = doc.querySelector('.container-fluid')?.outerHTML || '<p>Unable to load Archived Orders.</p>';
-                document.getElementById('mainContent').innerHTML = content;
-
-                const activeItem = document.querySelector('.sidebar li.active');
-                if (activeItem) activeItem.classList.remove('active');
-                document.querySelector('.sidebar li button[onclick="showArchivedOrders()"]').parentElement.classList.add('active');
-            })
-            .catch(error => {
-                console.error('Error loading Archived Orders:', error);
-                document.getElementById('mainContent').innerHTML = '<p>Error loading Archived Orders page.</p>';
-            });
-        }
-        function searchManageOrders(query = '') {
-        const url = 'manage_orders.php' + (query ? '?search=' + encodeURIComponent(query) : '');
-        fetch(url)
-        .then(response => response.text())
-        .then(data => {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(data, 'text/html');
-            const content = doc.querySelector('.container-fluid')?.outerHTML || '<p>Unable to load Manage Orders.</p>';
-            document.getElementById('mainContent').innerHTML = content;
-        })
-        .catch(error => {
-            console.error('Error fetching search results:', error);
-            document.getElementById('mainContent').innerHTML = '<p>Error loading search results.</p>';
-        });
         }
 
         function fetchDates() {
