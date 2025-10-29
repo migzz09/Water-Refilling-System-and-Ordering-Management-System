@@ -1,5 +1,5 @@
 <?php
 return [
-    'gmail_username' => 'jgillego.a12345324@umak.edu.ph',
-    'gmail_app_password' => 'tjpz lubr gsto dqlj',
+    'gmail_username' => 'your_username',
+    'gmail_app_password' => 'your_app_password',
 ];
