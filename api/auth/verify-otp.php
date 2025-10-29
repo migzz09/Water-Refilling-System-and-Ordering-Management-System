@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Verify OTP API Endpoint
  * Method: POST
@@ -24,12 +24,8 @@ if (empty($otp)) {
     $errors[] = "OTP is required.";
 }
 
-if (!isset($_SESSION['registration_otp'])) {
+if (!isset($_SESSION['registered_email'])) {
     $errors[] = "No OTP session found. Please register again.";
-}
-
-if (isset($_SESSION['otp_expiry']) && time() > $_SESSION['otp_expiry']) {
-    $errors[] = "OTP has expired. Please register again.";
 }
 
 if (!empty($errors)) {
@@ -38,45 +34,39 @@ if (!empty($errors)) {
     exit;
 }
 
-// Verify OTP
-if ($otp !== $_SESSION['registration_otp']) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'errors' => ['Invalid OTP code.']]);
-    exit;
-}
+$email = $_SESSION['registered_email'];
 
-// OTP is valid, complete registration
 try {
-    $data = $_SESSION['registration_data'];
-    
-    // Insert customer with email
-    $stmt = $pdo->prepare("
-        INSERT INTO customers (first_name, last_name, customer_contact, email, street, barangay, city, province)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    ");
-    $stmt->execute([
-        $data['firstName'],
-        $data['lastName'],
-        $data['contact'],
-        $data['email'],
-        $data['street'],
-        $data['barangay'],
-        $data['city'],
-        $data['province']
-    ]);
-    $customerId = $pdo->lastInsertId();
+    // Find account matching the email and active OTP
+    $stmt = $pdo->prepare('SELECT a.account_id, a.otp, a.otp_expires, c.customer_id FROM accounts a JOIN customers c ON a.customer_id = c.customer_id WHERE c.email = ?');
+    $stmt->execute([$email]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$row) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'message' => 'Registration session not found. Please register again.']);
+        exit;
+    }
 
-    // Insert account
-    $stmt = $pdo->prepare("
-        INSERT INTO accounts (customer_id, username, password, is_verified)
-        VALUES (?, ?, ?, 1)
-    ");
-    $stmt->execute([$customerId, $data['username'], $data['password']]);
+    // Check expiry
+    if (empty($row['otp']) || strtotime($row['otp_expires']) < time()) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'OTP has expired. Please request a new one.']);
+        exit;
+    }
 
-    // Clear registration session data
-    unset($_SESSION['registration_otp']);
-    unset($_SESSION['registration_data']);
-    unset($_SESSION['otp_expiry']);
+    if ($otp !== $row['otp']) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid OTP code.']);
+        exit;
+    }
+
+    // Mark account as verified and clear OTP
+    $stmt = $pdo->prepare('UPDATE accounts SET is_verified = 1, otp = NULL, otp_expires = NULL WHERE account_id = ?');
+    $stmt->execute([$row['account_id']]);
+
+    // Clear session keys used for registration
+    unset($_SESSION['registered_email']);
+    unset($_SESSION['otp_last_sent']);
 
     echo json_encode([
         'success' => true,

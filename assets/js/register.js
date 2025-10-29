@@ -19,12 +19,11 @@ async function loadCities() {
 
 // Populate city dropdown
 function populateCityDropdown() {
-    const citySelect = document.getElementById('city');
-    const barangaySelect = document.getElementById('barangay');
+    const citySelect = document.getElementById('register_city');
     
-    // Initially disable barangay dropdown
-    if (barangaySelect) {
-        barangaySelect.disabled = true;
+    // Initially clear any existing options except the first one
+    while (citySelect.options.length > 1) {
+        citySelect.remove(1);
     }
     
     // Populate cities
@@ -38,8 +37,8 @@ function populateCityDropdown() {
 
 // Update barangay dropdown based on selected city
 function updateBarangays() {
-    const citySelect = document.getElementById('city');
-    const barangaySelect = document.getElementById('barangay');
+    const citySelect = document.getElementById('register_city');
+    const barangaySelect = document.getElementById('register_barangay');
     const selectedCity = citySelect.value;
 
     // Clear barangay dropdown
@@ -72,17 +71,18 @@ async function handleRegistration(e) {
     const submitBtn = form.querySelector('[type="submit"]');
     setButtonLoading(submitBtn, true);
 
+    // Collect values from the register form (IDs in the HTML are prefixed with 'register_')
     const formData = {
-        username: document.getElementById('username').value.trim(),
-        password: document.getElementById('password').value.trim(),
-        email: document.getElementById('email').value.trim(),
-        contact: document.getElementById('contact').value.trim(),
-        first_name: document.getElementById('first_name').value.trim(),
-        last_name: document.getElementById('last_name').value.trim(),
-        street: document.getElementById('street').value.trim(),
-        barangay: document.getElementById('barangay').value,
-        city: document.getElementById('city').value,
-        province: 'Metro Manila'
+        username: (document.getElementById('register_username') || {}).value ? document.getElementById('register_username').value.trim() : '',
+        password: (document.getElementById('register_password') || {}).value ? document.getElementById('register_password').value.trim() : '',
+        email: (document.getElementById('register_email') || {}).value ? document.getElementById('register_email').value.trim() : '',
+        contact: (document.getElementById('register_contact') || {}).value ? document.getElementById('register_contact').value.trim() : '',
+        first_name: (document.getElementById('register_first_name') || {}).value ? document.getElementById('register_first_name').value.trim() : '',
+        last_name: (document.getElementById('register_last_name') || {}).value ? document.getElementById('register_last_name').value.trim() : '',
+        street: (document.getElementById('register_street') || {}).value ? document.getElementById('register_street').value.trim() : '',
+        barangay: document.getElementById('register_barangay') ? document.getElementById('register_barangay').value : '',
+        city: document.getElementById('register_city') ? document.getElementById('register_city').value : '',
+        province: document.getElementById('register_province') ? document.getElementById('register_province').value : 'Metro Manila'
     };
 
     try {
@@ -164,23 +164,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Toggle password visibility
-function togglePassword() {
-    const passwordInput = document.getElementById('password');
-    const passwordToggle = document.querySelector('.password-toggle');
+// Toggle password visibility for any password field
+function togglePassword(button) {
+    const passwordInput = button.parentElement.querySelector('input');
+    const icon = button.querySelector('i');
+    
     if (passwordInput.type === 'password') {
         passwordInput.type = 'text';
-        passwordToggle.innerHTML = `
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-            <circle cx="12" cy="12" r="3"/>
-            <line x1="3" y1="3" x2="21" y2="21" stroke="currentColor" stroke-width="2"/>
-        `;
+        icon.className = 'fa fa-eye-slash';
     } else {
         passwordInput.type = 'password';
-        passwordToggle.innerHTML = `
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-            <circle cx="12" cy="12" r="3"/>
-        `;
+        icon.className = 'fa fa-eye';
     }
 }
 
@@ -246,7 +240,7 @@ function startOTPTimer() {
             timerElement.textContent = 'You can now resend OTP';
             resendButton.disabled = false;
         } else {
-            timerElement.textContent = `Resend OTP in ${timeLeft}s`;
+            timerElement.textContent = 'Resend OTP in ' + timeLeft + 's';
             timeLeft--;
         }
     }, 1000);

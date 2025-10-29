@@ -7,44 +7,798 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="../assets/css/design-system.css">
-    <link rel="stylesheet" href="../assets/css/register.css">
-    <!-- Keeping inline styles for now - can be removed after testing -->
     <style>
+        /* Variables and Base Styles */
+        :root {
+            --primary-blue: #008CBA;
+            --primary-blue-dark: #0077A3;
+            --secondary-teal: #5FA883;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --white: #fff;
+            --border-color: #e0e0e0;
+            --border-light: #f0f0f0;
+            --bg-light: #f5f7fa;
+            --bg-white: #fff;
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 25px rgba(0,0,0,0.1);
+            --transition-base: 0.3s ease;
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+            --success: #2e7d32;
+            --success-light: #e8f5e9;
+            --success-border: #a5d6a7;
+            --error: #d32f2f;
+            --error-light: #ffebee;
+            --error-border: #ef9a9a;
+        }
+
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         }
+        
         body {
-            background-color: #f9fbfc;
-            color: #333;
-            line-height: 1.6;
-            overflow-x: hidden;
+            min-height: 100vh;
+            background: var(--bg-light);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
         }
-        header {
-            background: #ffffffcc;
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        button {
+            font: inherit;
+            cursor: pointer;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            font-weight: 500;
+            border-radius: var(--radius-md);
+            transition: all var(--transition-base);
+        }
+
+        .btn-outline {
+            color: var(--primary-blue);
+            background: transparent;
+            border: 1.5px solid var(--primary-blue);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary-blue);
+            color: white;
+        }
+        
+        /* Navbar Styles */
+        .navbar.glass {
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            padding: 1rem 5%;
+            -webkit-backdrop-filter: blur(10px);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .nav-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid #e5e5e5;
-            position: sticky;
+            padding: 1rem 0;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .nav-logo {
+            height: 34px;
+            width: auto;
+        }
+
+        .brand-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--primary-blue-dark) 0%, var(--secondary-teal) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-blue);
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        /* Main Content */
+        main {
+            flex: 1;
+            min-height: 100vh;
+            padding: 80px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-light);
+        }
+
+        /* Registration Form */
+        .register-section {
+            flex: 1;
+            padding: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .register-container {
+            width: 100%;
+            max-width: 1200px;
+            min-height: 600px;
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .register-left {
+            flex: 0 0 40%;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-teal) 100%);
+            padding: 4rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            position: relative;
+        }
+
+        .register-left-content {
+            max-width: 320px;
+            margin: 0 auto;
+            text-align: center;
+            z-index: 1;
+        }
+
+        .register-logo {
+            width: 120px;
+            height: auto;
+            margin: 0 auto 2rem;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+        }
+
+        .register-right {
+            flex: 0 0 60%;
+            padding: 3rem 2rem;
+            background: var(--white);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        .register-right-content {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .form-title {
+            color: var(--text-primary);
+            font-size: 2.25rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .form-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 1.5px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            color: var(--text-primary);
+            background: var(--white);
+            transition: all var(--transition-base);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 2px rgba(0, 140, 186, 0.2);
+            outline: none;
+        }
+
+        .form-group input[type="submit"] {
+            background: var(--primary-blue);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .form-group input[type="submit"]:hover {
+            background: var(--primary-blue-dark);
+            transform: translateY(-1px);
+        }
+
+        /* OTP Modal */
+        .otp-section {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow-xl);
+            z-index: 1100;
+            width: 90%;
+            max-width: 500px;
+            display: none;
+        }
+
+        .otp-overlay {
+            position: fixed;
             top: 0;
-            z-index: 1000;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1050;
+            display: none;
+        }
+
+        .otp-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition-base);
+        }
+
+        .otp-close:hover {
+            color: var(--text-primary);
+            background: var(--bg-light);
+        }
+
+        .otp-columns {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            text-align: center;
+        }
+
+        .otp-inputs {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin: 1.5rem 0;
+        }
+
+        .otp-inputs input {
+            width: 40px;
+            height: 40px;
+            text-align: center;
+            font-size: 1.2rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            transition: all var(--transition-base);
+        }
+
+        .otp-inputs input:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 2px rgba(0, 140, 186, 0.2);
+            outline: none;
+        }
+
+        .otp-timer {
+            color: var(--text-secondary);
+            margin: 1rem 0;
+        }
+
+        .otp-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        /* Footer Styles */
+        .site-footer {
+            background: var(--white);
+            padding: 1.5rem 0;
+            margin-top: auto;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .site-footer .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .copyright {
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .site-footer .socials {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .site-footer .socials a {
+            color: var(--text-secondary);
+            transition: color 0.3s;
+            font-size: 1.25rem;
+        }
+
+        .site-footer .socials a:hover {
+            color: var(--primary-blue);
+        }
+
+        @media (max-width: 992px) {
+            .register-container {
+                max-width: calc(100% - 2rem);
+                margin: 1rem;
+            }
+
+            .register-left {
+                flex: 0 0 45%;
+                padding: 3rem 1.5rem;
+            }
+
+            .register-right {
+                flex: 0 0 55%;
+                padding: 2.5rem 1.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .register-container {
+                flex-direction: column;
+                margin: 0;
+                min-height: 100vh;
+                border-radius: 0;
+            }
+
+            .register-section {
+                padding: 0;
+            }
+
+            .register-left {
+                flex: none;
+                padding: 2.5rem 1.5rem;
+            }
+
+            .register-right {
+                flex: none;
+                padding: 2rem 1.5rem;
+            }
+
+            .register-left-content {
+                max-width: 280px;
+            }
+
+            .register-right-content {
+                max-width: 100%;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .register-left {
+                padding: 2rem 1rem;
+            }
+
+            .register-right {
+                padding: 1.5rem 1rem;
+            }
+
+            .form-grid {
+                gap: 0.75rem;
+            }
+        }
+    </style>
+
+            <style>
+            /* Form Styling */
+        .form-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .form-header h2 {
+            color: var(--text-primary);
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .form-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .form-group {
+            margin: 0;
+            position: relative;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 1.5px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            color: var(--text-primary);
+            background: var(--white);
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 2px rgba(0, 140, 186, 0.2);
+            outline: none;
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary-blue-dark) 0%, var(--secondary-teal) 100%);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        /* Success/Error Messages */
+        .success,
+        .error {
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .success {
+            background: var(--success-light);
+            color: var(--success);
+            border: 1px solid var(--success-border);
+        }
+
+        .error {
+            background: var(--error-light);
+            color: var(--error);
+            border: 1px solid var(--error-border);
+        }
+
+        .error ul {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+
+        /* OTP Modal */
+        .otp-section {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--white);
+            padding: 3rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            z-index: 1100;
+            width: 90%;
+            max-width: 600px;
+            display: none;
+        }
+
+        .otp-section.active {
+            display: block;
+        }
+
+        .otp-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            padding: 0.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: color 0.3s;
+        }
+
+        .otp-close:hover {
+            color: var(--primary-blue);
+        }
+
+        .otp-columns {
+            display: flex;
+            gap: 2.5rem;
+            align-items: center;
+        }
+
+        .otp-column {
+            flex: 1;
+            text-align: center;
+        }
+
+        .otp-section h2 {
+            color: var(--primary-blue);
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .otp-message {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .otp-inputs {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin: 1.5rem 0;
+        }
+
+        .otp-digit {
+            width: 40px;
+            height: 40px;
+            text-align: center;
+            font-size: 1.2rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            transition: all 0.3s;
+        }
+
+        .otp-digit:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 2px rgba(0, 140, 186, 0.2);
+            outline: none;
+        }
+
+        .otp-timer {
+            color: var(--text-secondary);
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .otp-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+        .register-container {
+            display: flex;
+            min-height: 100vh;
+            margin: 0;
+            background: var(--bg-light);
+        }            .register-left {
+                padding: 2rem;
+            }
+
+            .register-right {
+                padding: 2rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .form-header h2 {
+                font-size: 1.75rem;
+            }
+
+            .nav-menu {
+                display: none;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .otp-columns {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
         }
         .logo {
             font-size: 1.5rem;
-            font-weight: bold;
+            font-weight: 600;
             color: #008CBA;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         nav ul {
             list-style: none;
             display: flex;
-            gap: 1.5rem;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+            gap: 2rem;
             align-items: center;
         }
         nav ul li a {
@@ -52,8 +806,11 @@
             color: #333;
             font-weight: 500;
             position: relative;
-            padding-bottom: 4px;
+            padding: 0.5rem 0;
             transition: color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         nav ul li a::after {
             content: "";
@@ -63,13 +820,43 @@
             bottom: 0;
             left: 0;
             background: #008CBA;
-            transition: width 0.3s;
+            transition: width 0.3s ease;
         }
         nav ul li a:hover {
             color: #008CBA;
         }
         nav ul li a:hover::after {
             width: 100%;
+        }
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .btn {
+            padding: 0.5rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .btn-outline {
+            border: 1.5px solid #008CBA;
+            color: #008CBA;
+            background: transparent;
+        }
+        .btn-outline:hover {
+            background: #008CBA;
+            color: white;
+        }
+        .btn-primary {
+            background: #008CBA;
+            color: white;
+            border: 1.5px solid #008CBA;
+        }
+        .btn-primary:hover {
+            background: #006d8f;
+            border-color: #006d8f;
         }
         .hero {
             min-height: 100vh;
@@ -78,10 +865,9 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            background: linear-gradient(rgba(0, 140, 186, 0.6), rgba(0, 140, 186, 0.6)),
-                        url('../assets/images/Water World Facade.jpg') no-repeat center/cover;
+            /* Use site-wide water-bg (defined in design-system.css) for consistent hero style */
             color: white;
-            padding: 4rem 5%;
+            padding: 6rem 5% 4rem 5%; /* increased top padding so navbar doesn't overlap */
             position: relative;
         }
         .auth-section {
@@ -108,7 +894,7 @@
         }
         .form-column {
             flex: 1;
-            min-width: 450px;
+            min-width: 280px; /* more responsive on small screens */
         }
         .form-group {
             margin-bottom: 1.2rem;
@@ -315,27 +1101,43 @@
             cursor: not-allowed;
             transform: none;
         }
-        footer {
-            background: #008CBA;
-            color: white;
-            text-align: center;
-            padding: 2rem 5%;
-            margin-top: 2rem;
-            position: relative;
-            z-index: 10;
+        .site-footer {
+            background: var(--white);
+            padding: 1.5rem 0;
+            border-top: 1px solid var(--border-light);
         }
-        footer .socials {
-            margin: 1rem 0;
+
+        .site-footer .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
         }
-        footer .socials a {
-            margin: 0 10px;
-            color: white;
-            text-decoration: none;
-            font-size: 1.2rem;
-            transition: color 0.3s;
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        footer .socials a:hover {
-            color: #cceeff;
+
+        .copyright {
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .site-footer .socials {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .site-footer .socials a {
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+            transition: color 0.3s ease;
+        }
+
+        .site-footer .socials a:hover {
+            color: var(--primary-blue);
         }
         @keyframes fadeIn {
             from { opacity: 0; }
@@ -344,152 +1146,199 @@
     </style>
 </head>
 <body>
-<header style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 5%;">
-    <div class="logo" style="display: flex; align-items: center;">
-        <img src="../assets/images/ww_logo.png" alt="WaterWorld Logo" style="height: 2.5rem; margin-right: 0.75rem;">
-        WaterWorld
-    </div>
-    <nav style="display: flex; align-items: center;">
-        <ul style="display: flex; list-style: none; gap: 1.5rem; align-items: center; margin: 0; padding: 0;">
-            <li><a href="../index.html" style="text-decoration: none; color: #333; font-weight: 500;">Home</a></li>
-            <li><a href="order-tracking.html" style="text-decoration: none; color: #333; font-weight: 500;">Track</a></li>
-            <li><a href="login.html" style="text-decoration: none; color: #333; font-weight: 500;">Login</a></li>
-        </ul>
-    </nav>
-</header>
-
-<section class="hero">
-    <div class="auth-section">
-        <h2>Register</h2>
-        <div id="success-container" class="success" style="display: none;">
-            <p id="success-message"></p>
-        </div>
-        <div id="error-container" class="error" style="display: none;">
-            <ul id="error-list"></ul>
-        </div>
-        <form method="POST" id="registration-form" name="register_form">
-            <div class="form-columns">
-                <div class="form-column">
-                    <div class="form-group">
-                        <label for="username">Username</label>
-                        <input type="text" name="username" id="username" value="" required>
+    <!-- Navigation -->
+        <nav class="navbar glass">
+            <div class="container">
+                <div class="nav-content">
+                    <a href="../index.html" class="nav-brand">
+                        <img src="../assets/images/ww_logo.png" alt="WaterWorld Logo" class="nav-logo">
+                        <span class="brand-name">WaterWorld</span>
+                    </a>
+                    
+                    <div class="nav-menu">
+                        <a href="../index.html" class="nav-link">
+                            <i class="fa fa-home"></i>
+                            Home
+                        </a>
+                        <a href="product.html" class="nav-link">
+                            <i class="fa fa-shopping-cart"></i>
+                            Products
+                        </a>
+                        <a href="order-tracking.html" class="nav-link">
+                            <i class="fa fa-search"></i>
+                            Track Order
+                        </a>
+                        <a href="../index.html#services" class="nav-link">
+                            <i class="fa fa-tint"></i>
+                            Services
+                        </a>
+                        <a href="../index.html#contact" class="nav-link">
+                            <i class="fa fa-envelope"></i>
+                            Contact
+                        </a>
                     </div>
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <div class="password-wrapper">
-                            <input type="password" name="password" id="password" required>
-                            <svg class="password-toggle" onclick="togglePassword()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                <circle cx="12" cy="12" r="3"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="first_name">First Name</label>
-                        <input type="text" name="first_name" id="first_name" value="" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="last_name">Last Name</label>
-                        <input type="text" name="last_name" id="last_name" value="" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="contact">Contact Number (e.g., 09XXXXXXXXX)</label>
-                        <input type="text" name="contact" id="contact" value="" pattern="[0-9]{11}" maxlength="11" placeholder="09XXXXXXXXX" required>
+                    
+                    <div class="nav-actions">
+                        <a href="login.html" class="btn btn-outline">
+                            <i class="fa fa-sign-in"></i>
+                            Login
+                        </a>
                     </div>
                 </div>
-                <div class="form-column">
-                    <div class="form-group">
-                        <label for="email">Email</label>
-                        <input type="email" name="email" id="email" value="" required>
+            </div>
+        </nav>
+    
+    <main>
+        <div class="register-container">
+            <div class="register-left">
+                <div class="register-left-content">
+                    <img src="../assets/images/ww_logo.png" alt="WaterWorld Logo" class="register-logo">
+                    <h1>Welcome to<br>WaterWorld</h1>
+                    <p>Join our community and enjoy pure, fresh water delivered right to your doorstep. Create your account to get started!</p>
+                </div>
+            </div>
+        
+            <div class="register-right">
+                <div class="register-right-content">
+                    <div class="form-header">
+                        <h2>Create Account</h2>
+                        <p>Fill in your details to register</p>
                     </div>
+
+                <div id="success-container" class="success" style="display: none;">
+                    <p id="success-message"></p>
+                </div>
+                <div id="error-container" class="error" style="display: none;">
+                    <ul id="error-list"></ul>
+                </div>
+
+                <form method="POST" id="registration-form" name="register_form" action="/api/auth/register.php" class="form-grid">
                     <div class="form-group">
-                        <label for="street">Street</label>
-                        <input type="text" name="street" id="street" value="" required>
+                        <label for="register_username">Username</label>
+                        <input type="text" class="form-control" name="username" id="register_username" placeholder="Choose a username" required>
                     </div>
+                    
                     <div class="form-group">
-                        <label for="city">City</label>
-                        <select name="city" id="city" required onchange="updateBarangays()">
+                        <label for="register_email">Email</label>
+                        <input type="email" class="form-control" name="email" id="register_email" placeholder="Enter your email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register_password">Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" class="form-control" name="password" id="register_password" placeholder="Create a strong password" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword(this)" aria-label="Toggle password visibility">
+                                <i class="fa fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register_first_name">First Name</label>
+                        <input type="text" class="form-control" name="first_name" id="register_first_name" placeholder="First name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register_last_name">Last Name</label>
+                        <input type="text" class="form-control" name="last_name" id="register_last_name" placeholder="Last name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register_contact">Contact Number</label>
+                        <input type="text" class="form-control" name="contact" id="register_contact" pattern="[0-9]{11}" maxlength="11" placeholder="09XXXXXXXXX" title="Contact number in format 09XXXXXXXXX" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register_street">Street</label>
+                        <input type="text" class="form-control" name="street" id="register_street" placeholder="Street address" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register_city">City</label>
+                        <select name="city" id="register_city" class="form-control" required onchange="updateBarangays()">
                             <option value="">Select City</option>
                         </select>
                     </div>
+
                     <div class="form-group">
-                        <label for="barangay">Barangay</label>
-                        <select name="barangay" id="barangay" required>
+                        <label for="register_barangay">Barangay</label>
+                        <select name="barangay" id="register_barangay" class="form-control" required>
                             <option value="">Select Barangay</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <input type="hidden" name="province" id="province" value="Metro Manila">
-                        <input type="submit" name="register_submit" value="Register">
-                    </div>
-                </div>
-            </div>
-        </form>
 
-        <!-- OTP Verification Popup -->
-        <div id="otp-form" class="otp-section">
-            <svg class="otp-close" onclick="closeOTPForm()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-            <div class="otp-columns">
-                <div class="otp-column">
-                    <div style="font-size: 4rem; text-align: center; margin: 0 auto 1.5rem;">🔐</div>
-                    <h2>Verify Your OTP</h2>
-                    <p class="otp-message">OTP sent to <span id="otp-email"></span></p>
+                    <div class="form-group full-width">
+                        <input type="hidden" name="province" id="register_province" value="Metro Manila">
+                        <button type="submit" name="register_submit" class="btn btn-primary btn-lg">Register</button>
+                    </div>
+                </form>
+
+    </div>
+
+    <!-- OTP Modal -->
+    <div class="otp-overlay" id="otp-overlay"></div>
+    <div id="otp-form" class="otp-section">
+        <button class="otp-close" onclick="closeOTPForm()" aria-label="Close OTP dialog">
+            <i class="fa fa-times"></i>
+        </button>
+        <div class="otp-columns">
+            <div class="otp-column">
+                <div style="font-size: 4rem; text-align: center; margin: 0 auto 1.5rem;">🔐</div>
+                <h2>Verify Your OTP</h2>
+                <p class="otp-message">OTP sent to <span id="otp-email"></span></p>
+            </div>
+            <div class="otp-column">
+                <div id="otp-success-container" class="success" style="display: none;">
+                    <p id="otp-success-message"></p>
                 </div>
-                <div class="otp-column">
-                    <div id="otp-success-container" class="success" style="display: none;">
-                        <p id="otp-success-message"></p>
-                    </div>
-                    <div id="otp-error-container" class="error" style="display: none;">
-                        <ul id="otp-error-list"></ul>
-                    </div>
-                    <form method="POST" id="form-element">
-                        <div class="form-group">
-                            <label for="otp">Enter OTP</label>
-                            <div class="otp-inputs">
-                                <input type="text" maxlength="1" pattern="[0-9]" class="otp-digit" required oninput="moveToNext(this, 0)">
-                                <input type="text" maxlength="1" pattern="[0-9]" class="otp-digit" required oninput="moveToNext(this, 1)" onkeydown="moveToPrev(this, 0)">
-                                <input type="text" maxlength="1" pattern="[0-9]" class="otp-digit" required oninput="moveToNext(this, 2)" onkeydown="moveToPrev(this, 1)">
-                                <input type="text" maxlength="1" pattern="[0-9]" class="otp-digit" required oninput="moveToNext(this, 3)" onkeydown="moveToPrev(this, 2)">
-                                <input type="text" maxlength="1" pattern="[0-9]" class="otp-digit" required oninput="moveToNext(this, 4)" onkeydown="moveToPrev(this, 3)">
-                                <input type="text" maxlength="1" pattern="[0-9]" class="otp-digit" required oninput="moveToNext(this, 5)" onkeydown="moveToPrev(this, 4)">
-                                <input type="hidden" name="otp" id="otp-hidden">
-                            </div>
+                <div id="otp-error-container" class="error" style="display: none;">
+                    <ul id="otp-error-list"></ul>
+                </div>
+                <form method="POST" id="form-element">
+                    <div class="form-group">
+                        <label for="otp">Enter OTP</label>
+                        <div class="otp-inputs">
+                            <input type="text" maxlength="1" pattern="[0-9]" class="otp-digit" required oninput="moveToNext(this, 0)" aria-label="OTP digit 1" title="OTP digit 1" placeholder="•">
+                            <input type="text" maxlength="1" pattern="[0-9]" class="otp-digit" required oninput="moveToNext(this, 1)" onkeydown="moveToPrev(this, 0)" aria-label="OTP digit 2" title="OTP digit 2" placeholder="•">
+                            <input type="text" maxlength="1" pattern="[0-9]" class="otp-digit" required oninput="moveToNext(this, 2)" onkeydown="moveToPrev(this, 1)" aria-label="OTP digit 3" title="OTP digit 3" placeholder="•">
+                            <input type="text" maxlength="1" pattern="[0-9]" class="otp-digit" required oninput="moveToNext(this, 3)" onkeydown="moveToPrev(this, 2)" aria-label="OTP digit 4" title="OTP digit 4" placeholder="•">
+                            <input type="text" maxlength="1" pattern="[0-9]" class="otp-digit" required oninput="moveToNext(this, 4)" onkeydown="moveToPrev(this, 3)" aria-label="OTP digit 5" title="OTP digit 5" placeholder="•">
+                            <input type="text" maxlength="1" pattern="[0-9]" class="otp-digit" required oninput="moveToNext(this, 5)" onkeydown="moveToPrev(this, 4)" aria-label="OTP digit 6" title="OTP digit 6" placeholder="•">
+                            <input type="hidden" name="otp" id="otp-hidden">
                         </div>
-                        <div class="otp-timer" id="otp-timer">Resend OTP in 60s</div>
-                        <div class="otp-buttons">
-                            <button type="button" id="resend-otp" disabled>Resend OTP</button>
-                            <input type="submit" name="otp_submit" value="Verify OTP">
-                        </div>
-                    </form>
+                    </div>
+                    <div class="otp-timer" id="otp-timer">Resend OTP in 60s</div>
+                    <div class="otp-buttons">
+                        <button type="button" id="resend-otp" disabled class="btn btn-outline btn-sm">Resend OTP</button>
+                        <input type="submit" name="otp_submit" value="Verify OTP" class="btn btn-primary btn-sm">
+                    </div>
+                </form>
+            </div>
+        </div>
+                    </div><!-- .register-right-content -->
+                </div><!-- .register-right -->
+            </div><!-- .register-container -->
+        </section><!-- .register-section -->
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <p class="copyright">&copy; 2025 WaterWorld Water Station. All rights reserved.</p>
+                <div class="socials">
+                    <a href="https://web.facebook.com/yourwaterworld" aria-label="Facebook" target="_blank">
+                        <i class="fa fa-facebook"></i>
+                    </a>
+                    <a href="https://www.google.com/maps" aria-label="Google Maps" target="_blank">
+                        <i class="fa fa-map-marker"></i>
+                    </a>
+                    <a href="mailto:yourwaterworld@gmail.com" aria-label="Email WaterWorld">
+                        <i class="fa fa-envelope"></i>
+                    </a>
                 </div>
             </div>
         </div>
-    </div>
-</section>
-
-<footer>
-    <p>&copy; 2025 WaterWorld Water Station. All rights reserved.</p>
-    <div class="socials" style="display: flex; gap: 20px; justify-content: center;">
-        <a href="https://web.facebook.com/yourwaterworld" aria-label="Facebook" target="_blank">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/>
-            </svg>
-        </a>
-        <a href="https://www.google.com/maps/place/Water+World/@14.5602872,121.0613366,17z/data=!3m1!4b1!4m6!3m5!1s0x3397c863ae316b73:0xada9b9c65212f757!8m2!3d14.560282!4d121.0639115!16s%2Fg%2F11hcw7cmvx?entry=ttu&g_ep=EgoyMDI1MTAxNC4wIKXMDSoASAFQAw%3D%3D" aria-label="Google Maps" target="_blank">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25-.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/>
-            </svg>
-        </a>
-        <a href="https://mail.google.com/mail/?view=cm&fs=1&to=yourwaterworld@gmail.com&su=Contact%20WaterWorld" aria-label="Email WaterWorld" target="_blank">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
-            </svg>
-        </a>
-    </div>
-</footer>
+    </footer>
 
 <!-- External JavaScript -->
 <script src="../assets/js/api-helper.js"></script>

@@ -1,9 +1,12 @@
 # Composer
 /vendor/
 composer.lock
+composer.json
+composer.phar
 
 # Configuration (contains sensitive data)
 config/config.php
+config/*.php
 
 # IDE
 .vscode/

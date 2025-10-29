@@ -36,7 +36,20 @@ const API = {
                 },
                 body: JSON.stringify(data)
             });
-            return await response.json();
+            // Try to parse JSON; if response is not JSON, fallback to text
+            const contentType = response.headers.get('content-type') || '';
+            if (contentType.includes('application/json')) {
+                const json = await response.json();
+                // Attach HTTP status for callers
+                json.__status = response.status;
+                return json;
+            } else {
+                const text = await response.text();
+                const payload = { success: false, message: text || 'Unexpected response', __status: response.status };
+                // Log text response for debugging
+                console.error('API POST non-JSON response:', text);
+                return payload;
+            }
         } catch (error) {
             console.error('API POST Error:', error);
             throw error;
