@@ -2,8 +2,8 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1
--- Generation Time: Oct 27, 2025 at 05:02 PM
+-- Host: 127.0.0.1:4306
+-- Generation Time: Oct 30, 2025 at 03:33 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `wrsoms`
+-- Database: `pbl`
 --
 
 -- --------------------------------------------------------
@@ -32,18 +32,22 @@ CREATE TABLE `accounts` (
   `customer_id` int(11) DEFAULT NULL,
   `username` varchar(50) NOT NULL,
   `password` varchar(50) NOT NULL,
+  `phone_number` varchar(20) DEFAULT NULL,
+  `profile_photo` varchar(255) DEFAULT NULL,
   `otp` varchar(6) DEFAULT NULL,
   `otp_expires` timestamp NOT NULL DEFAULT (current_timestamp() + interval 10 minute),
-  `is_verified` tinyint(1) DEFAULT 0
+  `is_verified` tinyint(1) DEFAULT 0,
+  `deletion_token` varchar(255) DEFAULT NULL,
+  `deletion_expires` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `accounts`
 --
 
-INSERT INTO `accounts` (`account_id`, `customer_id`, `username`, `password`, `otp`, `otp_expires`, `is_verified`) VALUES
-(1, 1, 'user2', 'password123', NULL, '2025-10-27 09:27:21', 1),
-(2, 2, 'migzz09', 'password123', '274751', '2025-10-27 21:59:55', 0);
+INSERT INTO `accounts` (`account_id`, `customer_id`, `username`, `password`, `phone_number`, `profile_photo`, `otp`, `otp_expires`, `is_verified`, `deletion_token`, `deletion_expires`) VALUES
+(1, 1, 'user2', 'password123', '09274665124', 'uploads/profile_1.jpg', NULL, '2025-10-27 09:27:21', 1, NULL, NULL),
+(2, 2, 'migzz09', 'password123', NULL, NULL, '274751', '2025-10-27 21:59:55', 0, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -102,7 +106,9 @@ CREATE TABLE `batches` (
 INSERT INTO `batches` (`batch_id`, `batch_date`, `batch_status_id`, `vehicle`, `notes`, `vehicle_type`, `batch_number`) VALUES
 (2, '2025-10-27 07:00:00', 1, 'Car #320', 'Auto-created batch', 'Car', 1),
 (3, '2025-10-27 07:00:00', 1, 'Tricycle #538', 'Auto-created batch', 'Tricycle', 1),
-(4, '2025-10-27 07:00:00', 1, 'Tricycle #338', 'Auto-created batch', 'Tricycle', 2);
+(4, '2025-10-27 07:00:00', 1, 'Tricycle #338', 'Auto-created batch', 'Tricycle', 2),
+(5, '2025-10-28 07:00:00', 1, 'Tricycle #816', 'Auto-created batch', 'Tricycle', 1),
+(6, '2025-10-29 07:00:00', 1, 'Tricycle #544', 'Auto-created batch', 'Tricycle', 1);
 
 -- --------------------------------------------------------
 
@@ -183,7 +189,8 @@ CREATE TABLE `customers` (
 
 INSERT INTO `customers` (`customer_id`, `account_id`, `first_name`, `middle_name`, `last_name`, `customer_contact`, `email`, `street`, `barangay`, `city`, `province`, `date_created`) VALUES
 (1, NULL, 'user2', NULL, 'user2', '09663085902', 'jfaustino.a12345404@umak.edu.ph', 'Milkweed-', 'Rizal', 'Taguig', 'Metro Manila', '2025-10-27 09:25:08'),
-(2, NULL, 'user4', NULL, 'user4', '09663085909', 'migzzuwu@gmail.com', 'Milkweed-', 'Rizal', 'Taguig', 'Metro Manila', '2025-10-27 13:49:55');
+(2, NULL, 'user4', NULL, 'user4', '09663085909', 'migzzuwu@gmail.com', 'Milkweed-', 'Rizal', 'Taguig', 'Metro Manila', '2025-10-27 13:49:55'),
+(5, NULL, 'prince andrei', NULL, 'briongos', '09274772514', 'pbriongos.a12345407@umak.edu.ph', 'adela', 'Rizal', 'Taguig', 'Metro Manila', '2025-10-30 13:53:25');
 
 -- --------------------------------------------------------
 
@@ -293,8 +300,8 @@ CREATE TABLE `inventory` (
 --
 
 INSERT INTO `inventory` (`container_id`, `container_type`, `stock`, `last_updated`) VALUES
-(1, 'Round', 99, '2025-10-27 10:05:50'),
-(2, 'Slim', 94, '2025-10-27 12:37:50');
+(1, 'Round', 97, '2025-10-29 06:31:43'),
+(2, 'Slim', 93, '2025-10-29 06:31:43');
 
 -- --------------------------------------------------------
 
@@ -323,7 +330,8 @@ INSERT INTO `orders` (`reference_id`, `customer_id`, `order_type_id`, `batch_id`
 ('15769', 1, 2, 4, '2025-10-27 10:37:56', '2025-10-27', 1, 150.00),
 ('294199', 1, 2, 2, '2025-10-27 10:05:50', '2025-10-27', 3, 40.00),
 ('322533', 1, 1, 2, '2025-10-27 12:37:50', '2025-10-27', 1, 70.00),
-('732977', 1, 1, 3, '2025-10-27 10:34:28', '2025-10-27', 1, 70.00);
+('732977', 1, 1, 3, '2025-10-27 10:34:28', '2025-10-27', 1, 70.00),
+('875990', 1, 2, 5, '2025-10-28 03:47:04', '2025-10-28', 1, 70.00);
 
 -- --------------------------------------------------------
 
@@ -354,7 +362,9 @@ INSERT INTO `order_details` (`order_detail_id`, `reference_id`, `batch_number`, 
 (5, '15769', 2, 2, 1, 2, 5, 150.00),
 (6, '322533', 1, 1, 1, 1, 1, 40.00),
 (7, '322533', 1, 2, 3, 2, 1, 30.00),
-(8, '13620', 1, 1, 3, 1, 1, 40.00);
+(8, '13620', 1, 1, 3, 1, 1, 40.00),
+(9, '875990', 1, 1, 3, 2, 1, 40.00),
+(10, '875990', 1, 2, 3, 1, 1, 30.00);
 
 -- --------------------------------------------------------
 
@@ -645,13 +655,13 @@ ALTER TABLE `water_types`
 -- AUTO_INCREMENT for table `accounts`
 --
 ALTER TABLE `accounts`
-  MODIFY `account_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `account_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `batches`
 --
 ALTER TABLE `batches`
-  MODIFY `batch_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `batch_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `batch_employees`
@@ -675,13 +685,13 @@ ALTER TABLE `containers`
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `customer_feedback`
 --
 ALTER TABLE `customer_feedback`
-  MODIFY `feedback_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `feedback_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `deliveries`
@@ -705,7 +715,7 @@ ALTER TABLE `employees`
 -- AUTO_INCREMENT for table `order_details`
 --
 ALTER TABLE `order_details`
-  MODIFY `order_detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `order_detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `order_status`
