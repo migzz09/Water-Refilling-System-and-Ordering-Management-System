@@ -145,7 +145,8 @@
     background: var(--bg-white);
     box-shadow: -8px 0 24px rgba(44, 95, 111, 0.2);
     transition: right var(--transition-base);
-    z-index: 1001;
+    /* Increased so the cart sits above the fixed navbar */
+    z-index: 1210;
     display: flex;
     flex-direction: column;
 }
@@ -182,6 +183,12 @@
     align-items: center;
     justify-content: center;
     transition: all var(--transition-base);
+}
+
+/* Make sure the close button is rendered above the navbar */
+.close-cart {
+    position: relative;
+    z-index: 1220;
 }
 
 .close-cart:hover {

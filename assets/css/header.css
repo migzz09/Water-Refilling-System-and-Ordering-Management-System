@@ -35,6 +35,15 @@
   padding: 1rem 0 !important;
 }
 
+/* Make sure navbar sits above page content */
+.navbar {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1100 !important;
+}
+
 /* Slight adjustments for small screens */
 @media (max-width: 768px) {
   .nav-brand { font-size: 1.25rem !important; }

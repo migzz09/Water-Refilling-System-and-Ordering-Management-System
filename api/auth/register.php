@@ -155,6 +155,26 @@ try {
         throw $e;
     }
 
+    // Persist the registered address into session addresses so the checkout
+    // page can immediately display the address even if the user hasn't logged in.
+    // Use customer_id if available.
+    if (isset($customer_id)) {
+        if (!isset($_SESSION['addresses'])) {
+            $_SESSION['addresses'] = [];
+        }
+        $_SESSION['addresses'][$customer_id] = [
+            'id' => (int)$customer_id,
+            'first_name' => $first_name,
+            'middle_name' => '',
+            'last_name' => $last_name,
+            'customer_contact' => $contact,
+            'street' => $street,
+            'barangay' => $barangay,
+            'city' => $city,
+            'province' => 'Metro Manila'
+        ];
+    }
+
     // Load app config (Gmail creds) if present
     $configPath = __DIR__ . '/../../config/config.php';
     $gmailUser = null; $gmailPass = null;

@@ -33,22 +33,39 @@ const vehicleCapacity = {
   'Car': 10
 };
 
+// Current selected payment method (default COD)
+let selectedPaymentMethod = 'cod';
+
 // Initialize page
 document.addEventListener('DOMContentLoaded', async function() {
   try {
-    // Check auth status
-    const authResponse = await fetch('/api/auth/session.php');
-    const authData = await authResponse.json();
-    if (!authData.authenticated) {
-      window.location.href = 'login.html';
-      return;
+    // Use API helper to ensure auth and consistent base path
+    await API.requireAuth();
+    const authData = await API.checkAuth();
+    // API.checkAuth returns { success, authenticated, user: { customer_id, username, ... } }
+    const sessionUser = authData && authData.user ? authData.user : null;
+    if (sessionUser && sessionUser.username) {
+      const userNameEl = document.getElementById('userName');
+      if (userNameEl) userNameEl.textContent = sessionUser.username;
     }
 
-    document.getElementById('userName').textContent = authData.username;
-    loadUserAddress(authData.customer_id);
-    loadCart();
+    if (sessionUser && sessionUser.customer_id) {
+      // wait for saved address to be loaded so we don't race with the "renderTempAddressSelection"
+      await loadUserAddress(sessionUser.customer_id);
+    }
+
+    await loadCart();
     setupCityDropdown();
     setupDeliveryDateMin();
+    // Ensure address selector exists. If there's already a saved address, renderAddressSelection
+    // was called by loadUserAddress; otherwise render the temp selection.
+    try {
+      if (!window.savedAddress) renderTempAddressSelection();
+    } catch (err) {
+      console.info('Address selector render skipped or failed:', err);
+    }
+
+  // Debug banner removed from global UI; debug is available inside the Registered Address box
 
   } catch (error) {
     console.error('Error initializing page:', error);
@@ -58,41 +75,395 @@ document.addEventListener('DOMContentLoaded', async function() {
 // Load user's saved address
 async function loadUserAddress(customerId) {
   try {
-    const response = await fetch(`/api/common/get_address.php?customer_id=${customerId}`);
-    const address = await response.json();
-    
-    if (address) {
-      document.getElementById('street').value = address.street || '';
-      document.getElementById('contactNumber').value = address.customer_contact || '';
-      
-      if (address.city) {
-        document.getElementById('city').value = address.city;
-        updateBarangays(address.city);
-        if (address.barangay) {
-          setTimeout(() => {
-            document.getElementById('barangay').value = address.barangay;
-          }, 100);
+    // addresses.php returns { addresses: [...] } stored in session
+    let resp = await API.get(`/common/addresses.php`);
+    let address = resp && Array.isArray(resp.addresses) && resp.addresses.length ? resp.addresses[0] : null;
+
+    // If the session-backed addresses endpoint returned nothing, fall back to a direct profile API
+    if (!address) {
+      try {
+        const profileResp = await API.get('/auth/profile.php');
+        if (profileResp && profileResp.success && profileResp.profile) {
+          address = {
+            street: profileResp.profile.street || '',
+            barangay: profileResp.profile.barangay || '',
+            city: profileResp.profile.city || '',
+            province: profileResp.profile.province || '',
+            first_name: profileResp.profile.first_name || '',
+            last_name: profileResp.profile.last_name || '',
+            customer_contact: profileResp.profile.customer_contact || ''
+          };
         }
+      } catch (err) {
+        console.info('Profile fallback failed:', err);
       }
+    }
+
+    if (address) {
+        // Keep saved address in memory and render a compact selector
+        window.savedAddress = address;
+        renderAddressSelection(address);
+        // make the saved address obvious: scroll into view and briefly highlight
+        setTimeout(() => {
+          try {
+            const savedEl = document.getElementById('address-saved');
+            if (savedEl) {
+              savedEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              const prev = savedEl.style.boxShadow;
+              savedEl.style.boxShadow = '0 0 0 4px rgba(11,116,222,0.12)';
+              setTimeout(() => { savedEl.style.boxShadow = prev; }, 1600);
+            }
+          } catch (e) { /* no-op */ }
+        }, 160);
+        // Also prefill the hidden form so users can edit if they choose
+        const streetEl = document.getElementById('street');
+        if (streetEl) streetEl.value = address.street || '';
+  // Do not auto-fill contact number into the form for privacy — leave contact field empty
+        if (address.city) {
+          const cityEl = document.getElementById('city');
+          if (cityEl) {
+            cityEl.value = address.city;
+            updateBarangays(address.city);
+            if (address.barangay) {
+              setTimeout(() => {
+                const barangayEl = document.getElementById('barangay');
+                if (barangayEl) barangayEl.value = address.barangay;
+              }, 100);
+            }
+          }
+        }
+    } 
+    else {
+      // No saved address returned
+      window.savedAddress = null;
+      renderTempAddressSelection();
+      selectedAddressType = 'other';
     }
   } catch (error) {
     console.error('Error loading address:', error);
   }
 }
 
+  // Selected address type: 'saved' or 'other'
+  let selectedAddressType = 'saved';
+
+  function renderAddressSelection(address) {
+    const container = document.getElementById('addressList');
+    if (!container) return;
+  // Consider a saved address present only if it has at least one non-empty component
+  const hasSaved = Boolean(address && (address.street || address.barangay || address.city));
+    const savedHtml = `
+      <div class="address-box" id="address-saved" tabindex="0">
+        <label class="address-radio">
+          <input type="radio" name="deliveryAddress" value="saved" ${hasSaved && address ? 'checked' : ''} ${!hasSaved ? 'disabled' : ''} />
+          <div class="address-content">
+            <div class="address-lines">
+              <strong>Registered Address</strong>
+              ${hasSaved ? `
+                <div class="address-summary" style="color:#0b4f9a;font-weight:600;font-size:13px;">${escapeHtml(address.street || '')} — ${address.barangay ? escapeHtml(address.barangay) + ', ' : ''}${address.city ? escapeHtml(address.city) : ''}</div>
+              ` : `
+                <div class="address-text" style="color:#666;">No registered address on file</div>
+              `}
+            </div>
+          </div>
+        </label>
+      </div>
+    `;
+
+    const otherHtml = `
+      <div class="address-box address-add" id="address-other" tabindex="0">
+        <label class="address-radio">
+          <input type="radio" name="deliveryAddress" value="other" />
+          <div class="address-content">
+            <strong>Deliver to a different address</strong>
+            <div class="address-sub">Click the arrow to add or edit an alternative delivery address</div>
+            <button type="button" class="address-open-btn" aria-label="Open address form">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+          </div>
+        </label>
+      </div>
+    `;
+
+    container.innerHTML = `<div class="address-grid">${savedHtml}${otherHtml}</div>`;
+
+    // No debug button: we display a concise address summary only.
+
+    // Defensive DOM update: ensure address text nodes are explicitly set so they
+    // appear even if innerHTML rendering behaves unexpectedly in some browsers.
+    if (hasSaved) {
+      const savedBox = container.querySelector('#address-saved');
+      if (savedBox) {
+        const summaryEl = savedBox.querySelector('.address-summary');
+        if (summaryEl) {
+          summaryEl.textContent = (address.street || '') + ' — ' + (address.barangay ? address.barangay + ', ' : '') + (address.city || '');
+        }
+      }
+    }
+
+    // Wire interactions
+    const savedRadio = container.querySelector('input[value="saved"]');
+    const otherRadio = container.querySelector('input[value="other"]');
+
+    if (savedRadio && !savedRadio.disabled) {
+      savedRadio.addEventListener('change', () => {
+        selectedAddressType = 'saved';
+        // ensure form fields remain synced
+        const a = window.savedAddress || {};
+        if (a.street) document.getElementById('street').value = a.street;
+        if (a.city) document.getElementById('city').value = a.city;
+  if (a.barangay) document.getElementById('barangay').value = a.barangay;
+        // Update barangay options and vehicle info to reflect selected saved address
+        if (a.city) {
+          try {
+            updateBarangays(a.city);
+          } catch (e) { /* ignore if function missing */ }
+          // allow barangay select to populate then set value and update vehicle info
+          setTimeout(() => {
+            const barangayEl = document.getElementById('barangay');
+            if (barangayEl && a.barangay) barangayEl.value = a.barangay;
+            updateVehicleInfo(window.cart || []);
+          }, 80);
+        } else {
+          updateVehicleInfo(window.cart || []);
+        }
+      });
+    }
+
+    if (otherRadio) {
+      otherRadio.addEventListener('change', () => {
+        selectedAddressType = 'other';
+        // don't open modal here — only open when user explicitly clicks the arrow button
+        try { updateVehicleInfo(window.cart || []); } catch (e) {}
+      });
+
+      // clicking the whole other-box should select 'other' but not open the modal
+      const otherBox = document.getElementById('address-other');
+      if (otherBox) otherBox.addEventListener('click', () => {
+        if (otherRadio) otherRadio.checked = true;
+        selectedAddressType = 'other';
+        try { updateVehicleInfo(window.cart || []); } catch (e) {}
+      });
+
+      // clicking the arrow button opens the modal to add/edit the alternative address
+      const otherOpenBtn = otherBox ? otherBox.querySelector('.address-open-btn') : null;
+      if (otherOpenBtn) {
+        otherOpenBtn.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          if (otherRadio) otherRadio.checked = true;
+          selectedAddressType = 'other';
+          openAddressFormModal();
+        });
+      }
+    }
+    // Clicking the saved-address box should select the saved radio (but not open modal)
+    const savedBox = container.querySelector('#address-saved');
+    if (savedBox) {
+      savedBox.addEventListener('click', (evt) => {
+        const r = container.querySelector('input[value="saved"]');
+        if (r && !r.disabled) {
+          r.checked = true;
+          selectedAddressType = 'saved';
+          r.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      });
+    }
+    // Refresh vehicle info to reflect current selection immediately
+    try { updateVehicleInfo(window.cart || []); } catch (e) { /* ignore */ }
+  }
+
+  function openAddressFormModal() {
+    const modal = document.getElementById('addressFormModal');
+    if (!modal) return;
+    // Populate or clear the form depending on whether a temp address exists.
+    // This prevents the form from being autofilled with the registered address
+    // when the user is opening the modal to add a different address.
+    const streetEl = document.getElementById('street');
+    const cityEl = document.getElementById('city');
+    const barangayEl = document.getElementById('barangay');
+
+    if (window.tempAddress) {
+      if (streetEl) streetEl.value = window.tempAddress.street || '';
+      if (cityEl) {
+        cityEl.value = window.tempAddress.city || '';
+        try { updateBarangays(cityEl.value); } catch (e) {}
+        if (window.tempAddress.barangay) {
+          setTimeout(() => { if (barangayEl) barangayEl.value = window.tempAddress.barangay; }, 100);
+        }
+      }
+    } else {
+      // Clear to avoid showing the registered address by default
+      if (streetEl) streetEl.value = '';
+      if (cityEl) cityEl.value = '';
+      if (barangayEl) barangayEl.innerHTML = '<option value="">Select Barangay</option>';
+    }
+
+    // show modal for user to input alternative address
+    modal.classList.add('active');
+  }
+
+  // Simple HTML escape helper
+  function escapeHtml(str) {
+    return String(str || '').replace(/[&<>"']/g, function (s) {
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[s];
+    });
+  }
+
+  // Handle address form submission locally as a temporary delivery address (not stored)
+  const addressForm = document.getElementById('addressForm');
+  if (addressForm) {
+    addressForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const form = e.target;
+      const temp = {
+        street: form.street.value || '',
+        barangay: form.barangay.value || '',
+        city: form.city.value || ''
+      };
+      window.tempAddress = temp;
+      // mark selected as 'other' and close modal (which will re-render and update vehicle info)
+      selectedAddressType = 'other';
+      onCloseAddressForm();
+    });
+  }
+
+  function renderTempAddressSelection() {
+    const container = document.getElementById('addressList');
+    if (!container) return;
+  const temp = window.tempAddress;
+  const saved = window.savedAddress;
+  // Consider a saved address present only if it has at least one non-empty component
+  const hasSaved = Boolean(saved && (saved.street || saved.barangay || saved.city));
+    const savedHtml = `
+      <div class="address-box" id="address-saved">
+        <label class="address-radio">
+          <input type="radio" name="deliveryAddress" value="saved" ${selectedAddressType==='saved' ? 'checked' : ''} ${!hasSaved ? 'disabled' : ''} />
+          <div class="address-content">
+            <div class="address-lines">
+              <strong>Registered Address</strong>
+              ${hasSaved ? `
+                <div class="address-summary" style="margin-top:6px;color:#0b4f9a;font-weight:600;font-size:13px;">${escapeHtml(saved.street || '')} — ${saved.barangay ? escapeHtml(saved.barangay) + ', ' : ''}${saved.city ? escapeHtml(saved.city) : ''}</div>
+              ` : `<div class="address-text" style="color:#666;">No registered address on file</div>`}
+            </div>
+          </div>
+        </label>
+      </div>
+    `;
+
+    const tempHtml = temp ? `
+      <div class="address-box" id="address-other">
+        <label class="address-radio">
+          <input type="radio" name="deliveryAddress" value="other" ${selectedAddressType==='other' ? 'checked' : ''} />
+          <div class="address-content">
+            <strong>Alternative Address</strong>
+            <div class="address-summary" style="margin-top:6px;color:#0b4f9a;font-weight:600;font-size:13px;">${escapeHtml(temp.street || '')} — ${temp.barangay ? escapeHtml(temp.barangay) + ', ' : ''}${temp.city ? escapeHtml(temp.city) : ''}</div>
+            <button type="button" class="address-open-btn" aria-label="Edit alternative address">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+          </div>
+        </label>
+      </div>
+    ` : `
+      <div class="address-box address-add" id="address-other">
+        <label class="address-radio">
+          <input type="radio" name="deliveryAddress" value="other" ${selectedAddressType==='other' ? 'checked' : ''} />
+          <div class="address-content">
+            <strong>Deliver to a different address</strong>
+            <div class="address-sub">Click to add or edit an alternative delivery address</div>
+            <button type="button" class="address-open-btn" aria-label="Add alternative address">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+          </div>
+        </label>
+      </div>
+    `;
+
+    container.innerHTML = `<div class="address-grid">${savedHtml}${tempHtml}</div>`;
+
+    // re-wire interactions
+    const otherBox = document.getElementById('address-other');
+    if (otherBox) otherBox.addEventListener('click', () => {
+      selectedAddressType = 'other';
+      // select radio only, do not open modal
+      const r = container.querySelector('input[value="other"]');
+      if (r) r.checked = true;
+      try { updateVehicleInfo(window.cart || []); } catch (e) {}
+    });
+    // arrow button opens the modal
+    const otherOpenBtn = otherBox ? otherBox.querySelector('.address-open-btn') : null;
+    if (otherOpenBtn) {
+      otherOpenBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const r = container.querySelector('input[value="other"]');
+        if (r) r.checked = true;
+        selectedAddressType = 'other';
+        openAddressFormModal();
+      });
+    }
+    // Clicking the saved-address box should select the saved radio (but not open modal)
+    const savedBox = container.querySelector('#address-saved');
+    if (savedBox) {
+      savedBox.addEventListener('click', (evt) => {
+        const r = container.querySelector('input[value="saved"]');
+        if (r && !r.disabled) {
+          r.checked = true;
+          selectedAddressType = 'saved';
+          r.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      });
+    }
+    const savedRadio = container.querySelector('input[value="saved"]');
+    if (savedRadio && !savedRadio.disabled) savedRadio.addEventListener('change', () => {
+      selectedAddressType = 'saved';
+      // sync selected saved address into form and update vehicle info
+      const s = saved || window.savedAddress || {};
+      if (s.street) document.getElementById('street').value = s.street;
+      if (s.city) document.getElementById('city').value = s.city;
+      try { updateBarangays(s.city); } catch (e) {}
+      setTimeout(() => {
+  const barangayEl = document.getElementById('barangay');
+  if (barangayEl && s.barangay) barangayEl.value = s.barangay;
+  updateVehicleInfo(window.cart || []);
+      }, 80);
+    });
+
+    // Defensive DOM update for temp/saved rendering: update summary element
+    if (hasSaved) {
+      const savedBox = container.querySelector('#address-saved');
+      if (savedBox) {
+        const summaryEl = savedBox.querySelector('.address-summary');
+        if (summaryEl) summaryEl.textContent = (saved.street || '') + ' — ' + (saved.barangay ? saved.barangay + ', ' : '') + (saved.city || '');
+      }
+    }
+    // If there's a temp address, ensure its summary is populated too
+    if (temp) {
+      const otherBoxEl = container.querySelector('#address-other');
+      if (otherBoxEl) {
+        const otherSummary = otherBoxEl.querySelector('.address-summary');
+        if (otherSummary) otherSummary.textContent = (temp.street || '') + ' — ' + (temp.barangay ? temp.barangay + ', ' : '') + (temp.city || '');
+      }
+    }
+    // Refresh vehicle info to reflect current selection immediately
+    try { updateVehicleInfo(window.cart || []); } catch (e) { /* ignore */ }
+  }
+
 // Load cart items
 async function loadCart() {
   try {
-    const response = await fetch('/api/orders/get_cart.php');
-    if (!response.ok) {
-      throw new Error('Failed to load cart');
-    }
-    
-    const data = await response.json();
-    if (data.cart && data.cart.length > 0) {
+    const data = await API.get('/orders/get_cart.php');
+    if (data && data.cart && data.cart.length > 0) {
+      // store globally for other functions
+      window.cart = data.cart;
       renderCart(data.cart);
       updateVehicleInfo(data.cart);
     } else {
+      // redirect to products if cart empty
       window.location.href = 'product.html';
     }
   } catch (error) {
@@ -102,7 +473,6 @@ async function loadCart() {
 
 function renderCart(cart) {
   const cartItems = document.getElementById('cartItems');
-  const cartTotal = document.getElementById('cartTotal');
   let total = 0;
 
   cartItems.innerHTML = cart.map(item => {
@@ -117,19 +487,38 @@ function renderCart(cart) {
             ${item.name} Container
             <div class="cart-item-subtitle">${item.water_type_name}, ${item.order_type_name}</div>
           </div>
-          <div>Quantity: ${item.quantity}</div>
+          <div class="cart-item-qty">Quantity: <strong>${item.quantity}</strong></div>
         </div>
-        <div class="cart-item-price">₱${itemTotal.toFixed(2)}${isPurchaseNew ? ' <div style="font-size:0.85em;color:#666;">(Includes refill)</div>' : ''}</div>
+        <div class="cart-item-price">₱${itemTotal.toFixed(2)}${isPurchaseNew ? ' <div style="font-size:0.85em;color:#666;">(Already filled)</div>' : ''}</div>
       </div>
     `;
   }).join('');
 
-  cartTotal.textContent = '₱' + total.toFixed(2);
+  // Update summary fields (IDs exist in checkout.html)
+  const subtotalEl = document.getElementById('subtotal');
+  const totalEl = document.getElementById('total');
+
+  if (subtotalEl) subtotalEl.textContent = '₱' + total.toFixed(2);
+  // No delivery fees — total equals subtotal
+  if (totalEl) totalEl.textContent = '₱' + total.toFixed(2);
+
+  // Enable checkout button when cart is rendered
+  const checkoutBtn = document.getElementById('checkoutBtn');
+  if (checkoutBtn) checkoutBtn.disabled = false;
 }
 
 function updateVehicleInfo(cart) {
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const city = document.getElementById('city').value;
+  // Determine city based on selected address source (saved, temp, or form)
+  let city = '';
+  if (selectedAddressType === 'saved' && window.savedAddress) {
+    city = window.savedAddress.city || '';
+  } else if (selectedAddressType === 'other' && window.tempAddress) {
+    city = window.tempAddress.city || '';
+  } else {
+    const cityEl = document.getElementById('city');
+    city = cityEl ? cityEl.value : '';
+  }
   const vehicleType = getVehicleType(city);
   const capacity = vehicleCapacity[vehicleType];
 
@@ -142,7 +531,8 @@ function updateVehicleInfo(cart) {
         Please reduce your order quantity or split into multiple orders.
       </div>
     `;
-    document.getElementById('placeOrderBtn').disabled = true;
+    const btn = document.getElementById('placeOrderBtn') || document.getElementById('checkoutBtn');
+    if (btn) btn.disabled = true;
   } else {
     info.innerHTML = `
       <div class="alert alert-info">
@@ -150,7 +540,8 @@ function updateVehicleInfo(cart) {
         Your order will be delivered by ${vehicleType} (Capacity: ${capacity} containers)
       </div>
     `;
-    document.getElementById('placeOrderBtn').disabled = false;
+    const btn = document.getElementById('placeOrderBtn') || document.getElementById('checkoutBtn');
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -192,27 +583,39 @@ function getVehicleType(city) {
   return city === 'Taguig' ? 'Tricycle' : 'Car';
 }
 
+// Debug helper removed for production: debug UI was used during development and
+// intentionally stripped from the checkout page per request.
+
 function validateForm() {
-  const required = [
-    { id: 'street', message: 'Street address is required' },
-    { id: 'city', message: 'City is required' },
-    { id: 'barangay', message: 'Barangay is required' },
-    { id: 'contactNumber', message: 'Contact number is required' },
-    { id: 'deliveryDate', message: 'Delivery date is required' }
-  ];
+  // If user selects saved address, we don't require the address fields again
+  const required = [{ id: 'deliveryDate', message: 'Delivery date is required' }];
+  if (selectedAddressType === 'other') {
+    required.unshift(
+      { id: 'street', message: 'Street address is required' },
+      { id: 'city', message: 'City is required' },
+      { id: 'barangay', message: 'Barangay is required' },
+    );
+  }
 
   for (const field of required) {
     const element = document.getElementById(field.id);
-    if (!element.value) {
+    if (!element || !element.value) {
       alert(field.message);
-      element.focus();
+      if (element) element.focus();
       return false;
     }
   }
 
-  const contact = document.getElementById('contactNumber').value;
-  if (!contact.match(/^09\d{9}$/)) {
-    alert('Please enter a valid contact number (e.g., 09XXXXXXXXX)');
+  // Validate contact number if present (saved address may contain it). If absent it's optional here.
+  let contact = '';
+  if (window.savedAddress && window.savedAddress.customer_contact) {
+    contact = window.savedAddress.customer_contact;
+  } else if (window.tempAddress && window.tempAddress.customer_contact) {
+    contact = window.tempAddress.customer_contact;
+  }
+
+  if (contact && !contact.match(/^09\d{9}$/)) {
+    alert('Please enter a valid contact number (e.g., 09XXXXXXXXX) in your profile or saved address.');
     return false;
   }
 
@@ -222,16 +625,53 @@ function validateForm() {
 function placeOrder() {
   if (!validateForm()) return;
 
+  // Build order details based on selected address type
+  let street = '';
+  let city = '';
+  let barangay = '';
+  let contactNumber = '';
+  if (selectedAddressType === 'saved' && window.savedAddress) {
+    street = window.savedAddress.street || '';
+    city = window.savedAddress.city || '';
+    barangay = window.savedAddress.barangay || '';
+    contactNumber = window.savedAddress.customer_contact || '';
+  } else if (window.tempAddress) {
+    street = window.tempAddress.street || '';
+    city = window.tempAddress.city || '';
+    barangay = window.tempAddress.barangay || '';
+    contactNumber = window.tempAddress.customer_contact || '';
+  } else {
+    street = document.getElementById('street').value;
+    city = document.getElementById('city').value;
+    barangay = document.getElementById('barangay').value;
+    // Contact number removed from modal — leave empty here (may come from saved profile/address)
+    contactNumber = '';
+  }
+
   const orderDetails = {
-    street: document.getElementById('street').value,
-    city: document.getElementById('city').value,
-    barangay: document.getElementById('barangay').value,
-    contactNumber: document.getElementById('contactNumber').value,
+    street,
+    city,
+    barangay,
+    contactNumber,
     deliveryDate: document.getElementById('deliveryDate').value,
-    paymentMethod: document.querySelector('input[name="payment"]:checked').value
+    paymentMethod: selectedPaymentMethod
   };
 
   showOrderConfirmation(orderDetails);
+}
+
+// Handler for payment option boxes
+function selectPaymentMethod(method) {
+  selectedPaymentMethod = method;
+  // Visually mark the selected option
+  const options = document.querySelectorAll('.payment-option');
+  options.forEach(opt => {
+    if (opt.getAttribute('data-method') === method) {
+      opt.classList.add('selected');
+    } else {
+      opt.classList.remove('selected');
+    }
+  });
 }
 
 function showOrderConfirmation(details) {
@@ -262,13 +702,36 @@ function showOrderConfirmation(details) {
 }
 
 async function confirmOrder() {
+  // Build order data based on selected address source
+  let street = '';
+  let city = '';
+  let barangay = '';
+  let contactNumber = '';
+  if (selectedAddressType === 'saved' && window.savedAddress) {
+    street = window.savedAddress.street || '';
+    city = window.savedAddress.city || '';
+    barangay = window.savedAddress.barangay || '';
+    contactNumber = window.savedAddress.customer_contact || '';
+  } else if (window.tempAddress) {
+    street = window.tempAddress.street || '';
+    city = window.tempAddress.city || '';
+    barangay = window.tempAddress.barangay || '';
+    contactNumber = window.tempAddress.customer_contact || '';
+  } else {
+    street = document.getElementById('street').value;
+    city = document.getElementById('city').value;
+    barangay = document.getElementById('barangay').value;
+    // Contact number removed from modal — leave empty here (may come from saved profile/address)
+    contactNumber = '';
+  }
+
   const orderData = {
-    street: document.getElementById('street').value,
-    city: document.getElementById('city').value,
-    barangay: document.getElementById('barangay').value,
-    contactNumber: document.getElementById('contactNumber').value,
+    street,
+    city,
+    barangay,
+    contactNumber,
     deliveryDate: document.getElementById('deliveryDate').value,
-    paymentMethod: document.querySelector('input[name="payment"]:checked').value
+    paymentMethod: selectedPaymentMethod
   };
 
   try {
@@ -369,6 +832,26 @@ function closeModal() {
   document.getElementById('orderConfirmation').classList.remove('active');
 }
 
+function closeAddressForm() {
+  const modal = document.getElementById('addressFormModal');
+  if (modal) modal.classList.remove('active');
+}
+
+// When closing the address modal (either via X or programmatically), keep UI in sync
+// Re-render the address selectors and refresh vehicle info so the displayed vehicle
+// matches the currently-selected address (saved or temp).
+function onCloseAddressForm() {
+  // Ensure modal is hidden
+  const modal = document.getElementById('addressFormModal');
+  if (modal) modal.classList.remove('active');
+
+  // Re-render selection so the address-list reflects any tempAddress change
+  try { renderTempAddressSelection(); } catch (e) { /* ignore */ }
+
+  // Update vehicle info based on selected address
+  try { updateVehicleInfo(window.cart || []); } catch (e) { /* ignore */ }
+}
+
 function closeReceipt() {
   document.getElementById('receiptModal').classList.remove('active');
   window.location.href = 'product.html';
@@ -380,12 +863,22 @@ function toggleUserDropdown() {
 }
 
 function logout() {
-  fetch('/api/auth/logout.php')
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        window.location.href = '../index.html';
-      }
-    })
-    .catch(error => console.error('Error logging out:', error));
+  // Prefer centralized logout if available
+  if (typeof window.logout === 'function') {
+    return window.logout();
+  }
+
+  // Fallback
+  API.post('/auth/logout.php', {}).then(data => {
+    if (data && data.success) {
+      window.location.href = '/WRSOMS/index.html';
+    } else {
+      window.location.href = '/WRSOMS/index.html';
+    }
+  }).catch(err => {
+    console.error('Logout error fallback:', err);
+    window.location.href = '/WRSOMS/index.html';
+  });
 }
+
+// Delivery fees removed — no calculation required

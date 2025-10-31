@@ -519,7 +519,7 @@ function updateCart() {
               </div>
               <div class="cart-item-price">
                 <div style="font-weight: 500;">₱${unitPrice.toFixed(2)} each</div>
-                ${isPurchaseNew ? '<div style="font-size: 0.85em; color: #666; margin-top: 2px;">₱250.00 total per container (includes refill)</div>' : '<div style="font-size: 0.85em; color: #666; margin-top: 2px;">Water: ₱' + Number(item.price || 0).toFixed(2) + '</div>'}
+                ${isPurchaseNew ? '<div style="font-size: 0.85em; color: #666; margin-top: 2px;">₱250.00 total per container (already filled)</div>' : '<div style="font-size: 0.85em; color: #666; margin-top: 2px;">Water: ₱' + Number(item.price || 0).toFixed(2) + '</div>'}
               </div>
               <div class="quantity-controls">
                 <button class="btn btn-sm" onclick="updateQuantity(${item.id}, ${item.water_type_id}, ${item.order_type_id}, -1)">

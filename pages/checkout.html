@@ -6,49 +6,76 @@
   <title>Checkout - WaterWorld</title>
   <link rel="stylesheet" href="../assets/css/design-system.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-  <link rel="stylesheet" href="../assets/css/steel.css">
+  <!-- removed steel.css which caused conflicting styles; use header overrides -->
+  <link rel="stylesheet" href="../assets/css/header.css">
+  <!-- include index styles so header/nav matches the homepage -->
+  <link rel="stylesheet" href="../assets/css/index.css">
   <link rel="stylesheet" href="../assets/css/checkout.css">
 </head>
 <body>
-  <header>
-    <div class="nav-brand">
-      <a href="../index.html">
-        <img src="../assets/images/ww_logo.png" alt="WaterWorld Logo" class="nav-logo">
-        <span class="brand-name">WaterWorld</span>
-      </a>
-    </div>
-    <nav class="nav-menu">
-      <a href="../index.html">Home</a>
-      <a href="product.html">Products</a>
-      <a href="order-tracking.html">Track Order</a>
-      <a href="#services">Services</a>
-      <a href="#contact">Contact</a>
-    </nav>
-    <div class="nav-actions">
-      <div class="user-menu" id="userMenu">
-        <button class="btn btn-outline btn-sm profile-btn" onclick="toggleUserDropdown()">
-          <i class="fa fa-user-circle"></i>
-          <span id="userName">Profile</span>
-          <i class="fa fa-chevron-down"></i>
+  <!-- Navigation (unified with index header) -->
+  <nav class="navbar glass">
+    <div class="container">
+      <div class="nav-content">
+        <div class="nav-brand">
+          <img src="../assets/images/ww_logo.png" alt="WaterWorld Logo" class="nav-logo">
+          <span class="brand-name">Water World</span>
+        </div>
+
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+          <span class="icon-menu"></span>
         </button>
-        <div class="user-dropdown" id="userDropdown">
-          <a href="product.html" class="dropdown-item">
-            <i class="fa fa-shopping-cart"></i> Products
+
+        <div class="nav-menu" id="navMenu">
+          <a href="../index.html" class="nav-link">
+            <i class="fa fa-home"></i>
+            Home
           </a>
-          <a href="usertransaction-history.html" class="dropdown-item">
-            <i class="fa fa-history"></i> Order History
+          <a href="product.html" class="nav-link">
+            <i class="fa fa-shopping-cart"></i>
+            Products
           </a>
-          <a href="order-tracking.html" class="dropdown-item">
-            <i class="fa fa-search"></i> Track Order
+          <a href="order-tracking.html" class="nav-link">
+            <i class="fa fa-search"></i>
+            Track Order
           </a>
-          <hr>
-          <a href="#" onclick="logout()" class="dropdown-item">
-            <i class="fa fa-sign-out"></i> Logout
+          <a href="../index.html#services" class="nav-link">
+            <i class="fa fa-tint"></i>
+            Services
           </a>
+          <a href="../index.html#contact" class="nav-link">
+            <i class="fa fa-envelope"></i>
+            Contact
+          </a>
+        </div>
+
+        <div class="nav-actions" id="navActions">
+          <a href="login.html" class="btn btn-outline btn-sm" id="loginBtn">
+            <i class="fa fa-sign-in"></i>
+            Login
+          </a>
+          <a href="register.html" class="btn btn-primary btn-sm" id="registerBtn">
+            <i class="fa fa-user-plus"></i>
+            Register
+          </a>
+          <div class="user-menu" id="userMenu" style="display: none;">
+            <button class="btn btn-outline btn-sm profile-btn" onclick="toggleUserDropdown()" aria-label="Profile" title="Profile">
+              <i class="fa fa-user-circle"></i>
+              <span id="userName">Profile</span>
+              <i class="fa fa-chevron-down"></i>
+            </button>
+            <div class="user-dropdown" id="userDropdown" style="display: none;">
+              <a href="product.html" class="dropdown-item"><i class="fa fa-shopping-cart"></i> View Products</a>
+              <a href="usertransaction-history.html" class="dropdown-item"><i class="fa fa-history"></i> Order History</a>
+              <a href="order-tracking.html" class="dropdown-item"><i class="fa fa-search"></i> Track Order</a>
+              <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
+              <a href="#" onclick="logout()" class="dropdown-item"><i class="fa fa-sign-out"></i> Logout</a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </header>
+  </nav>
 
   <div class="checkout-container">
     <div class="checkout-main">
@@ -65,6 +92,11 @@
         <h2 class="section-title">Delivery Address</h2>
         <div id="addressList">
           <!-- Address list will be rendered here -->
+        </div>
+        <div id="vehicleInfo" style="margin-top:1rem;"></div>
+        <div class="form-group" style="margin-top:1rem;">
+          <label class="form-label" for="deliveryDate">Preferred Delivery Date</label>
+          <input type="date" id="deliveryDate" name="deliveryDate" class="form-control" required />
         </div>
       </section>
 
@@ -102,15 +134,11 @@
           <span>Subtotal</span>
           <span id="subtotal">₱0.00</span>
         </div>
-        <div class="summary-line">
-          <span>Delivery Fee</span>
-          <span id="deliveryFee">₱0.00</span>
-        </div>
         <div class="summary-line total">
           <span>Total</span>
           <span id="total">₱0.00</span>
         </div>
-        <button class="btn btn-primary btn-block btn-lg" id="checkoutBtn" onclick="submitOrder()" disabled>
+        <button class="btn btn-primary btn-block btn-lg" id="checkoutBtn" onclick="placeOrder()" disabled>
           Place Order
         </button>
       </div>
@@ -122,8 +150,9 @@
     <div class="modal-content">
       <div class="modal-header">
         <h3 class="modal-title" id="addressFormTitle">Add New Address</h3>
-        <button class="close-modal" onclick="closeAddressForm()">
-          <i class="fa fa-times"></i>
+        <button class="close-modal" onclick="onCloseAddressForm()" aria-label="Close address form">
+          <i class="fa fa-times" aria-hidden="true"></i>
+          <span class="sr-only">Close</span>
         </button>
       </div>
       <form id="addressForm">
@@ -140,18 +169,18 @@
           <input type="text" class="form-control" id="street" name="street" required>
         </div>
         <div class="form-group">
-          <label class="form-label" for="barangay">Barangay</label>
-          <input type="text" class="form-control" id="barangay" name="barangay" required>
-        </div>
-        <div class="form-group">
           <label class="form-label" for="city">City</label>
-          <input type="text" class="form-control" id="city" name="city" required>
+          <select class="form-control" id="city" name="city" required>
+            <option value="">Select City</option>
+          </select>
         </div>
         <div class="form-group">
-          <label class="form-label" for="contactNumber">Contact Number</label>
-          <input type="tel" class="form-control" id="contactNumber" name="contactNumber" 
-                 pattern="[0-9]{11}" placeholder="09XXXXXXXXX" required>
+          <label class="form-label" for="barangay">Barangay</label>
+          <select class="form-control" id="barangay" name="barangay" required>
+            <option value="">Select Barangay</option>
+          </select>
         </div>
+        <!-- Contact number removed from add-address modal by request (handled via saved profile/address) -->
         <button type="submit" class="btn btn-primary btn-block">Save Address</button>
       </form>
     </div>
@@ -160,7 +189,40 @@
   <!-- Notification -->
   <div class="notification" id="notification"></div>
 
+  <!-- Order Confirmation Modal -->
+  <div class="modal-overlay" id="orderConfirmation">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Confirm Your Order</h3>
+        <button class="close-modal" onclick="closeModal()" aria-label="Close confirmation modal"><i class="fa fa-times" aria-hidden="true"></i><span class="sr-only">Close</span></button>
+      </div>
+      <div class="order-details"></div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmOrder()">Confirm & Place Order</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Receipt Modal -->
+  <div class="modal-overlay" id="receiptModal">
+    <div class="modal-content receipt">
+      <div class="modal-header">
+        <h3>Order Receipt</h3>
+        <button class="close-modal" onclick="closeReceipt()" aria-label="Close receipt"><i class="fa fa-times" aria-hidden="true"></i><span class="sr-only">Close</span></button>
+      </div>
+      <div class="receipt-details"></div>
+      <div class="receipt-actions">
+        <button class="btn btn-outline" onclick="printReceipt()">Print Receipt</button>
+        <button class="btn btn-primary" onclick="closeReceipt()">Done</button>
+      </div>
+    </div>
+  </div>
+
   <script src="../assets/js/api-helper.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <!-- index.js provides header/auth UI initialization and small helpers used by the nav -->
+  <script src="../assets/js/index.js"></script>
   <script src="../assets/js/checkout.js"></script>
 </body>
 </html>
