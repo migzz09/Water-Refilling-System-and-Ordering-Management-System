@@ -261,6 +261,9 @@ select:focus {
 
 .payment-option {
   position: relative;
+  padding: 0.4rem;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  outline: none;
 }
 
 .payment-option.selected {
@@ -274,7 +277,11 @@ select:focus {
   opacity: 0;
 }
 
-.payment-option label {
+.payment-option .payment-details,
+.payment-option .payment-icon {
+  display: inline-block;
+}
+.payment-option {
   display: flex;
   align-items: center;
   padding: 1rem;
@@ -282,7 +289,10 @@ select:focus {
   border: 2px solid #e5e5e5;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s;
+}
+
+.payment-option:focus-visible {
+  box-shadow: 0 0 0 4px rgba(11,116,222,0.12);
 }
 
 .payment-option input[type="radio"]:checked + label {
@@ -295,6 +305,29 @@ select:focus {
   font-size: 1.5rem;
   color: var(--primary-color);
 }
+
+/* Checkmark shown for selected payment option */
+.payment-check {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--primary-color);
+  border: 2px solid transparent;
+}
+.payment-option.selected .payment-check {
+  background: #fff;
+  border-color: rgba(11,116,222,0.12);
+  box-shadow: 0 6px 18px rgba(11,116,222,0.08);
+}
+.payment-check i { font-size: 14px; }
 
 /* Vehicle Info */
 #vehicleInfo {
@@ -407,6 +440,24 @@ select:focus {
   gap: 1rem;
   margin-top: 2rem;
 }
+
+/* Confirmation modal specifics */
+.confirmation-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.confirmation-details h3 { margin: 0 0 0.5rem 0; color: #0b4f9a; }
+.confirmation-block { background: #fff; padding: 0.75rem; border-radius: 8px; border:1px solid rgba(0,0,0,0.04); }
+.confirmation-items { max-height: 200px; overflow:auto; margin-bottom: 0.5rem; }
+.conf-item { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.03); }
+.conf-item .qty { color:#666; font-size:0.9rem; }
+.conf-summary { display:flex; justify-content:space-between; font-weight:700; margin-top:8px; }
+.confirmation-note { font-size:0.9rem; color:#666; margin-top:8px; }
+
+/* Make confirm button stand out inside modal */
+.modal-actions .btn-primary { padding: 0.75rem 1.25rem; font-size:1rem; }
+.modal-actions .btn-outline { padding: 0.6rem 1rem; }
 
 /* Receipt Styles */
 .receipt {

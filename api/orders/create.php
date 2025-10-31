@@ -47,8 +47,13 @@ if (!empty($errors)) {
 try {
     $pdo->beginTransaction();
 
-    // Generate reference ID
-    $referenceId = 'WW' . date('Ymd') . str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
+    // Generate a unique 6-character numeric reference ID to match `orders.reference_id` varchar(6)
+    do {
+        $referenceId = str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
+        $check = $pdo->prepare("SELECT COUNT(*) FROM orders WHERE reference_id = ?");
+        $check->execute([$referenceId]);
+        $exists = $check->fetchColumn();
+    } while ($exists);
 
     // Calculate total
     $totalAmount = 0;
@@ -57,11 +62,12 @@ try {
     }
 
     // Insert order
-    $stmt = $pdo->prepare("
-        INSERT INTO orders (reference_id, customer_id, order_type_id, order_status_id, order_date, delivery_option_id, total_amount, notes)
-        VALUES (?, ?, ?, 1, NOW(), ?, ?, ?)
-    ");
-    $stmt->execute([$referenceId, $customerId, $orderType, $deliveryOption, $totalAmount, $notes]);
+        // Insert order
+        // Insert only columns present in this schema: no 'notes' column
+        $stmt = $pdo->prepare(
+            "INSERT INTO orders (reference_id, customer_id, order_type_id, order_status_id, order_date, total_amount) VALUES (?, ?, ?, 1, NOW(), ?)"
+        );
+        $stmt->execute([$referenceId, $customerId, $orderType, $totalAmount]);
 
     // Insert order details
     $stmt = $pdo->prepare("

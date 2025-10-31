@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Checkout - WaterWorld</title>
-  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-  <!-- removed steel.css which caused conflicting styles; use header overrides -->
-  <link rel="stylesheet" href="../assets/css/header.css">
-  <!-- include index styles so header/nav matches the homepage -->
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <!-- include index styles so header/nav matches the homepage (keep order: index then header) -->
   <link rel="stylesheet" href="../assets/css/index.css">
+  <link rel="stylesheet" href="../assets/css/header.css">
   <link rel="stylesheet" href="../assets/css/checkout.css">
 </head>
 <body>
@@ -104,7 +104,7 @@
       <section class="checkout-section">
         <h2 class="section-title">Payment Method</h2>
         <div class="payment-options">
-          <div class="payment-option" data-method="cod" onclick="selectPaymentMethod('cod')">
+          <div class="payment-option" data-method="cod" onclick="selectPaymentMethod('cod')" role="button" tabindex="0" aria-pressed="false">
             <div class="payment-icon">
               <i class="fa fa-money"></i>
             </div>
@@ -112,8 +112,9 @@
               <div class="payment-title">Cash on Delivery</div>
               <div class="payment-description">Pay when your order arrives</div>
             </div>
+            <div class="payment-check" aria-hidden="true"><i class="fa fa-check"></i></div>
           </div>
-          <div class="payment-option" data-method="gcash" onclick="selectPaymentMethod('gcash')">
+          <div class="payment-option" data-method="gcash" onclick="selectPaymentMethod('gcash')" role="button" tabindex="0" aria-pressed="false">
             <div class="payment-icon">
               <i class="fa fa-mobile"></i>
             </div>
@@ -121,6 +122,7 @@
               <div class="payment-title">GCash</div>
               <div class="payment-description">Pay securely with GCash</div>
             </div>
+            <div class="payment-check" aria-hidden="true"><i class="fa fa-check"></i></div>
           </div>
         </div>
       </section>

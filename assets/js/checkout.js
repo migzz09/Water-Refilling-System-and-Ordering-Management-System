@@ -57,6 +57,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     await loadCart();
     setupCityDropdown();
     setupDeliveryDateMin();
+    // Ensure initial visual state for payment options and keyboard wiring
+    try {
+      selectPaymentMethod(selectedPaymentMethod);
+      wirePaymentOptionKeys();
+    } catch (e) {}
     // Ensure address selector exists. If there's already a saved address, renderAddressSelection
     // was called by loadUserAddress; otherwise render the temp selection.
     try {
@@ -668,36 +673,72 @@ function selectPaymentMethod(method) {
   options.forEach(opt => {
     if (opt.getAttribute('data-method') === method) {
       opt.classList.add('selected');
+      opt.setAttribute('aria-pressed', 'true');
     } else {
       opt.classList.remove('selected');
+      opt.setAttribute('aria-pressed', 'false');
     }
+  });
+}
+
+// Make payment-option elements keyboard-activatable (Enter / Space)
+function wirePaymentOptionKeys() {
+  const options = document.querySelectorAll('.payment-option');
+  options.forEach(opt => {
+    opt.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter' || ev.key === ' ') {
+        ev.preventDefault();
+        const method = opt.getAttribute('data-method');
+        if (method) selectPaymentMethod(method);
+      }
+    });
   });
 }
 
 function showOrderConfirmation(details) {
   const modal = document.getElementById('orderConfirmation');
   const orderDetails = modal.querySelector('.order-details');
+  // Build an itemized view using the current cart if available
+  const cart = Array.isArray(window.cart) ? window.cart : [];
+  let itemsHtml = '';
+  let subtotal = 0;
+  if (cart.length) {
+    cart.forEach(item => {
+      const isPurchaseNew = item.order_type_name === 'Purchase New Container/s';
+      const unitPrice = isPurchaseNew ? 250 : Number(item.price || 0);
+      const itemTotal = unitPrice * (Number(item.quantity) || 0);
+      subtotal += itemTotal;
+      itemsHtml += `<div class="conf-item"><div><div class="name">${item.name} Container</div><div class="qty">${item.water_type_name}, ${item.order_type_name} × ${item.quantity}</div></div><div class="price">₱${itemTotal.toFixed(2)}</div></div>`;
+    });
+  } else {
+    itemsHtml = '<div class="confirmation-note">No items in cart</div>';
+  }
+
+  const deliveryDateText = details.deliveryDate ? new Date(details.deliveryDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Not specified';
+  const vehicle = getVehicleType(details.city || (window.savedAddress && window.savedAddress.city) || '');
 
   orderDetails.innerHTML = `
     <div class="confirmation-details">
-      <h3>Delivery Address</h3>
-      <p>${details.street}</p>
-      <p>${details.barangay}, ${details.city}</p>
-      <p>Contact: ${details.contactNumber}</p>
-      
-      <h3>Delivery Date</h3>
-      <p>${new Date(details.deliveryDate).toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })}</p>
-      
-      <h3>Payment Method</h3>
-      <p>${details.paymentMethod === 'cod' ? 'Cash on Delivery' : 'GCash'}</p>
+      <div class="confirmation-block">
+        <h3>Delivery Address</h3>
+        <div><strong>${details.street || ''}</strong></div>
+        <div>${details.barangay || ''}${details.barangay && details.city ? ', ' : ''}${details.city || ''}</div>
+        <div style="margin-top:8px;color:#666;">Contact: ${details.contactNumber || 'Not provided'}</div>
+        <div class="confirmation-note" style="margin-top:8px;">Delivery vehicle: <strong>${vehicle}</strong></div>
+      </div>
+
+      <div class="confirmation-block">
+        <h3>Order Summary</h3>
+        <div class="confirmation-items">${itemsHtml}</div>
+        <div class="conf-summary"><div>Subtotal</div><div>₱${subtotal.toFixed(2)}</div></div>
+        <div class="conf-summary" style="margin-top:6px;"><div>Grand Total</div><div>₱${subtotal.toFixed(2)}</div></div>
+        <div class="confirmation-note">Delivery Date: <strong>${deliveryDateText}</strong></div>
+        <div class="confirmation-note">Payment method: <strong>${details.paymentMethod === 'cod' ? 'Cash on Delivery' : 'GCash'}</strong></div>
+      </div>
     </div>
   `;
 
+  // show modal
   modal.classList.add('active');
 }
 
@@ -735,17 +776,65 @@ async function confirmOrder() {
   };
 
   try {
-    const response = await fetch('/api/orders/create.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(orderData)
+    // Build payload expected by the API: include items and numeric ids
+    const cart = Array.isArray(window.cart) ? window.cart : [];
+    const items = cart.map(item => {
+      const isPurchaseNew = item.order_type_name === 'Purchase New Container/s';
+      const unitPrice = isPurchaseNew ? 250 : Number(item.price || 0);
+      return {
+        container_id: item.id,
+        quantity: Number(item.quantity || 0),
+        price: unitPrice
+      };
     });
 
-    const result = await response.json();
-    if (result.success) {
-      showReceipt(result.order);
+    // Map payment method to numeric id used by the API (assumption: 1 = COD, 2 = GCash)
+    const paymentMethodId = selectedPaymentMethod === 'gcash' ? 2 : 1;
+
+    const payload = {
+      order_type: 1,
+      delivery_option: 1,
+      payment_method: paymentMethodId,
+      items: items,
+      notes: '',
+      // include delivery/address info for completeness (API may ignore but helpful for server-side logging)
+      delivery: {
+        street: orderData.street,
+        city: orderData.city,
+        barangay: orderData.barangay,
+        contact: orderData.contactNumber,
+        deliveryDate: orderData.deliveryDate
+      }
+    };
+
+    // Use centralized API helper so baseURL is applied consistently (/WRSOMS/api)
+    const result = await API.post('/orders/create.php', payload);
+    // API.post attaches __status and returns { success: false, message: text } for non-JSON responses
+    if (result && result.success) {
+      // API returns data with reference_id and total_amount. Build an order object for the receipt UI.
+      const data = result.data || {};
+      const orderObj = {
+        reference_id: data.reference_id || data.referenceId || '',
+        order_date: new Date().toISOString(),
+        delivery_date: orderData.deliveryDate,
+        address: `${orderData.street || ''}${orderData.barangay ? ', ' + orderData.barangay : ''}${orderData.city ? ', ' + orderData.city : ''}`,
+        customer_contact: orderData.contactNumber || (window.savedAddress && window.savedAddress.customer_contact) || 'Not provided',
+        vehicle_type: getVehicleType(orderData.city || (window.savedAddress && window.savedAddress.city) || ''),
+        batch_number: data.batch_number || data.batchNumber || '',
+        items: cart,
+        total_amount: data.total_amount || data.totalAmount || 0
+      };
+
+      showReceipt(orderObj);
     } else {
-      alert(result.error || 'Failed to place order. Please try again.');
+      // Attempt to surface useful error information (API.post may return message or errors)
+      let errMsg = 'Failed to place order. Please try again.';
+      if (result) {
+        if (result.message) errMsg = result.message;
+        else if (result.errors && Array.isArray(result.errors)) errMsg = result.errors.join('\n');
+        else if (result.__status === 404) errMsg = 'Order API not found (404). Check server path.';
+      }
+      alert(errMsg);
     }
   } catch (error) {
     console.error('Error placing order:', error);
