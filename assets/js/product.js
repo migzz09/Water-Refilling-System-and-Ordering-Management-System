@@ -8,79 +8,100 @@ const state = {
   selectedProduct: null,
   selectedWaterType: null,
   selectedOrderType: null,
+  selectedQuantity: 1,
   editingItem: null
 };
 
+// Helper to return correct image path depending on page folder
+function getImageSrc(filename) {
+  const file = filename || 'placeholder.png';
+  // If we're inside /pages/ use ../assets, otherwise assets/
+  const base = window.location.pathname.includes('/pages/') ? '../assets/images/' : 'assets/images/';
+  return base + file;
+}
 // Initialize page
 document.addEventListener('DOMContentLoaded', async function() {
+  // Initialize centralized auth UI if available, and load cart for all pages
   try {
-    // Initialize centralized auth UI if available (sets #userName, shows/hides buttons)
-    if (window.initAuthUI) {
-      await initAuthUI();
+    if (window.initAuthUI) await initAuthUI();
+  } catch (err) {
+    console.error('initAuthUI failed:', err);
+  }
+
+  // helper to safely parse JSON and surface HTML responses for debugging
+  async function safeParseJSON(response) {
+    const contentType = response.headers.get('content-type') || '';
+    const text = await response.text();
+    if (!contentType.includes('application/json')) {
+      const snippet = text.length > 1000 ? text.slice(0, 1000) + '... (truncated)' : text;
+      throw new Error('Expected JSON but received: ' + snippet);
     }
-
-    // Load all data in parallel for better performance
-    const [productsResponse, waterTypesResponse, orderTypesResponse] = await Promise.all([
-      fetch('/WRSOMS/api/common/containers.php'),
-      fetch('/WRSOMS/api/common/water_types.php'),
-      fetch('/WRSOMS/api/common/order_types.php')
-    ]);
-
-    // helper to safely parse JSON and surface HTML responses for debugging
-    async function safeParseJSON(response) {
-      const contentType = response.headers.get('content-type') || '';
-      const text = await response.text();
-      if (!contentType.includes('application/json')) {
-        // include a short snippet of the response to help debugging
-        const snippet = text.length > 1000 ? text.slice(0, 1000) + '... (truncated)' : text;
-        throw new Error('Expected JSON but received: ' + snippet);
-      }
-      try {
-        return JSON.parse(text);
-      } catch (e) {
-        const snippet = text.length > 1000 ? text.slice(0, 1000) + '... (truncated)' : text;
-        throw new Error('Invalid JSON response: ' + snippet);
-      }
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      const snippet = text.length > 1000 ? text.slice(0, 1000) + '... (truncated)' : text;
+      throw new Error('Invalid JSON response: ' + snippet);
     }
+  }
 
-    // Handle products
-    if (!productsResponse.ok) {
-      throw new Error(`Products HTTP error! status: ${productsResponse.status}`);
-    }
-    const products = await safeParseJSON(productsResponse);
-    console.log('Products loaded:', products);
-    renderProducts(products);
-
-    // Handle water types
-    if (!waterTypesResponse.ok) {
-      throw new Error(`Water types HTTP error! status: ${waterTypesResponse.status}`);
-    }
-    const waterTypes = await safeParseJSON(waterTypesResponse);
-    console.log('Water types loaded:', waterTypes);
-    renderWaterTypes(waterTypes);
-
-    // Handle order types
-    if (!orderTypesResponse.ok) {
-      throw new Error(`Order types HTTP error! status: ${orderTypesResponse.status}`);
-    }
-    const orderTypes = await safeParseJSON(orderTypesResponse);
-    console.log('Order types loaded:', orderTypes);
-    renderOrderTypes(orderTypes);
-
-    // Load cart
+  // Always load cart so floating cart works on index and product pages
+  try {
     await loadCart();
+  } catch (err) {
+    console.error('loadCart failed:', err);
+  }
 
-  } catch (error) {
-    console.error('Error initializing page:', error);
-    const grid = document.getElementById('productsGrid');
-    if (grid) {
-      grid.innerHTML = `
-        <div class="error" style="text-align: center; padding: 2rem;">
-          <i class="fa fa-exclamation-triangle" style="font-size: 2rem; color: #dc3545;"></i>
-          <p style="margin-top: 1rem;">Error loading data. Please try refreshing the page.</p>
-          <p style="color: #666; font-size: 0.9rem;">${error.message}</p>
-        </div>
-      `;
+  // If this page contains the products grid, initialize full product listing
+  if (document.getElementById('productsGrid')) {
+    try {
+      const [productsResponse, waterTypesResponse, orderTypesResponse] = await Promise.all([
+        fetch('/WRSOMS/api/common/containers.php'),
+        fetch('/WRSOMS/api/common/water_types.php'),
+        fetch('/WRSOMS/api/common/order_types.php')
+      ]);
+
+      if (!productsResponse.ok) throw new Error(`Products HTTP error! status: ${productsResponse.status}`);
+      const products = await safeParseJSON(productsResponse);
+      renderProducts(products);
+
+      if (!waterTypesResponse.ok) throw new Error(`Water types HTTP error! status: ${waterTypesResponse.status}`);
+      const waterTypes = await safeParseJSON(waterTypesResponse);
+      renderWaterTypes(waterTypes);
+
+      if (!orderTypesResponse.ok) throw new Error(`Order types HTTP error! status: ${orderTypesResponse.status}`);
+      const orderTypes = await safeParseJSON(orderTypesResponse);
+      renderOrderTypes(orderTypes);
+    } catch (error) {
+      console.error('Error initializing product page:', error);
+      const grid = document.getElementById('productsGrid');
+      if (grid) {
+        grid.innerHTML = `
+          <div class="error" style="text-align: center; padding: 2rem;">
+            <i class="fa fa-exclamation-triangle" style="font-size: 2rem; color: #dc3545;"></i>
+            <p style="margin-top: 1rem;">Error loading data. Please try refreshing the page.</p>
+            <p style="color: #666; font-size: 0.9rem;">${error.message}</p>
+          </div>
+        `;
+      }
+    }
+  } else {
+    // If not on product listing page, we still want the modal selection options available for editing cart
+    try {
+      const [waterTypesResponse, orderTypesResponse] = await Promise.all([
+        fetch('/WRSOMS/api/common/water_types.php'),
+        fetch('/WRSOMS/api/common/order_types.php')
+      ]);
+      if (waterTypesResponse.ok) {
+        const waterTypes = await safeParseJSON(waterTypesResponse);
+        // render only if modal exists
+        if (document.getElementById('waterTypeOptions')) renderWaterTypes(waterTypes);
+      }
+      if (orderTypesResponse.ok) {
+        const orderTypes = await safeParseJSON(orderTypesResponse);
+        if (document.getElementById('orderTypeOptions')) renderOrderTypes(orderTypes);
+      }
+    } catch (err) {
+      console.error('Error loading modal options on non-product page:', err);
     }
   }
 
@@ -96,10 +117,10 @@ function renderProducts(products) {
   try {
     grid.innerHTML = products.map(product => `
       <div class="product-card">
-        <img src="../assets/images/${product.image || 'placeholder.png'}" 
+        <img src="${getImageSrc(product.image || 'placeholder.png')}" 
              alt="${product.container_type} Container" 
              class="product-image"
-             onerror="this.src='../assets/images/placeholder.png'">
+             onerror="this.src='${getImageSrc('placeholder.png')}'">
         <h3 class="product-title">${product.container_type} Container</h3>
         <p class="product-price">₱${Number(product.price).toFixed(2)}</p>
         <p class="product-description">${getProductDescription(product.container_type)}</p>
@@ -213,6 +234,19 @@ function openModal(productId, productName, productPrice, productImage, isEdit = 
   state.selectedWaterType = null;
   state.selectedOrderType = null;
   state.editingItem = isEdit ? item : null;
+  // initialize modal quantity
+  state.selectedQuantity = (isEdit && item && item.quantity) ? item.quantity : 1;
+
+  // reflect quantity in modal UI if present
+  const qtyEl = document.getElementById('modalQuantityValue');
+  if (qtyEl) qtyEl.textContent = String(state.selectedQuantity);
+  // update +/- disabled state
+  updateModalQtyControls();
+  // focus modal for keyboard interaction
+  const modalContent = document.querySelector('.modal-content');
+  if (modalContent) modalContent.focus();
+  // attach keyboard handler
+  document.addEventListener('keydown', modalKeyHandler);
 
   document.getElementById('modalTitle').textContent = isEdit ? 'Edit Cart Item' : 'Select Water and Order Type';
   document.getElementById('selectionModal').classList.add('active');
@@ -234,6 +268,12 @@ function openModal(productId, productName, productPrice, productImage, isEdit = 
 function preSelectOptions(item) {
   state.selectedWaterType = { id: item.water_type_id, name: item.water_type_name };
   state.selectedOrderType = { id: item.order_type_id, name: item.order_type_name };
+  // when editing, initialize selected quantity from item
+  if (item.quantity) {
+    state.selectedQuantity = item.quantity;
+    const qtyEl = document.getElementById('modalQuantityValue');
+    if (qtyEl) qtyEl.textContent = String(state.selectedQuantity);
+  }
 
   document.querySelectorAll('[name="water_type"]').forEach(input => {
     const card = input.closest('.water-type-option');
@@ -300,6 +340,50 @@ function updateConfirmButton() {
   document.getElementById('confirmSelection').disabled = !(state.selectedWaterType && state.selectedOrderType);
 }
 
+// Change modal quantity (called by +/- buttons)
+function modalChangeQuantity(change) {
+  const newQty = Math.max(1, (state.selectedQuantity || 1) + change);
+  state.selectedQuantity = newQty;
+  const qtyEl = document.getElementById('modalQuantityValue');
+  if (qtyEl) qtyEl.textContent = String(newQty);
+  updateModalQtyControls();
+}
+
+function updateModalQtyControls() {
+  const minus = document.getElementById('modalQtyMinus');
+  const plus = document.getElementById('modalQtyPlus');
+  const qty = state.selectedQuantity || 1;
+  if (minus) {
+    minus.disabled = qty <= 1;
+    if (minus.disabled) {
+      minus.classList.add('disabled');
+      minus.setAttribute('aria-disabled', 'true');
+    } else {
+      minus.classList.remove('disabled');
+      minus.setAttribute('aria-disabled', 'false');
+    }
+  }
+  if (plus) {
+    plus.disabled = false;
+    plus.setAttribute('aria-disabled', 'false');
+  }
+}
+
+// Keyboard support: ArrowUp/Right to increase, ArrowDown/Left to decrease, Esc to close
+function modalKeyHandler(e) {
+  const modal = document.getElementById('selectionModal');
+  if (!modal || !modal.classList.contains('active')) return;
+  if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
+    e.preventDefault();
+    modalChangeQuantity(1);
+  } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
+    e.preventDefault();
+    modalChangeQuantity(-1);
+  } else if (e.key === 'Escape') {
+    closeModal();
+  }
+}
+
 function confirmSelection() {
   // Get selected values from the radio inputs
   const waterTypeInput = document.querySelector('input[name="water_type"]:checked');
@@ -334,7 +418,7 @@ function confirmSelection() {
     name: state.selectedProduct.name,
     price: state.selectedProduct.price,
     image: state.selectedProduct.image,
-    quantity: state.editingItem ? state.editingItem.quantity : 1,
+    quantity: state.selectedQuantity || (state.editingItem ? state.editingItem.quantity : 1),
     water_type_id: parseInt(waterTypeInput.value, 10),
     water_type_name: waterTypeName,
     order_type_id: parseInt(orderTypeInput.value, 10),
@@ -376,6 +460,8 @@ function closeModal() {
   state.selectedWaterType = null;
   state.selectedOrderType = null;
   state.editingItem = null;
+  // remove modal keyboard listener
+  document.removeEventListener('keydown', modalKeyHandler);
 }
 
 function updateCart() {
@@ -415,17 +501,17 @@ function updateCart() {
       `;
       checkoutBtn.disabled = true;
     } else {
-      cartItemsContainer.innerHTML = state.cart.map(item => {
+  cartItemsContainer.innerHTML = state.cart.map(item => {
         const isPurchaseNew = item.order_type_name === 'Purchase New Container/s';
         // unit price: ₱250 for new container (includes refill), otherwise the water price
         const unitPrice = isPurchaseNew ? 250 : Number(item.price || 0);
         
         return `
           <div class="cart-item" data-item-id="${item.id}">
-            <img src="../assets/images/${item.image}" 
+            <img src="${getImageSrc(item.image)}" 
                  alt="${item.name}" 
                  class="cart-item-image"
-                 onerror="this.src='../assets/images/placeholder.png'">
+                 onerror="this.src='${getImageSrc('placeholder.png')}'">
             <div class="cart-item-details">
               <div class="cart-item-title">
                 ${item.name} Container
@@ -458,22 +544,26 @@ function updateCart() {
     }
   }
 
-  // Save cart to server
-  fetch('../api/orders/update_cart.php', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ cart: state.cart })
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error('Failed to update cart');
-    }
-    return response.json();
-  })
-  .catch(error => {
-    console.error('Error updating cart:', error);
-    showError('Failed to update cart. Please try again.');
-  });
+  // Save cart to server using API helper (ensures correct baseURL)
+  if (typeof API !== 'undefined' && API.post) {
+    API.post('/orders/update_cart.php', { cart: state.cart })
+      .then(result => {
+        if (result && result.success === false) {
+          console.error('Server rejected cart update:', result.message || result);
+        }
+      })
+      .catch(error => {
+        console.error('Error updating cart:', error);
+        // non-blocking
+      });
+  } else {
+    // Fallback to relative fetch if API helper is not available
+    fetch('../api/orders/update_cart.php', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ cart: state.cart })
+    }).catch(error => console.error('Error updating cart (fallback):', error));
+  }
 }
 
 function updateQuantity(id, water_type_id, order_type_id, change) {
@@ -523,32 +613,44 @@ function toggleUserDropdown() {
 }
 
 function loadCart() {
-  fetch('../api/orders/get_cart.php')
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Failed to load cart');
-      }
-      return response.json();
-    })
-    .then(data => {
-      if (data.cart) {
-        state.cart = data.cart;
-        updateCart();
-      }
-    })
-    .catch(error => {
-      console.error('Error loading cart:', error);
-      showError('Failed to load cart. Please refresh the page.');
-    });
+  // Use centralized API helper so base URL is consistent across pages
+  if (typeof API !== 'undefined' && API.get) {
+    API.get('/orders/get_cart.php')
+      .then(data => {
+        if (data && data.cart) {
+          state.cart = data.cart;
+          updateCart();
+        }
+      })
+      .catch(error => {
+        console.error('Error loading cart:', error);
+      });
+  } else {
+    // Fallback for pages that include product.js without API helper
+    fetch('../api/orders/get_cart.php')
+      .then(response => {
+        if (!response.ok) throw new Error('Failed to load cart');
+        return response.json();
+      })
+      .then(data => {
+        if (data.cart) {
+          state.cart = data.cart;
+          updateCart();
+        }
+      })
+      .catch(error => {
+        console.error('Error loading cart (fallback):', error);
+      });
+  }
 }
 
 function checkout() {
   if (state.cart.length === 0) return;
-  
-  fetch('../api/auth/session.php')
-    .then(response => response.json())
+  // Use API helper if available
+  const authCheck = (typeof API !== 'undefined' && API.get) ? API.get('/auth/session.php') : fetch('../api/auth/session.php').then(r => r.json());
+  authCheck
     .then(data => {
-      if (data.authenticated) {
+      if (data && data.authenticated) {
         window.location.href = 'checkout.html';
       } else {
         alert('Please login to proceed with checkout');
@@ -578,5 +680,23 @@ document.addEventListener('click', function(event) {
     closeModal();
   }
 });
+
+// Prevent clicks inside the cart panel or user dropdown from bubbling to the document
+// (this avoids the cart closing when buttons inside it replace DOM nodes during their handlers)
+(() => {
+  const cartPanel = document.getElementById('cartPanel');
+  if (cartPanel) {
+    cartPanel.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+  }
+
+  const userDropdown = document.getElementById('userDropdown');
+  if (userDropdown) {
+    userDropdown.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+  }
+})();
 
 // logout is provided by shared auth.js (initAuthUI / logout)

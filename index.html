@@ -129,6 +129,44 @@
         </div>
     </section>
 
+    <!-- Cart (floating and panel) - available on index so users can edit orders while browsing -->
+    <div class="floating-cart" onclick="toggleCart()" role="button" tabindex="0" aria-label="Open cart" title="Open cart">
+        <i class="fa fa-shopping-cart"></i>
+        <span class="cart-count" id="cartCount">0</span>
+    </div>
+
+    <div class="cart-panel" id="cartPanel">
+        <div class="cart-header">
+            <h2>Your Cart</h2>
+            <button class="close-cart" onclick="toggleCart()" aria-label="Close cart" title="Close cart">&times;</button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <div class="empty-cart"><div class="empty-cart-icon">🛒</div><p>Your cart is empty</p></div>
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total"><span>Total:</span><span id="cartTotal">₱0.00</span></div>
+            <button class="checkout-btn" id="checkoutBtn" onclick="checkout()" disabled>Proceed to Checkout</button>
+        </div>
+    </div>
+
+    <!-- Selection modal (used when editing cart items) -->
+    <div class="modal-overlay" id="selectionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Select Water and Order Type</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="water-type-options" id="waterTypeOptions"><h4>Water Type</h4></div>
+            <div class="order-type-options" id="orderTypeOptions"><h4>Order Type</h4></div>
+            <div class="modal-quantity" id="modalQuantity" style="display:flex; align-items:center; gap:8px; margin-top:12px;">
+                <button class="qty-btn" type="button" onclick="modalChangeQuantity(-1)" aria-label="Decrease quantity" id="modalQtyMinus">-</button>
+                <span id="modalQuantityValue" role="status" aria-live="polite" style="min-width:42px; text-align:center; display:inline-block; font-weight:700;">1</span>
+                <button class="qty-btn" type="button" onclick="modalChangeQuantity(1)" aria-label="Increase quantity" id="modalQtyPlus">+</button>
+            </div>
+            <button class="modal-confirm-btn" id="confirmSelection" onclick="confirmSelection()" disabled>Confirm Selection</button>
+        </div>
+    </div>
+
     <!-- How It Works Section -->
     <section id="how-it-works" class="section">
         <div class="container">
@@ -355,6 +393,7 @@
     <!-- Scripts -->
     <script src="assets/js/api-helper.js"></script>
     <script src="assets/js/auth.js"></script>
+    <script src="assets/js/product.js"></script>
     <script src="assets/js/index.js"></script>
 </body>
 </html>

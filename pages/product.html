@@ -134,7 +134,12 @@
       </div>
       <div class="water-type-options" id="waterTypeOptions"><h4>Water Type</h4></div>
       <div class="order-type-options" id="orderTypeOptions"><h4>Order Type</h4></div>
-      <button class="modal-confirm-btn" id="confirmSelection" onclick="confirmSelection()" disabled>Confirm Selection</button>
+          <div class="modal-quantity" id="modalQuantity" style="display:flex; align-items:center; gap:8px; margin-top:12px;">
+            <button class="qty-btn" type="button" onclick="modalChangeQuantity(-1)" aria-label="Decrease quantity" id="modalQtyMinus">-</button>
+            <span id="modalQuantityValue" role="status" aria-live="polite" style="min-width:42px; text-align:center; display:inline-block; font-weight:700;">1</span>
+            <button class="qty-btn" type="button" onclick="modalChangeQuantity(1)" aria-label="Increase quantity" id="modalQtyPlus">+</button>
+          </div>
+          <button class="modal-confirm-btn" id="confirmSelection" onclick="confirmSelection()" disabled>Confirm Selection</button>
     </div>
   </div>
 

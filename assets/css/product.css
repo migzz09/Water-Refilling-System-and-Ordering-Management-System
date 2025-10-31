@@ -266,6 +266,46 @@
     color: var(--text-primary);
 }
 
+/* Modal Quantity Stepper */
+.modal-quantity {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-quantity .qty-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    border: 1px solid var(--bg-light);
+    background: var(--bg-white);
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.12s ease;
+}
+
+.modal-quantity .qty-btn:hover:not(.disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.modal-quantity .qty-btn.disabled,
+.modal-quantity .qty-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.modal-quantity #modalQuantityValue {
+    min-width: 48px;
+    font-size: 1.125rem;
+}
+
 .cart-item-actions {
     display: flex;
     gap: var(--spacing-xs);
