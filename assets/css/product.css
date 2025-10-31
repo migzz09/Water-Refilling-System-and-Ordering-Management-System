@@ -414,6 +414,13 @@
     font-weight: 600;
 }
 
+.order-type-desc {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    font-style: italic;
+}
+
 .water-type-option,
 .order-type-option {
     border: 2px solid var(--bg-light);

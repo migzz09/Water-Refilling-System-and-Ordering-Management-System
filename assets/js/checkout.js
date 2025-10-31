@@ -106,7 +106,9 @@ function renderCart(cart) {
   let total = 0;
 
   cartItems.innerHTML = cart.map(item => {
-    const itemTotal = item.price * item.quantity;
+    const isPurchaseNew = item.order_type_name === 'Purchase New Container/s';
+    const unitPrice = isPurchaseNew ? 250 : Number(item.price || 0);
+    const itemTotal = unitPrice * item.quantity;
     total += itemTotal;
     return `
       <div class="cart-item">
@@ -117,7 +119,7 @@ function renderCart(cart) {
           </div>
           <div>Quantity: ${item.quantity}</div>
         </div>
-        <div class="cart-item-price">₱${itemTotal.toFixed(2)}</div>
+        <div class="cart-item-price">₱${itemTotal.toFixed(2)}${isPurchaseNew ? ' <div style="font-size:0.85em;color:#666;">(Includes refill)</div>' : ''}</div>
       </div>
     `;
   }).join('');

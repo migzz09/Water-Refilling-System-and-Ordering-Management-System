@@ -3,88 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WaterWorld Water Station - Pure. Fresh. Delivered.</title>
+    <title>Water World Water Station - Pure. Fresh. Delivered.</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="assets/css/design-system.css">
     <link rel="stylesheet" href="assets/css/index.css">
+    <link rel="stylesheet" href="assets/css/product.css">
+    <link rel="stylesheet" href="assets/css/header.css">
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar glass">
-        <div class="container">
-            <div class="nav-content">
-                <div class="nav-brand">
-                    <img src="assets/images/ww_logo.png" alt="WaterWorld Logo" class="nav-logo">
-                    <span class="brand-name">WaterWorld</span>
-                </div>
-                
-                <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
-                    <span class="icon-menu"></span>
-                </button>
-                
-                <div class="nav-menu" id="navMenu">
-                    <a href="index.html" class="nav-link active">
-                        <i class="fa fa-home"></i>
-                        Home
-                    </a>
-                    <a href="pages/product.html" class="nav-link">
-                        <i class="fa fa-shopping-cart"></i>
-                        Products
-                    </a>
-                    <a href="pages/order-tracking.html" class="nav-link">
-                        <i class="fa fa-search"></i>
-                        Track Order
-                    </a>
-                    <a href="#services" class="nav-link">
-                        <i class="fa fa-tint"></i>
-                        Services
-                    </a>
-                    <a href="#contact" class="nav-link">
-                        <i class="fa fa-envelope"></i>
-                        Contact
-                    </a>
-                </div>
-                
-                <div class="nav-actions" id="navActions">
-                    <a href="pages/login.html" class="btn btn-outline btn-sm" id="loginBtn">
-                        <i class="fa fa-sign-in"></i>
-                        Login
-                    </a>
-                    <a href="pages/register.html" class="btn btn-primary btn-sm" id="registerBtn">
-                        <i class="fa fa-user-plus"></i>
-                        Register
-                    </a>
-                    <div class="user-menu" id="userMenu" style="display: none;">
-                        <button class="btn btn-outline btn-sm profile-btn" onclick="toggleUserDropdown()">
-                            <i class="fa fa-user-circle"></i>
-                            <span id="userName">Profile</span>
-                            <i class="fa fa-chevron-down"></i>
-                        </button>
-                        <div class="user-dropdown" id="userDropdown" style="display: none;">
-                            <a href="pages/product.html" class="dropdown-item">
-                                <i class="fa fa-shopping-cart"></i>
-                                View Products
-                            </a>
-                            <a href="pages/usertransaction-history.html" class="dropdown-item">
-                                <i class="fa fa-history"></i>
-                                Order History
-                            </a>
-                            <a href="pages/order-tracking.html" class="dropdown-item">
-                                <i class="fa fa-search"></i>
-                                Track Order
-                            </a>
-                            <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
-                            <a href="#" onclick="logout()" class="dropdown-item">
-                                <i class="fa fa-sign-out"></i>
-                                Logout
-                            </a>
+        <!-- Navigation -->
+        <nav class="navbar glass">
+            <div class="container">
+                <div class="nav-content">
+                    <div class="nav-brand">
+                        <img src="assets/images/ww_logo.png" alt="WaterWorld Logo" class="nav-logo">
+                        <span class="brand-name">Water World</span>
+                    </div>
+
+                    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                        <span class="icon-menu"></span>
+                    </button>
+
+                    <div class="nav-menu" id="navMenu">
+                        <a href="index.html" class="nav-link active">
+                            <i class="fa fa-home"></i>
+                            Home
+                        </a>
+                        <a href="pages/product.html" class="nav-link">
+                            <i class="fa fa-shopping-cart"></i>
+                            Products
+                        </a>
+                        <a href="pages/order-tracking.html" class="nav-link">
+                            <i class="fa fa-search"></i>
+                            Track Order
+                        </a>
+                        <a href="index.html#services" class="nav-link">
+                            <i class="fa fa-tint"></i>
+                            Services
+                        </a>
+                        <a href="index.html#contact" class="nav-link">
+                            <i class="fa fa-envelope"></i>
+                            Contact
+                        </a>
+                    </div>
+
+                    <div class="nav-actions" id="navActions">
+                        <a href="pages/login.html" class="btn btn-outline btn-sm" id="loginBtn">
+                            <i class="fa fa-sign-in"></i>
+                            Login
+                        </a>
+                        <a href="pages/register.html" class="btn btn-primary btn-sm" id="registerBtn">
+                            <i class="fa fa-user-plus"></i>
+                            Register
+                        </a>
+                        <div class="user-menu" id="userMenu" style="display: none;">
+                            <button class="btn btn-outline btn-sm profile-btn" onclick="toggleUserDropdown()" aria-label="Profile" title="Profile">
+                                <i class="fa fa-user-circle"></i>
+                                <span id="userName">Profile</span>
+                                <i class="fa fa-chevron-down"></i>
+                            </button>
+                            <div class="user-dropdown" id="userDropdown" style="display: none;">
+                                <a href="pages/product.html" class="dropdown-item"><i class="fa fa-shopping-cart"></i> View Products</a>
+                                <a href="pages/usertransaction-history.html" class="dropdown-item"><i class="fa fa-history"></i> Order History</a>
+                                <a href="pages/order-tracking.html" class="dropdown-item"><i class="fa fa-search"></i> Track Order</a>
+                                <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
+                                <a href="#" onclick="logout()" class="dropdown-item"><i class="fa fa-sign-out"></i> Logout</a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </nav>
+        </nav>
 
     <!-- Hero Section -->
     <section class="hero water-bg">
@@ -315,7 +305,7 @@
                 <div class="footer-section">
                     <div class="footer-brand">
                         <img src="assets/images/ww_logo.png" alt="WaterWorld Logo" class="footer-logo">
-                        <span class="brand-name">WaterWorld</span>
+                        <span class="brand-name">Water World</span>
                     </div>
                     <p class="footer-description">
                         Your trusted partner for pure, fresh water delivery in Metro Manila since 2020.
@@ -357,13 +347,14 @@
             </div>
             
             <div class="footer-bottom">
-                <p>&copy; 2025 WaterWorld Water Station. All rights reserved.</p>
+                <p>&copy; 2025 Water World Water Station. All rights reserved.</p>
             </div>
         </div>
     </footer>
 
     <!-- Scripts -->
     <script src="assets/js/api-helper.js"></script>
+    <script src="assets/js/auth.js"></script>
     <script src="assets/js/index.js"></script>
 </body>
 </html>

@@ -48,20 +48,7 @@ document.addEventListener('click', function(event) {
   }
 });
 
-// Logout function
-async function logout() {
-  try {
-    const result = await API.post('/auth/logout.php', {});
-    if (result.success) {
-      // Redirect to home page
-      window.location.href = '/WRSOMS/index.html';
-    }
-  } catch (error) {
-    console.error('Logout error:', error);
-    // Force redirect anyway
-    window.location.href = '/WRSOMS/index.html';
-  }
-}
+// Logout is provided by shared auth.js (window.logout)
 
 // Reveal sections on scroll
 const sections = document.querySelectorAll("section");
@@ -116,7 +103,12 @@ function togglePassword() {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
-  checkAuthStatus();
+  // Use centralized auth UI initializer
+  if (window.initAuthUI) {
+    initAuthUI();
+  } else {
+    checkAuthStatus();
+  }
 });
 
 // Initialize scroll reveal

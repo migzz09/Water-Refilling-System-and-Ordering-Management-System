@@ -14,58 +14,108 @@ const state = {
 // Initialize page
 document.addEventListener('DOMContentLoaded', async function() {
   try {
-  // Check auth status
-  const authResponse = await fetch('../api/auth/session.php');
-    const authData = await authResponse.json();
-    if (authData.authenticated) {
-      document.getElementById('loginBtn').style.display = 'none';
-      document.getElementById('registerBtn').style.display = 'none';
-      document.getElementById('userMenu').style.display = 'block';
-      document.getElementById('userName').textContent = authData.username;
+    // Initialize centralized auth UI if available (sets #userName, shows/hides buttons)
+    if (window.initAuthUI) {
+      await initAuthUI();
     }
 
-    // Load products
-  const productsResponse = await fetch('../api/common/containers.php');
-    const products = await productsResponse.json();
+    // Load all data in parallel for better performance
+    const [productsResponse, waterTypesResponse, orderTypesResponse] = await Promise.all([
+      fetch('/WRSOMS/api/common/containers.php'),
+      fetch('/WRSOMS/api/common/water_types.php'),
+      fetch('/WRSOMS/api/common/order_types.php')
+    ]);
+
+    // helper to safely parse JSON and surface HTML responses for debugging
+    async function safeParseJSON(response) {
+      const contentType = response.headers.get('content-type') || '';
+      const text = await response.text();
+      if (!contentType.includes('application/json')) {
+        // include a short snippet of the response to help debugging
+        const snippet = text.length > 1000 ? text.slice(0, 1000) + '... (truncated)' : text;
+        throw new Error('Expected JSON but received: ' + snippet);
+      }
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        const snippet = text.length > 1000 ? text.slice(0, 1000) + '... (truncated)' : text;
+        throw new Error('Invalid JSON response: ' + snippet);
+      }
+    }
+
+    // Handle products
+    if (!productsResponse.ok) {
+      throw new Error(`Products HTTP error! status: ${productsResponse.status}`);
+    }
+    const products = await safeParseJSON(productsResponse);
+    console.log('Products loaded:', products);
     renderProducts(products);
 
-    // Load water types
-  const waterTypesResponse = await fetch('../api/common/water_types.php');
-    const waterTypes = await waterTypesResponse.json();
+    // Handle water types
+    if (!waterTypesResponse.ok) {
+      throw new Error(`Water types HTTP error! status: ${waterTypesResponse.status}`);
+    }
+    const waterTypes = await safeParseJSON(waterTypesResponse);
+    console.log('Water types loaded:', waterTypes);
     renderWaterTypes(waterTypes);
 
-    // Load order types
-  const orderTypesResponse = await fetch('../api/common/order_types.php');
-    const orderTypes = await orderTypesResponse.json();
+    // Handle order types
+    if (!orderTypesResponse.ok) {
+      throw new Error(`Order types HTTP error! status: ${orderTypesResponse.status}`);
+    }
+    const orderTypes = await safeParseJSON(orderTypesResponse);
+    console.log('Order types loaded:', orderTypes);
     renderOrderTypes(orderTypes);
 
     // Load cart
-    loadCart();
+    await loadCart();
+
   } catch (error) {
-    console.error('Error loading data:', error);
+    console.error('Error initializing page:', error);
+    const grid = document.getElementById('productsGrid');
+    if (grid) {
+      grid.innerHTML = `
+        <div class="error" style="text-align: center; padding: 2rem;">
+          <i class="fa fa-exclamation-triangle" style="font-size: 2rem; color: #dc3545;"></i>
+          <p style="margin-top: 1rem;">Error loading data. Please try refreshing the page.</p>
+          <p style="color: #666; font-size: 0.9rem;">${error.message}</p>
+        </div>
+      `;
+    }
   }
+
 });
 
 function renderProducts(products) {
   const grid = document.getElementById('productsGrid');
-  grid.innerHTML = products.map(product => `
-    <div class="product-card">
-      <img src="../assets/images/${product.image}" 
-           alt="${product.container_type} Container" 
-           class="product-image"
-           onerror="this.src='../assets/images/placeholder.png'">
-      <h3 class="product-title">${product.container_type} Container</h3>
-      <p class="product-price">₱${Number(product.price).toFixed(2)}</p>
-      <p class="product-description">${getProductDescription(product.container_type)}</p>
-      <button class="btn btn-primary btn-block add-to-cart-btn" 
-              data-id="${product.container_id}" 
-              data-name="${product.container_type}"
-              data-price="${product.price}"
-              data-image="${product.image}">
-        <i class="fa fa-shopping-cart"></i> Add to Cart
-      </button>
-    </div>
-  `).join('');
+  if (!products || products.length === 0) {
+    grid.innerHTML = '<div class="no-products">No products available</div>';
+    return;
+  }
+  
+  try {
+    grid.innerHTML = products.map(product => `
+      <div class="product-card">
+        <img src="../assets/images/${product.image || 'placeholder.png'}" 
+             alt="${product.container_type} Container" 
+             class="product-image"
+             onerror="this.src='../assets/images/placeholder.png'">
+        <h3 class="product-title">${product.container_type} Container</h3>
+        <p class="product-price">₱${Number(product.price).toFixed(2)}</p>
+        <p class="product-description">${getProductDescription(product.container_type)}</p>
+        <button class="btn btn-primary btn-block add-to-cart-btn" 
+                data-id="${product.container_id}" 
+                data-name="${product.container_type}"
+                data-price="${product.price}"
+                data-image="${product.image || 'placeholder.png'}">
+          <i class="fa fa-shopping-cart"></i> Add to Cart
+        </button>
+      </div>
+    `).join('');
+  } catch (error) {
+    console.error('Error rendering products:', error, products);
+    grid.innerHTML = '<div class="error">Error loading products. Please try again.</div>';
+  }
 }
 
 function getProductDescription(type) {
@@ -89,14 +139,33 @@ function renderWaterTypes(types) {
 
 function renderOrderTypes(types) {
   const container = document.getElementById('orderTypeOptions');
-  container.innerHTML = `<h4>Order Type</h4>` + types.map(type => `
-    <div class="order-type-option" data-id="${type.order_type_id}">
-      <input type="radio" name="order_type" id="order_${type.order_type_id}" value="${type.order_type_id}" aria-label="${type.type_name}" title="${type.type_name}">
-      <label for="order_${type.order_type_id}">
-        <div class="order-type-name">${type.type_name}</div>
-      </label>
-    </div>
-  `).join('');
+  container.innerHTML = `<h4>Order Type</h4>` + types.map(type => {
+    const isPurchaseNew = type.type_name === 'Purchase New Container/s';
+    console.log('Order type:', type.type_name, 'isPurchaseNew:', isPurchaseNew); // Debug log
+    return `
+      <div class="order-type-option" data-id="${type.order_type_id}" data-name="${type.type_name}">
+        <input type="radio" 
+               name="order_type" 
+               id="order_${type.order_type_id}" 
+               value="${type.order_type_id}" 
+               aria-label="${type.type_name}"
+               title="${type.type_name}">
+        <label for="order_${type.order_type_id}">
+          <div class="order-type-name">${type.type_name}</div>
+          ${isPurchaseNew ? '<div class="order-type-desc" style="color: #0066cc; font-weight: 500;">(Price: ₱250.00 per container)</div>' : ''}
+        </label>
+      </div>
+    `;
+  }).join('');
+
+  // Add click event listeners
+  container.querySelectorAll('.order-type-option').forEach(option => {
+    option.addEventListener('click', () => {
+      const id = parseInt(option.dataset.id, 10);
+      const name = option.dataset.name;
+      selectOrderType(id, name);
+    });
+  });
 }
 
 // Event delegation for add-to-cart buttons and option-card clicks
@@ -187,11 +256,17 @@ function preSelectOptions(item) {
 
 function selectWaterType(id, name) {
   state.selectedWaterType = { id, name };
-  document.querySelectorAll('[name="water_type"]').forEach(input => {
+  const options = document.querySelectorAll('[name="water_type"]');
+  options.forEach(input => {
     const card = input.closest('.water-type-option');
     if (parseInt(input.value) === id) {
-      if (card) card.classList.add('selected');
-      input.checked = true;
+      if (card) {
+        card.classList.add('selected');
+        const typeName = card.querySelector('.water-type-name')?.textContent || name;
+        input.checked = true;
+        input.title = typeName;
+        state.selectedWaterType = { id, name: typeName };
+      }
     } else {
       if (card) card.classList.remove('selected');
       input.checked = false;
@@ -202,11 +277,17 @@ function selectWaterType(id, name) {
 
 function selectOrderType(id, name) {
   state.selectedOrderType = { id, name };
-  document.querySelectorAll('[name="order_type"]').forEach(input => {
+  const options = document.querySelectorAll('[name="order_type"]');
+  options.forEach(input => {
     const card = input.closest('.order-type-option');
     if (parseInt(input.value) === id) {
-      if (card) card.classList.add('selected');
-      input.checked = true;
+      if (card) {
+        card.classList.add('selected');
+        const typeName = card.querySelector('.order-type-name')?.textContent || name;
+        input.checked = true;
+        input.title = typeName;
+        state.selectedOrderType = { id, name: typeName };
+      }
     } else {
       if (card) card.classList.remove('selected');
       input.checked = false;
@@ -220,7 +301,25 @@ function updateConfirmButton() {
 }
 
 function confirmSelection() {
-  if (!state.selectedProduct || !state.selectedWaterType || !state.selectedOrderType) return;
+  // Get selected values from the radio inputs
+  const waterTypeInput = document.querySelector('input[name="water_type"]:checked');
+  const orderTypeInput = document.querySelector('input[name="order_type"]:checked');
+
+  console.log('Selections:', { // Debug log
+    waterType: waterTypeInput?.value,
+    orderType: orderTypeInput?.value,
+    product: state.selectedProduct
+  });
+
+  // Check if all required selections are made
+  if (!waterTypeInput || !orderTypeInput || !state.selectedProduct) {
+    alert('Please select both water type and order type before confirming.');
+    return;
+  }
+
+  // Get the selected water type and order type names from their parent elements
+  const waterTypeName = waterTypeInput.closest('.water-type-option').querySelector('.water-type-name').textContent;
+  const orderTypeName = orderTypeInput.closest('.order-type-option').querySelector('.order-type-name').textContent;
 
   if (state.editingItem) {
     state.cart = state.cart.filter(item => !(
@@ -236,10 +335,10 @@ function confirmSelection() {
     price: state.selectedProduct.price,
     image: state.selectedProduct.image,
     quantity: state.editingItem ? state.editingItem.quantity : 1,
-    water_type_id: state.selectedWaterType.id,
-    water_type_name: state.selectedWaterType.name,
-    order_type_id: state.selectedOrderType.id,
-    order_type_name: state.selectedOrderType.name
+    water_type_id: parseInt(waterTypeInput.value, 10),
+    water_type_name: waterTypeName,
+    order_type_id: parseInt(orderTypeInput.value, 10),
+    order_type_name: orderTypeName
   };
 
   const existingItem = state.cart.find(item => 
@@ -281,12 +380,19 @@ function closeModal() {
 
 function updateCart() {
   const cartCount = document.getElementById('cartCount');
-  const cartItems = document.getElementById('cartItems');
+  const cartItemsContainer = document.getElementById('cartItems');
   const cartTotal = document.getElementById('cartTotal');
   const checkoutBtn = document.getElementById('checkoutBtn');
 
   const totalItems = state.cart.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  
+  // Calculate total price including container purchase price if applicable
+  const totalPrice = state.cart.reduce((sum, item) => {
+    const isPurchaseNew = item.order_type_name === 'Purchase New Container/s';
+    // If purchasing a new container, total per unit is fixed at ₱250 (includes refill)
+    const unitPrice = isPurchaseNew ? 250 : Number(item.price || 0);
+    return sum + (unitPrice * item.quantity);
+  }, 0);
 
   cartCount.textContent = totalItems;
   cartTotal.textContent = '₱' + totalPrice.toFixed(2);
@@ -300,37 +406,56 @@ function updateCart() {
     `;
     checkoutBtn.disabled = true;
   } else {
-    cartItems.innerHTML = state.cart.map(item => `
-      <div class="cart-item">
-        <img src="../assets/images/${item.image}" 
-             alt="${item.name}" 
-             class="cart-item-image"
-             onerror="this.src='../assets/images/placeholder.png'">
-        <div class="cart-item-details">
-          <div class="cart-item-title">
-            ${item.name} Container
-            <div class="cart-item-subtitle">${item.water_type_name}, ${item.order_type_name}</div>
-          </div>
-          <div class="cart-item-price">₱${item.price.toFixed(2)} each</div>
-          <div class="quantity-controls">
-            <button class="btn btn-sm" onclick="updateQuantity(${item.id}, ${item.water_type_id}, ${item.order_type_id}, -1)">
-              <i class="fa fa-minus"></i>
-            </button>
-            <span class="quantity-value">${item.quantity}</span>
-            <button class="btn btn-sm" onclick="updateQuantity(${item.id}, ${item.water_type_id}, ${item.order_type_id}, 1)">
-              <i class="fa fa-plus"></i>
-            </button>
-            <button class="btn btn-primary btn-sm" onclick="editItem(${item.id}, ${item.water_type_id}, ${item.order_type_id})">
-              <i class="fa fa-edit"></i>
-            </button>
-            <button class="btn btn-danger btn-sm" onclick="removeItem(${item.id}, ${item.water_type_id}, ${item.order_type_id})">
-              <i class="fa fa-trash"></i>
-            </button>
-          </div>
+    if (state.cart.length === 0) {
+      cartItemsContainer.innerHTML = `
+        <div class="empty-cart">
+          <div class="empty-cart-icon">🛒</div>
+          <p>Your cart is empty</p>
         </div>
-      </div>
-    `).join('');
-    checkoutBtn.disabled = false;
+      `;
+      checkoutBtn.disabled = true;
+    } else {
+      cartItemsContainer.innerHTML = state.cart.map(item => {
+        const isPurchaseNew = item.order_type_name === 'Purchase New Container/s';
+        // unit price: ₱250 for new container (includes refill), otherwise the water price
+        const unitPrice = isPurchaseNew ? 250 : Number(item.price || 0);
+        
+        return `
+          <div class="cart-item" data-item-id="${item.id}">
+            <img src="../assets/images/${item.image}" 
+                 alt="${item.name}" 
+                 class="cart-item-image"
+                 onerror="this.src='../assets/images/placeholder.png'">
+            <div class="cart-item-details">
+              <div class="cart-item-title">
+                ${item.name} Container
+                <div class="cart-item-subtitle">${item.water_type_name}, ${item.order_type_name}</div>
+              </div>
+              <div class="cart-item-price">
+                <div style="font-weight: 500;">₱${unitPrice.toFixed(2)} each</div>
+                ${isPurchaseNew ? '<div style="font-size: 0.85em; color: #666; margin-top: 2px;">₱250.00 total per container (includes refill)</div>' : '<div style="font-size: 0.85em; color: #666; margin-top: 2px;">Water: ₱' + Number(item.price || 0).toFixed(2) + '</div>'}
+              </div>
+              <div class="quantity-controls">
+                <button class="btn btn-sm" onclick="updateQuantity(${item.id}, ${item.water_type_id}, ${item.order_type_id}, -1)">
+                  <i class="fa fa-minus"></i>
+                </button>
+                <span class="quantity-value">${item.quantity}</span>
+                <button class="btn btn-sm" onclick="updateQuantity(${item.id}, ${item.water_type_id}, ${item.order_type_id}, 1)">
+                  <i class="fa fa-plus"></i>
+                </button>
+                <button class="btn btn-primary btn-sm" onclick="editItem(${item.id}, ${item.water_type_id}, ${item.order_type_id})">
+                  <i class="fa fa-edit"></i>
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="removeItem(${item.id}, ${item.water_type_id}, ${item.order_type_id})">
+                  <i class="fa fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      checkoutBtn.disabled = false;
+    }
   }
 
   // Save cart to server
@@ -454,13 +579,4 @@ document.addEventListener('click', function(event) {
   }
 });
 
-function logout() {
-  fetch('/api/auth/logout.php')
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        window.location.href = '../index.html';
-      }
-    })
-    .catch(error => console.error('Error logging out:', error));
-}
+// logout is provided by shared auth.js (initAuthUI / logout)
