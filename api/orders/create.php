@@ -143,9 +143,45 @@ try {
         $subtotal = ($item['quantity'] ?? 0) * ($item['price'] ?? 0);
         $stmt->execute([$referenceId, $batch_number, $item['container_id'], $item['quantity'], $subtotal]);
     }
+    // For refill orders, create pickup and delivery entries tied to the batch
+    $pickup_delivery_id = null;
+    $delivery_delivery_id = null;
+    if ((int)$orderType === 1) {
+        // Try to read pickup_time/delivery_time from batch; fall back to defaults
+        $pickupTime = '07:00:00';
+        $deliveryTime = '10:00:00';
+        if ($batch_id) {
+            try {
+                $tstmt = $pdo->prepare("SELECT pickup_time, delivery_time FROM batches WHERE batch_id = ? LIMIT 1");
+                $tstmt->execute([$batch_id]);
+                $trow = $tstmt->fetch(PDO::FETCH_ASSOC);
+                if ($trow) {
+                    if (!empty($trow['pickup_time'])) $pickupTime = $trow['pickup_time'];
+                    if (!empty($trow['delivery_time'])) $deliveryTime = $trow['delivery_time'];
+                }
+            } catch (Exception $e) {
+                // ignore and use defaults
+            }
+        }
+
+        // build scheduled timestamps (use deliveryDate if provided)
+        $scheduledDate = $deliveryDate ?: date('Y-m-d');
+        $pickupScheduled = $scheduledDate . ' ' . $pickupTime;
+        $deliveryScheduled = $scheduledDate . ' ' . $deliveryTime;
+
+        // Insert pickup delivery record
+        $dstmt = $pdo->prepare("INSERT INTO deliveries (batch_id, delivery_status_id, delivery_date, delivery_type, scheduled_time, notes) VALUES (?, 1, ?, 'pickup', ?, ?)");
+        $dstmt->execute([$batch_id, $scheduledDate, $pickupScheduled, 'Auto-created pickup for order ' . $referenceId]);
+        $pickup_delivery_id = $pdo->lastInsertId();
+
+        // Insert delivery delivery record
+        $dstmt = $pdo->prepare("INSERT INTO deliveries (batch_id, delivery_status_id, delivery_date, delivery_type, scheduled_time, notes) VALUES (?, 1, ?, 'delivery', ?, ?)");
+        $dstmt->execute([$batch_id, $scheduledDate, $deliveryScheduled, 'Auto-created delivery for order ' . $referenceId]);
+        $delivery_delivery_id = $pdo->lastInsertId();
+    }
+
     // Insert payment record
     $stmt = $pdo->prepare("INSERT INTO payments (reference_id, payment_method_id, payment_status_id, amount_paid) VALUES (?, ?, 1, ?)");
-    $stmt->execute([$referenceId, $paymentMethod, $totalAmount]);
     $stmt->execute([$referenceId, $paymentMethod, $totalAmount]);
 
     $pdo->commit();

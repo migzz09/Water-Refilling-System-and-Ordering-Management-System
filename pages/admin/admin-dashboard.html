@@ -6,356 +6,25 @@
     <title>Admin Dashboard - WATER WORLD</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
-
-        body {
-            background: #F7FAFC;
-            color: #1A202C;
-            min-height: 100vh;
-            display: flex;
-            overflow-x: hidden;
-        }
-
-        .sidebar {
-            width: 64px;
-            background: #1A202C;
-            color: #E2E8F0;
-            position: fixed;
-            height: 100vh;
-            padding: 24px 0;
-            transition: width 0.3s ease;
-            z-index: 1000;
-        }
-
-        .sidebar:hover, .sidebar:focus-within {
-            width: 240px;
-        }
-
-        .logo-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-size: 20px;
-            font-weight: 600;
-            color: #3B82F6;
-            text-align: center;
-            margin-bottom: 32px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            background: transparent;
-            padding: 8px;
-        }
-
-        .logo-img {
-            width: 32px;
-            height: 32px;
-            object-fit: contain;
-            background: transparent;
-        }
-
-        .logo-text {
-            font-size: 20px;
-            font-weight: 600;
-            color: #3B82F6;
-        }
-
-        .sidebar:hover .logo-container, .sidebar:focus-within .logo-container {
-            opacity: 1;
-        }
-
-        .sidebar ul {
-            list-style: none;
-        }
-
-        .sidebar ul li {
-            padding: 16px;
-            cursor: pointer;
-            transition: background 0.2s ease;
-        }
-
-        .sidebar ul li:hover, .sidebar ul li:focus {
-            background: #2D3748;
-        }
-
-        .sidebar ul li.active {
-            background: #3B82F6;
-            color: #FFFFFF;
-            position: relative;
-        }
-
-        .sidebar ul li a, .sidebar ul li button {
-            color: inherit;
-            text-decoration: none;
-            font-size: 14px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            display: block;
-            text-align: center;
-            background: none;
-            border: none;
-            width: 100%;
-            cursor: pointer;
-        }
-
-        .sidebar:hover ul li a, .sidebar:focus-within ul li a,
-        .sidebar:hover ul li button, .sidebar:focus-within ul li button {
-            opacity: 1;
-            text-align: left;
-        }
-
-        .content {
-            margin-left: 64px;
-            padding: 24px;
-            width: calc(100% - 64px);
-            background: #FFFFFF;
-            min-height: 100vh;
-            transition: margin-left 0.3s ease, width 0.3s ease;
-        }
-
-        .sidebar:hover ~ .content, .sidebar:focus-within ~ .content {
-            margin-left: 240px;
-            width: calc(100% - 240px);
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #E2E8F0;
-        }
-
-        .header .title {
-            font-size: 24px;
-            font-weight: 600;
-            color: #1A202C;
-        }
-
-        .header .date-time {
-            font-size: 14px;
-            color: #6B7280;
-        }
-
-        .metrics {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .metric-card {
-            background: #FFFFFF;
-            padding: 16px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            text-align: center;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .metric-card:hover, .metric-card:focus-within {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .metric-card h3 {
-            font-size: 12px;
-            font-weight: 500;
-            color: #6B7280;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 8px;
-        }
-
-        .metric-card p {
-            font-size: 20px;
-            font-weight: 600;
-            color: #1A202C;
-        }
-
-        .metric-card[data-color="blue"] { border-left: 4px solid #3B82F6; }
-        .metric-card[data-color="green"] { border-left: 4px solid #10B981; }
-        .metric-card[data-color="purple"] { border-left: 4px solid #8B5CF6; }
-        .metric-card[data-color="teal"] { border-left: 4px solid #14B8A6; }
-        .metric-card[data-color="pink"] { border-left: 4px solid #EC4899; }
-        .metric-card[data-color="gray"] { border-left: 4px solid #6B7280; }
-
-        .quick-actions {
-            margin-bottom: 24px;
-        }
-
-        .quick-actions button {
-            background: #3B82F6;
-            color: #FFFFFF;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: background 0.2s ease, transform 0.2s ease;
-        }
-
-        .quick-actions button:hover, .quick-actions button:focus {
-            background: #2563EB;
-            transform: translateY(-2px);
-        }
-
-        .quick-actions button:focus {
-            outline: 2px solid #3B82F6;
-            outline-offset: 2px;
-        }
-
-        .batch-table, .recent-orders-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            background: #FFFFFF;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        .batch-table th,
-        .batch-table td,
-        .recent-orders-table th,
-        .recent-orders-table td {
-            padding: 12px 16px;
-            text-align: left;
-            border-bottom: 1px solid #E2E8F0;
-        }
-
-        .batch-table th,
-        .recent-orders-table th {
-            background: #3B82F6;
-            color: #FFFFFF;
-            font-weight: 500;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .batch-table tr:hover,
-        .recent-orders-table tr:hover {
-            background: #F7FAFC;
-        }
-
-        .batch-table tr:last-child td,
-        .recent-orders-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            border: 0;
-        }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-                padding-bottom: 16px;
-            }
-            .sidebar:hover, .sidebar:focus-within {
-                width: 100%;
-            }
-            .content {
-                margin-left: 0;
-                width: 100%;
-                padding: 16px;
-            }
-            .sidebar:hover ~ .content, .sidebar:focus-within ~ .content {
-                margin-left: 0;
-                width: 100%;
-            }
-            .metrics {
-                grid-template-columns: 1fr;
-            }
-            .logo-container {
-                flex-direction: column;
-                gap: 4px;
-            }
-            .logo-img {
-                width: 28px;
-                height: 28px;
-            }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .metric-card, .quick-actions button, .sidebar, .content {
-                transition: none;
-            }
-        }
-
-        .sidebar-report {
-            position: fixed;
-            top: 0;
-            left: -250px;
-            width: 250px;
-            height: 100%;
-            background: #2c3e50;
-            color: #fff;
-            transition: 0.3s;
-            padding-top: 60px;
-            overflow-y: auto;
-            z-index: 1050;
-        }
-        .sidebar-report.active {
-            left: 0;
-        }
-        .sidebar-report ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .sidebar-report ul li {
-            padding: 10px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .sidebar-report ul li a {
-            color: #fff;
-            text-decoration: none;
-            display: block;
-        }
-        .sidebar-report ul li a:hover {
-            background: #34495e;
-        }
-        .close-btn {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: #fff;
-        }
-    </style>
+    <!-- Reuse site design system and header styles to match index color scheme -->
+    <link rel="stylesheet" href="/WRSOMS/assets/css/design-system.css">
+    <link rel="stylesheet" href="/WRSOMS/assets/css/header.css">
+    <link rel="stylesheet" href="/WRSOMS/assets/css/admin.css">
+    
 </head>
 <body>
     <nav class="sidebar" aria-label="Main navigation">
-        <div class="logo-container">
-            <img src="ww_logo.png" alt="Water World Logo" class="logo-img">
-            <span class="logo-text">WATER WORLD</span>
+        <div class="logo-container nav-brand">
+            <img src="/WRSOMS/assets/images/ww_logo.png" alt="Water World Logo" class="nav-logo logo-img">
+            <span class="brand-name">Water World</span>
         </div>
         <ul>
-            <li class="active"><button type="button" onclick="showDashboard()">Dashboard</button></li>
-            <li><a href="manage_orders.php">Manage Orders</a></li>
-            <li><a href="status.php">Manage Status</a></li>
-            <li><button type="button" onclick="showDailyReport()">Daily Report</button></li>
+            <li class="active"><button type="button" onclick="showDashboard()"><i class="fa fa-tachometer"></i> Dashboard</button></li>
+            <li><a href="manage_orders.php"><i class="fa fa-shopping-cart"></i> Manage Orders</a></li>
+            <li><a href="status.php"><i class="fa fa-list"></i> Manage Status</a></li>
+            <li><button type="button" onclick="showDailyReport()"><i class="fa fa-calendar"></i> Daily Report</button></li>
         </ul>
     </nav>
     <div class="sidebar-report" id="reportSidebar">
@@ -363,6 +32,7 @@
         <ul id="reportDates"></ul>
     </div>
     <main class="content" aria-label="Dashboard content" id="mainContent">
+        <div class="dashboard-inner">
         <header class="header">
             <h1 class="title">Dashboard</h1>
             <div class="date-time" aria-live="polite">Date:  | Time: </div>
@@ -372,28 +42,40 @@
         </section>
         <section class="metrics" aria-label="Key metrics">
             <div class="metric-card" data-color="blue" role="region" aria-label="Total Orders">
-                <h3>Total Orders</h3>
-                <p></p>
+                <div class="metric-card-inner">
+                    <span class="metric-icon"><i class="fa fa-list-alt"></i></span>
+                    <div class="metric-text"><h3>Total Orders</h3><p id="totalOrdersVal">—</p></div>
+                </div>
             </div>
             <div class="metric-card" data-color="green" role="region" aria-label="Pending Orders">
-                <h3>Pending Orders</h3>
-                <p></p>
+                <div class="metric-card-inner">
+                    <span class="metric-icon"><i class="fa fa-clock-o"></i></span>
+                    <div class="metric-text"><h3>Pending Orders</h3><p id="pendingOrdersVal">—</p></div>
+                </div>
             </div>
             <div class="metric-card" data-color="purple" role="region" aria-label="Completed Orders">
-                <h3>Completed Orders</h3>
-                <p></p>
+                <div class="metric-card-inner">
+                    <span class="metric-icon"><i class="fa fa-check-circle"></i></span>
+                    <div class="metric-text"><h3>Completed Orders</h3><p id="completedOrdersVal">—</p></div>
+                </div>
             </div>
             <div class="metric-card" data-color="teal" role="region" aria-label="Total Revenue">
-                <h3>Total Revenue</h3>
-                <p></p>
+                <div class="metric-card-inner">
+                    <span class="metric-icon"><i class="fa fa-money"></i></span>
+                    <div class="metric-text"><h3>Total Revenue</h3><p id="totalRevenueVal">—</p></div>
+                </div>
             </div>
             <div class="metric-card" data-color="pink" role="region" aria-label="Average Order Value">
-                <h3>Avg Order Value</h3>
-                <p></p>
+                <div class="metric-card-inner">
+                    <span class="metric-icon"><i class="fa fa-calculator"></i></span>
+                    <div class="metric-text"><h3>Avg Order Value</h3><p id="avgOrderVal">—</p></div>
+                </div>
             </div>
             <div class="metric-card" data-color="gray" role="region" aria-label="Pending Deliveries">
-                <h3>Pending Deliveries</h3>
-                <p></p>
+                <div class="metric-card-inner">
+                    <span class="metric-icon"><i class="fa fa-truck"></i></span>
+                    <div class="metric-text"><h3>Pending Deliveries</h3><p id="pendingDeliveriesVal">—</p></div>
+                </div>
             </div>
         </section>
         <section class="metric-card" role="region" aria-label="Batch Overview">
@@ -408,26 +90,8 @@
                         <th scope="col">Status</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <?php
-                    $batches = [];
-                    foreach ($batch_details as $batch) {
-                        $key = $batch['vehicle_type'] . '-' . $batch['batch_number'];
-                        $batches[$key] = $batch;
-                    }
-                    for ($i = 1; $i <= 3; $i++) {
-                        foreach (['Tricycle', 'Car'] as $vehicle_type) {
-                            $key = $vehicle_type . '-' . $i;
-                            $batch = $batches[$key] ?? ['vehicle_type' => $vehicle_type, 'batch_number' => $i, 'order_count' => 0, 'batch_status' => 'N/A'];
-                            echo "<tr>";
-                            echo "<td>" . htmlspecialchars($batch['vehicle_type']) . "</td>";
-                            echo "<td>#" . htmlspecialchars($batch['batch_number']) . "</td>";
-                            echo "<td>" . htmlspecialchars($batch['order_count']) . "</td>";
-                            echo "<td>" . htmlspecialchars($batch['batch_status']) . "</td>";
-                            echo "</tr>";
-                        }
-                    }
-                    ?>
+                <tbody id="batchBody">
+                    <!-- Populated by client-side JS -->
                 </tbody>
             </table>
         </section>
@@ -443,18 +107,12 @@
                         <th scope="col">Status</th>
                     </tr>
                 </thead>
-                <tbody>
-                    
-                        <tr>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                    
+                <tbody id="recentOrdersBody">
+                    <!-- Populated by client-side JS -->
                 </tbody>
             </table>
         </section>
+        </div>
     </main>
     <script>
         let originalContent = document.getElementById('mainContent').innerHTML;
@@ -519,6 +177,86 @@
         const bootstrapScript = document.createElement('script');
         bootstrapScript.src = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js';
         document.body.appendChild(bootstrapScript);
+    
+    // Fetch dashboard data from API and populate UI
+    (function loadDashboard() {
+        const apiUrl = '/WRSOMS/api/admin/dashboard.php';
+
+        function money(v) {
+            return '₱' + Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        fetch(apiUrl, { credentials: 'same-origin' })
+            .then(r => r.json())
+            .then(res => {
+                if (!res.success) throw new Error(res.message || 'Failed to load');
+                const data = res.data || {};
+                const stats = data.stats || {};
+
+                document.getElementById('totalOrdersVal').textContent = stats.total_orders ?? '0';
+                document.getElementById('pendingOrdersVal').textContent = stats.pending_orders ?? '0';
+                document.getElementById('completedOrdersVal').textContent = stats.completed_orders ?? '0';
+                document.getElementById('totalRevenueVal').textContent = money(stats.total_revenue ?? 0);
+                document.getElementById('avgOrderVal').textContent = money(stats.avg_order_value ?? 0);
+                document.getElementById('pendingDeliveriesVal').textContent = stats.pending_deliveries ?? '0';
+
+                // Batch details
+                const batchBody = document.getElementById('batchBody');
+                batchBody.innerHTML = '';
+                // Build a map for quick lookup
+                const batches = {};
+                (data.batch_details || []).forEach(b => {
+                    const key = b.vehicle_type + '-' + b.batch_number;
+                    batches[key] = b;
+                });
+                for (let i = 1; i <= 3; i++) {
+                    ['Tricycle', 'Car'].forEach(vehicle_type => {
+                        const key = vehicle_type + '-' + i;
+                        const b = batches[key] || { vehicle_type, batch_number: i, order_count: 0, batch_status: 'N/A' };
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${escapeHtml(b.vehicle_type)}</td>
+                            <td>#${escapeHtml(b.batch_number)}</td>
+                            <td>${escapeHtml(b.order_count)}</td>
+                            <td>${escapeHtml(b.batch_status)}</td>
+                        `;
+                        batchBody.appendChild(tr);
+                    });
+                }
+
+                // Recent orders
+                const recentBody = document.getElementById('recentOrdersBody');
+                recentBody.innerHTML = '';
+                (data.recent_orders || []).forEach(o => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${escapeHtml(o.reference_id)}</td>
+                        <td>${escapeHtml(o.order_date)}</td>
+                        <td>${escapeHtml(Number(o.total_amount).toFixed(2))}</td>
+                        <td>${escapeHtml(o.order_status || '')}</td>
+                    `;
+                    recentBody.appendChild(tr);
+                });
+
+                // Update header date/time
+                const dt = new Date();
+                const dateTime = document.querySelector('.header .date-time');
+                if (dateTime) dateTime.textContent = `Date: ${dt.toLocaleDateString()} | Time: ${dt.toLocaleTimeString()}`;
+            })
+            .catch(err => {
+                console.error('Dashboard load error', err);
+            });
+
+        function escapeHtml(s) {
+            if (s === null || s === undefined) return '';
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+    })();
     </script>
 </body>
 </html>
