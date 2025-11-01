@@ -14,7 +14,7 @@ try {
     foreach ($containers as $c) {
         $type = $c['container_type'];
         // map to image filename (file should exist in assets/images)
-        $image = ($type === 'Round') ? 'round_container.jpg' : (($type === 'Slim') ? 'slim_container.jpg' : 'placeholder.png');
+        $image = ($type === 'Round') ? 'round_container.jpg' : (($type === 'Slim') ? 'slim_container.jpg' : 'placeholder.svg');
 
         $response[] = [
             'container_id' => (int)$c['container_id'],

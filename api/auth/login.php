@@ -57,7 +57,30 @@ try {
     $stmt->execute([$username]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($user && $password === $user['password']) {
+    // Debug logging (remove after testing)
+    error_log("Login attempt for user: " . $username);
+    error_log("User found: " . ($user ? 'yes' : 'no'));
+    if ($user) {
+        error_log("Password length in DB: " . strlen($user['password']));
+        error_log("Password starts with: " . substr($user['password'], 0, 10));
+        error_log("Is verified: " . $user['is_verified']);
+    }
+
+    // Check if user exists and verify password
+    $passwordValid = false;
+    if ($user) {
+        // Try password_verify for hashed passwords
+        if (password_verify($password, $user['password'])) {
+            $passwordValid = true;
+        } 
+        // Fallback: check if it's an old unhashed password
+        elseif ($password === $user['password']) {
+            $passwordValid = true;
+            // Note: Can't rehash yet due to VARCHAR(50) limit - need to alter table first
+        }
+    }
+
+    if ($user && $passwordValid) {
         // Login successful
         $_SESSION['customer_id'] = $user['customer_id'];
         $_SESSION['username'] = $user['username'];

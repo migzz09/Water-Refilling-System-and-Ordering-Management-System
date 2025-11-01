@@ -14,7 +14,7 @@ const state = {
 
 // Helper to return correct image path depending on page folder
 function getImageSrc(filename) {
-  const file = filename || 'placeholder.png';
+  const file = filename || 'placeholder.svg';
   // If we're inside /pages/ use ../assets, otherwise assets/
   const base = window.location.pathname.includes('/pages/') ? '../assets/images/' : 'assets/images/';
   return base + file;
@@ -117,10 +117,10 @@ function renderProducts(products) {
   try {
     grid.innerHTML = products.map(product => `
       <div class="product-card">
-        <img src="${getImageSrc(product.image || 'placeholder.png')}" 
-             alt="${product.container_type} Container" 
+                <img src="${getImageSrc(product.image || 'placeholder.svg')}" 
+             alt="${product.water_type} - ${product.container_type}" 
              class="product-image"
-             onerror="this.src='${getImageSrc('placeholder.png')}'">
+             onerror="this.src='${getImageSrc('placeholder.svg')}'">
         <h3 class="product-title">${product.container_type} Container</h3>
         <p class="product-price">₱${Number(product.price).toFixed(2)}</p>
         <p class="product-description">${getProductDescription(product.container_type)}</p>
@@ -128,7 +128,7 @@ function renderProducts(products) {
                 data-id="${product.container_id}" 
                 data-name="${product.container_type}"
                 data-price="${product.price}"
-                data-image="${product.image || 'placeholder.png'}">
+                data-image="${product.image || 'placeholder.svg'}">
           <i class="fa fa-shopping-cart"></i> Add to Cart
         </button>
       </div>
@@ -511,7 +511,7 @@ function updateCart() {
             <img src="${getImageSrc(item.image)}" 
                  alt="${item.name}" 
                  class="cart-item-image"
-                 onerror="this.src='${getImageSrc('placeholder.png')}'">
+                 onerror="this.src='${getImageSrc('placeholder.svg')}'">
             <div class="cart-item-details">
               <div class="cart-item-title">
                 ${item.name} Container
