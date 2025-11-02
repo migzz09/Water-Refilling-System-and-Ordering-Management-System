@@ -144,13 +144,82 @@
 
 /* dashboard container to center content and limit width */
 .dashboard-inner {
-    max-width: 1100px;
+    max-width: 1400px; /* wider admin canvas so batch columns can fit */
     margin: 0 auto;
+}
+
+/* Manage Orders specific improvements */
+.orders-list { margin-top: 8px; }
+.orders-card { padding: 12px; }
+
+/* Make batch cards flow into responsive columns to avoid long vertical scroll */
+.batches-grid {
+    display: grid;
+    /* more flexible minimum card width so cards can wrap earlier and avoid horizontal overflow */
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 16px;
+}
+
+/* Constrain table height and enable internal scrolling so each card stays compact */
+.metric-card .table-responsive {
+    /* Allow tables to size naturally on wide screens; enable internal scrolling only on small viewports */
+    max-height: none;
+    overflow: visible;
+}
+
+/* Allow long text to wrap instead of stretching the table */
+.recent-orders-table td, .recent-orders-table th {
+    white-space: normal;
+    word-break: break-word;
+}
+
+/* Reduce padding and font-size in the orders table to fit more columns */
+.recent-orders-table th, .recent-orders-table td {
+    padding: 8px 10px;
+    font-size: 0.88rem;
+}
+
+/* Tighten action button styles inside tables */
+.recent-orders-table .btn {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    border-radius: 6px;
+}
+
+/* Make unassigned orders card full-width below the batch grid */
+.unassigned-container {
+    margin-top: 12px;
+}
+
+/* Media tweaks for narrow screens */
+@media (max-width: 900px) {
+    .dashboard-inner { padding: 0 12px; }
+    .metric-card .table-responsive { max-height: 320px; overflow: auto; }
+    .recent-orders-table th, .recent-orders-table td { font-size: 0.80rem; padding: 6px 8px; }
 }
 
 /* subtle hover on cards */
 .metric-card { transition: transform 0.18s ease, box-shadow 0.18s ease; }
 .metric-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
+
+/* Prevent header action buttons from overflowing the card: allow wrapping for the inner flex group */
+.metric-card > .d-flex > .d-flex {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+/* Slightly tighter styling for small action buttons inside metric cards */
+.metric-card .btn.btn-sm {
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    white-space: normal; /* allow text to wrap if narrow */
+}
+
+/* Ensure regular buttons inside cards can wrap and don't force horizontal scroll */
+.metric-card .btn { white-space: normal; }
 
 /* Sidebar buttons/links styling */
 .sidebar ul li button, .sidebar ul li a {
@@ -187,7 +256,7 @@
 }
 
 .batch-table th, .batch-table td, .recent-orders-table th, .recent-orders-table td {
-    padding: 12px 16px;
+    padding: 8px 10px;
     border-bottom: 1px solid rgba(0,0,0,0.04);
 }
 
@@ -196,7 +265,7 @@
     color: var(--text-white);
     font-weight: 600;
     text-transform: uppercase;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
 }
 
 /* Responsive tweaks */

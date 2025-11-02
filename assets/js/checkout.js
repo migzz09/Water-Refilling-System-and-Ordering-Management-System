@@ -783,6 +783,9 @@ async function confirmOrder() {
       const unitPrice = isPurchaseNew ? 250 : Number(item.price || 0);
       return {
         container_id: item.id,
+        water_type_id: item.water_type_id != null ? Number(item.water_type_id) : null,
+        // prefer explicit per-item order_type_id if present, otherwise infer from name
+        order_type_id: (item.order_type_id != null) ? Number(item.order_type_id) : (isPurchaseNew ? 2 : 1),
         quantity: Number(item.quantity || 0),
         price: unitPrice
       };

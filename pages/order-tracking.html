@@ -241,6 +241,17 @@
             color: var(--primary-blue-dark);
         }
 
+        .item-type {
+            display: inline-block;
+            margin-left: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            background: rgba(74,144,164,0.08);
+            color: var(--primary-blue-dark);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
         .total-amount {
             background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-teal) 100%);
             color: white;
@@ -390,6 +401,10 @@
                         <span class="info-label">Status</span>
                         <span class="status-badge" id="order-status"></span>
                     </div>
+                    <div class="info-item" style="grid-column: 1 / -1;">
+                        <span class="info-label">Message</span>
+                        <span class="info-value" id="user-message"></span>
+                    </div>
                 </div>
             </div>
 
@@ -505,11 +520,15 @@
             // Order Information
             document.getElementById('order-date').textContent = formatDate(data.order_date);
             document.getElementById('delivery-date').textContent = formatDate(data.delivery_date);
-            document.getElementById('order-type').textContent = data.order_type || 'N/A';
+            document.getElementById('order-type').textContent = data.order_type_display || data.order_type || 'N/A';
             
             const statusBadge = document.getElementById('order-status');
             statusBadge.textContent = data.order_status || 'Pending';
             statusBadge.className = 'status-badge ' + getStatusClass(data.order_status);
+
+            // user message (pickup/delivery notice)
+            const um = document.getElementById('user-message');
+            um.textContent = data.user_message || '';
             
             // Order Items
             const itemsList = document.getElementById('order-items');
@@ -519,10 +538,23 @@
                 data.items.forEach(item => {
                     const li = document.createElement('li');
                     li.className = 'item';
+
+                    // Determine per-item type label (detail_order_type from API)
+                    const detailType = (item.detail_order_type || '').toLowerCase();
+                    let typeText = '';
+                    if (detailType.indexOf('purchase') !== -1) {
+                        typeText = 'Purchased container/s';
+                    } else if (detailType.indexOf('refill') !== -1) {
+                        typeText = 'Refill';
+                    }
+
                     li.innerHTML = `
                         <div class="item-details">
                             <span class="item-quantity">${item.quantity}x</span>
-                            <span>${item.container_type}</span>
+                            <div>
+                                <div>${item.container_type}</div>
+                                ${typeText ? `<div class="item-type">${typeText}</div>` : ''}
+                            </div>
                         </div>
                         <span class="item-price">₱${parseFloat(item.subtotal).toFixed(2)}</span>
                     `;

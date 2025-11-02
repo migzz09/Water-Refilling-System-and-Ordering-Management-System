@@ -129,19 +129,30 @@ try {
         $batch_number = $batchInfo['batch_number'] ?? 1;
     }
 
-    // Insert order with batch and delivery date
-    $stmt = $pdo->prepare(
-        "INSERT INTO orders (reference_id, customer_id, order_type_id, batch_id, order_date, delivery_date, order_status_id, total_amount) VALUES (?, ?, ?, ?, NOW(), ?, 1, ?)"
-    );
-    $stmt->execute([$referenceId, $customerId, $orderType, $batch_id, $deliveryDate, $totalAmount]);
+    // Always create a checkout record for this order (single-item or multi-item)
+    $checkout_id = null;
+    $cstmt = $pdo->prepare("INSERT INTO checkouts (customer_id, created_at, notes) VALUES (?, NOW(), ?)");
+    $cstmt->execute([$customerId, $notes]);
+    $checkout_id = $pdo->lastInsertId();
 
-    // Insert order details
+    // Insert order with batch and delivery date
+    // include checkout_id if present (orders table may have that column)
     $stmt = $pdo->prepare(
-        "INSERT INTO order_details (reference_id, batch_number, container_id, quantity, subtotal) VALUES (?, ?, ?, ?, ?)"
+        "INSERT INTO orders (reference_id, customer_id, checkout_id, order_type_id, batch_id, order_date, delivery_date, order_status_id, total_amount) VALUES (?, ?, ?, ?, ?, NOW(), ?, 1, ?)"
+    );
+    $stmt->execute([$referenceId, $customerId, $checkout_id, $orderType, $batch_id, $deliveryDate, $totalAmount]);
+
+    // Insert order details (include per-item water_type_id and order_type_id when provided)
+    $stmt = $pdo->prepare(
+        "INSERT INTO order_details (reference_id, batch_number, container_id, water_type_id, order_type_id, quantity, subtotal) VALUES (?, ?, ?, ?, ?, ?, ?)"
     );
     foreach ($items as $item) {
         $subtotal = ($item['quantity'] ?? 0) * ($item['price'] ?? 0);
-        $stmt->execute([$referenceId, $batch_number, $item['container_id'], $item['quantity'], $subtotal]);
+        $waterTypeId = isset($item['water_type_id']) ? (int)$item['water_type_id'] : null;
+        $itemOrderTypeId = isset($item['order_type_id']) ? (int)$item['order_type_id'] : (int)$orderType;
+        $containerId = isset($item['container_id']) ? (int)$item['container_id'] : null;
+        $quantity = isset($item['quantity']) ? (int)$item['quantity'] : 0;
+        $stmt->execute([$referenceId, $batch_number, $containerId, $waterTypeId, $itemOrderTypeId, $quantity, $subtotal]);
     }
     // For refill orders, create pickup and delivery entries tied to the batch
     $pickup_delivery_id = null;
@@ -193,7 +204,8 @@ try {
             'reference_id' => $referenceId,
             'total_amount' => $totalAmount
             , 'batch_id' => $batch_id,
-            'batch_number' => $batch_number
+            'batch_number' => $batch_number,
+            'checkout_id' => $checkout_id
         ]
     ]);
 } catch (Exception $e) {

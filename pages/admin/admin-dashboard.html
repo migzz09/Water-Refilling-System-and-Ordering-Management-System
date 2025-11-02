@@ -22,7 +22,7 @@
         </div>
         <ul>
             <li class="active"><button type="button" onclick="showDashboard()"><i class="fa fa-tachometer"></i> Dashboard</button></li>
-            <li><a href="manage_orders.php"><i class="fa fa-shopping-cart"></i> Manage Orders</a></li>
+            <li><a href="#" onclick="loadManageOrders(event)"><i class="fa fa-shopping-cart"></i> Manage Orders</a></li>
             <li><a href="status.php"><i class="fa fa-list"></i> Manage Status</a></li>
             <li><button type="button" onclick="showDailyReport()"><i class="fa fa-calendar"></i> Daily Report</button></li>
         </ul>
@@ -152,6 +152,43 @@
                 .catch(error => {
                     console.error('Error fetching daily report:', error);
                     document.getElementById('mainContent').innerHTML = '<p>Error loading daily report. Please try again.</p>';
+                });
+        }
+
+        function loadManageOrders(e) {
+            if (e) e.preventDefault();
+            fetch('manage-orders.html')
+                .then(response => response.text())
+                .then(data => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(data, 'text/html');
+                    const container = doc.querySelector('.container');
+                    if (!container) {
+                        document.getElementById('mainContent').innerHTML = '<p>Error: manage orders content not found.</p>';
+                        return;
+                    }
+                    // Replace main content with the fetched container
+                    document.getElementById('mainContent').innerHTML = container.outerHTML;
+
+                    // Execute any inline scripts from the fetched page
+                    const scripts = Array.from(doc.querySelectorAll('script'))
+                        .map(s => s.textContent)
+                        .join('\n');
+                    if (scripts) {
+                        const scriptElement = document.createElement('script');
+                        scriptElement.textContent = scripts;
+                        document.getElementById('mainContent').appendChild(scriptElement);
+                    }
+
+                    // Update active state on sidebar
+                    const active = document.querySelector('.sidebar li.active');
+                    if (active) active.classList.remove('active');
+                    const li = document.querySelector('.sidebar a[onclick="loadManageOrders(event)"]').parentElement;
+                    if (li) li.classList.add('active');
+                })
+                .catch(error => {
+                    console.error('Error loading manage orders:', error);
+                    document.getElementById('mainContent').innerHTML = '<p>Error loading Manage Orders. Please try again.</p>';
                 });
         }
 
