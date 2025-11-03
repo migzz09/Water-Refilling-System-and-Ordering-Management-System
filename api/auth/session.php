@@ -1,28 +1,34 @@
-<?php
-/**
- * Session Check API
- * Returns current session status and user info
- */
+﻿<?php
 session_start();
 header('Content-Type: application/json');
 
+error_log("Session check - Session ID: " . session_id());
+error_log("Session check - customer_id: " . (isset($_SESSION['customer_id']) ? $_SESSION['customer_id'] : 'NOT SET'));
+error_log("Session check - username: " . (isset($_SESSION['username']) ? $_SESSION['username'] : 'NOT SET'));
+
 try {
     if (isset($_SESSION['customer_id'])) {
-        // User is logged in
+        require_once __DIR__ . '/../../config/connect.php';
+        
+        $stmt = $pdo->prepare('SELECT password_changed_at, profile_photo FROM accounts WHERE customer_id = ?');
+        $stmt->execute([$_SESSION['customer_id']]);
+        $account = $stmt->fetch(PDO::FETCH_ASSOC);
+        
         echo json_encode([
             'success' => true,
             'authenticated' => true,
             'user' => [
                 'customer_id' => $_SESSION['customer_id'],
-                'username' => $_SESSION['username'] ?? null,
-                'email' => $_SESSION['email'] ?? null,
-                'first_name' => $_SESSION['first_name'] ?? null,
-                'last_name' => $_SESSION['last_name'] ?? null
+                'username' => isset($_SESSION['username']) ? $_SESSION['username'] : null,
+                'email' => isset($_SESSION['email']) ? $_SESSION['email'] : null,
+                'first_name' => isset($_SESSION['first_name']) ? $_SESSION['first_name'] : null,
+                'last_name' => isset($_SESSION['last_name']) ? $_SESSION['last_name'] : null,
+                'password_changed_at' => isset($account['password_changed_at']) ? $account['password_changed_at'] : null,
+                'profile_photo' => isset($account['profile_photo']) ? $account['profile_photo'] : null
             ],
             'message' => 'User is authenticated'
         ]);
     } else {
-        // User is not logged in
         echo json_encode([
             'success' => true,
             'authenticated' => false,

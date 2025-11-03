@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback - Water World Water Station</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../assets/css/design-system.css">
+    <link rel="stylesheet" href="../assets/css/index.css">
+    <link rel="stylesheet" href="../assets/css/header.css">
+    <style>
+        body {
+            padding-top: 80px;
+        }
+
+        .feedback-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .feedback-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-top: 1rem;
+        }
+
+        .feedback-header h1 {
+            font-size: 2.5rem;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #4A90A4 0%, #2C5F6F 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .feedback-header p {
+            font-size: 1.1rem;
+            color: var(--text-gray);
+        }
+
+        .feedback-card {
+            background: var(--bg-white);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 2rem;
+        }
+
+        .rating-section {
+            margin-bottom: 2rem;
+        }
+
+        .rating-section h3 {
+            font-size: 1.2rem;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .stars {
+            display: flex;
+            gap: 0.5rem;
+            font-size: 2.5rem;
+        }
+
+        .star {
+            cursor: pointer;
+            color: #D1D5DB;
+            transition: all 0.2s ease;
+        }
+
+        .star:hover,
+        .star.active {
+            color: #FCD34D;
+            transform: scale(1.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .form-group label .required {
+            color: #EF4444;
+            margin-left: 0.25rem;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid #E5E7EB;
+            border-radius: var(--radius-lg);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #4A90A4;
+            box-shadow: 0 0 0 3px rgba(74, 144, 164, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .category-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .category-card {
+            padding: 1rem;
+            border: 2px solid #E5E7EB;
+            border-radius: var(--radius-lg);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .category-card:hover {
+            border-color: #4A90A4;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .category-card.selected {
+            border-color: #4A90A4;
+            background: linear-gradient(135deg, #E8EFF3 0%, #D6E4EA 100%);
+        }
+
+        .category-card i {
+            font-size: 2rem;
+            color: #4A90A4;
+            margin-bottom: 0.5rem;
+        }
+
+        .category-card .category-name {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .submit-section {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            padding-top: 1.5rem;
+            border-top: 2px solid #E5E7EB;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.875rem 2rem;
+            border-radius: var(--radius-lg);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4A90A4 0%, #2C5F6F 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(74, 144, 164, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-gray);
+            border: 2px solid #E5E7EB;
+        }
+
+        .btn-secondary:hover {
+            border-color: #4A90A4;
+            color: #4A90A4;
+        }
+
+        .success-message {
+            display: none;
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: var(--radius-xl);
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .success-message.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        .success-message i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .success-message h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .error-message {
+            background: #FEE2E2;
+            color: #DC2626;
+            padding: 1rem;
+            border-radius: var(--radius-lg);
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .feedback-header h1 {
+                font-size: 2rem;
+            }
+
+            .feedback-card {
+                padding: 1.5rem;
+            }
+
+            .category-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .submit-section {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar glass">
+        <div class="container">
+            <div class="nav-content">
+                <div class="nav-brand">
+                    <img src="../assets/images/ww_logo.png" alt="WaterWorld Logo" class="nav-logo">
+                    <span class="brand-name">Water World</span>
+                </div>
+
+                <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                    <span class="icon-menu"></span>
+                </button>
+
+                <div class="nav-menu" id="navMenu">
+                    <a href="../index.html" class="nav-link">
+                        <i class="fa fa-home"></i>
+                        Home
+                    </a>
+                    <a href="product.html" class="nav-link">
+                        <i class="fa fa-shopping-cart"></i>
+                        Products
+                    </a>
+                    <a href="order-tracking.html" class="nav-link">
+                        <i class="fa fa-search"></i>
+                        Track Order
+                    </a>
+                    <a href="../index.html#services" class="nav-link">
+                        <i class="fa fa-tint"></i>
+                        Services
+                    </a>
+                    <a href="../index.html#contact" class="nav-link">
+                        <i class="fa fa-envelope"></i>
+                        Contact
+                    </a>
+                </div>
+
+                <div class="nav-actions" id="navActions">
+                    <a href="login.html" class="btn btn-outline btn-sm" id="loginBtn">
+                        <i class="fa fa-sign-in"></i>
+                        Login
+                    </a>
+                    <a href="register.html" class="btn btn-primary btn-sm" id="registerBtn">
+                        <i class="fa fa-user-plus"></i>
+                        Register
+                    </a>
+                    <div class="user-menu" id="userMenu" style="display: none;">
+                        <button class="btn btn-outline btn-sm profile-btn" onclick="toggleUserDropdown()" aria-label="Profile" title="Profile">
+                            <i class="fa fa-user-circle"></i>
+                            <span id="userName">Profile</span>
+                            <i class="fa fa-chevron-down"></i>
+                        </button>
+                        <div class="user-dropdown" id="userDropdown" style="display: none;">
+                            <a href="product.html" class="dropdown-item"><i class="fa fa-shopping-cart"></i> View Products</a>
+                            <a href="usertransaction-history.html" class="dropdown-item"><i class="fa fa-history"></i> Order History</a>
+                            <a href="order-tracking.html" class="dropdown-item"><i class="fa fa-search"></i> Track Order</a>
+                            <a href="feedback.html" class="dropdown-item"><i class="fa fa-comment"></i> Feedback</a>
+                            <a href="settings.html" class="dropdown-item"><i class="fa fa-cog"></i> Settings</a>
+                            <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
+                            <a href="#" onclick="logout()" class="dropdown-item"><i class="fa fa-sign-out"></i> Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="feedback-container">
+        <!-- Header -->
+        <div class="feedback-header">
+            <h1>We Value Your Feedback</h1>
+            <p>Help us improve our service by sharing your experience</p>
+        </div>
+
+        <!-- Success Message -->
+        <div class="success-message" id="successMessage">
+            <i class="fa fa-check-circle"></i>
+            <h3>Thank You!</h3>
+            <p>Your feedback has been submitted successfully. We appreciate you taking the time to help us improve.</p>
+        </div>
+
+        <!-- Feedback Form -->
+        <div class="feedback-card" id="feedbackForm">
+            <div class="error-message" id="errorMessage"></div>
+
+            <form id="feedbackFormElement">
+                <!-- Rating Section -->
+                <div class="rating-section">
+                    <h3>How would you rate your experience?</h3>
+                    <div class="stars" id="starRating">
+                        <i class="fa fa-star star" data-rating="1"></i>
+                        <i class="fa fa-star star" data-rating="2"></i>
+                        <i class="fa fa-star star" data-rating="3"></i>
+                        <i class="fa fa-star star" data-rating="4"></i>
+                        <i class="fa fa-star star" data-rating="5"></i>
+                    </div>
+                    <input type="hidden" id="rating" name="rating" required>
+                </div>
+
+                <!-- Category Selection -->
+                <div class="form-group">
+                    <label>What is your feedback about?<span class="required">*</span></label>
+                    <div class="category-cards">
+                        <div class="category-card" data-category="product">
+                            <i class="fa fa-tint"></i>
+                            <div class="category-name">Product Quality</div>
+                        </div>
+                        <div class="category-card" data-category="delivery">
+                            <i class="fa fa-truck"></i>
+                            <div class="category-name">Delivery Service</div>
+                        </div>
+                        <div class="category-card" data-category="customer-service">
+                            <i class="fa fa-users"></i>
+                            <div class="category-name">Customer Service</div>
+                        </div>
+                        <div class="category-card" data-category="website">
+                            <i class="fa fa-globe"></i>
+                            <div class="category-name">Website</div>
+                        </div>
+                        <div class="category-card" data-category="other">
+                            <i class="fa fa-ellipsis-h"></i>
+                            <div class="category-name">Other</div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="category" name="category" required>
+                </div>
+
+                <!-- Subject -->
+                <div class="form-group">
+                    <label for="subject">Subject<span class="required">*</span></label>
+                    <input type="text" id="subject" name="subject" placeholder="Brief summary of your feedback" required>
+                </div>
+
+                <!-- Message -->
+                <div class="form-group">
+                    <label for="message">Your Message<span class="required">*</span></label>
+                    <textarea id="message" name="message" placeholder="Please share your detailed feedback here..." required></textarea>
+                </div>
+
+                <!-- Email (optional for guests) -->
+                <div class="form-group">
+                    <label for="email">Email Address (for follow-up)</label>
+                    <input type="email" id="email" name="email" placeholder="your.email@example.com">
+                </div>
+
+                <!-- Submit Section -->
+                <div class="submit-section">
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='../index.html'">
+                        <i class="fa fa-times"></i>
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-paper-plane"></i>
+                        Submit Feedback
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../assets/js/api-helper.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script>
+        // Initialize page and check authentication
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // Require user to be logged in
+                await API.requireAuth();
+                
+                // Load user info for the navbar
+                const authData = await API.checkAuth();
+                if (authData && authData.user && authData.user.username) {
+                    document.getElementById('userName').textContent = authData.user.username;
+                }
+            } catch (error) {
+                console.error('Authentication error:', error);
+                // User will be redirected to login by requireAuth
+            }
+        });
+
+        // Star rating functionality
+        const stars = document.querySelectorAll('.star');
+        const ratingInput = document.getElementById('rating');
+        let selectedRating = 0;
+
+        stars.forEach(star => {
+            star.addEventListener('click', function() {
+                selectedRating = this.getAttribute('data-rating');
+                ratingInput.value = selectedRating;
+                updateStars(selectedRating);
+            });
+
+            star.addEventListener('mouseenter', function() {
+                const hoverRating = this.getAttribute('data-rating');
+                updateStars(hoverRating);
+            });
+        });
+
+        document.getElementById('starRating').addEventListener('mouseleave', function() {
+            updateStars(selectedRating);
+        });
+
+        function updateStars(rating) {
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+        }
+
+        // Category selection
+        const categoryCards = document.querySelectorAll('.category-card');
+        const categoryInput = document.getElementById('category');
+        let selectedCategory = '';
+
+        categoryCards.forEach(card => {
+            card.addEventListener('click', function() {
+                categoryCards.forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedCategory = this.getAttribute('data-category');
+                categoryInput.value = selectedCategory;
+            });
+        });
+
+        // Form submission
+        document.getElementById('feedbackFormElement').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.classList.remove('show');
+
+            // Validation
+            if (!selectedRating) {
+                errorMessage.textContent = 'Please select a rating';
+                errorMessage.classList.add('show');
+                return;
+            }
+
+            if (!selectedCategory) {
+                errorMessage.textContent = 'Please select a feedback category';
+                errorMessage.classList.add('show');
+                return;
+            }
+
+            const formData = {
+                rating: selectedRating,
+                category: selectedCategory,
+                subject: document.getElementById('subject').value,
+                message: document.getElementById('message').value
+            };
+
+            try {
+                const result = await API.post('/common/submit_feedback.php', formData);
+                
+                if (result && result.success) {
+                    // Show success message
+                    document.getElementById('feedbackForm').style.display = 'none';
+                    document.getElementById('successMessage').classList.add('show');
+
+                    // Redirect to home after 3 seconds
+                    setTimeout(() => {
+                        window.location.href = '../index.html';
+                    }, 3000);
+                } else {
+                    throw new Error(result.message || 'Failed to submit feedback');
+                }
+
+            } catch (error) {
+                console.error('Error submitting feedback:', error);
+                errorMessage.textContent = error.message || 'An error occurred. Please try again.';
+                errorMessage.classList.add('show');
+            }
+        });
+
+        // Toggle user dropdown
+        function toggleUserDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const userMenu = document.getElementById('userMenu');
+            const dropdown = document.getElementById('userDropdown');
+            if (userMenu && dropdown && !userMenu.contains(event.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        // Logout function
+        async function logout() {
+            try {
+                await API.post('/auth/logout.php');
+                window.location.href = '../index.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+                window.location.href = '../index.html';
+            }
+        }
+
+        // Check authentication and update UI
+        async function checkAuth() {
+            try {
+                const result = await API.checkAuth();
+                if (result.authenticated && result.user) {
+                    // Hide login/register buttons
+                    document.getElementById('loginBtn').style.display = 'none';
+                    document.getElementById('registerBtn').style.display = 'none';
+                    
+                    // Show user menu
+                    document.getElementById('userMenu').style.display = 'block';
+                    
+                    // Update username
+                    const userName = result.user.first_name || result.user.username || 'Profile';
+                    document.getElementById('userName').textContent = userName;
+                    
+                    // Auto-fill email in feedback form
+                    if (result.user.email) {
+                        document.getElementById('email').value = result.user.email;
+                    }
+                } else {
+                    // Show login/register buttons
+                    document.getElementById('loginBtn').style.display = 'inline-flex';
+                    document.getElementById('registerBtn').style.display = 'inline-flex';
+                    
+                    // Hide user menu
+                    document.getElementById('userMenu').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error checking auth:', error);
+                // Show login/register buttons on error
+                document.getElementById('loginBtn').style.display = 'inline-flex';
+                document.getElementById('registerBtn').style.display = 'inline-flex';
+                document.getElementById('userMenu').style.display = 'none';
+            }
+        }
+
+        checkAuth();
+    </script>
+</body>
+</html>

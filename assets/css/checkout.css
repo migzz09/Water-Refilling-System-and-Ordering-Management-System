@@ -510,3 +510,53 @@ select:focus {
     padding: 1.5rem;
   }
 }
+
+/* Quantity Edit Button */
+.btn-edit-qty {
+  transition: all 0.2s ease;
+}
+
+.btn-edit-qty:hover {
+  background: var(--primary-blue) !important;
+  color: white !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(74, 144, 164, 0.3);
+}
+
+.btn-edit-qty:active {
+  transform: translateY(0);
+}
+
+/* Selection Modal Option Cards */
+.option-card {
+  transition: all 0.2s ease;
+}
+
+.option-card:hover {
+  border-color: var(--primary-blue) !important;
+  background-color: rgba(74, 144, 164, 0.05) !important;
+  transform: translateX(4px);
+}
+
+.option-card.selected {
+  background-color: rgba(74, 144, 164, 0.1) !important;
+  box-shadow: 0 2px 8px rgba(74, 144, 164, 0.2);
+}
+
+.option-card input[type="radio"] {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+/* Quantity Modal Buttons */
+.qty-btn:hover {
+  background: var(--primary-blue) !important;
+  color: white !important;
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(74, 144, 164, 0.3);
+}
+
+.qty-btn:active {
+  transform: scale(0.98);
+}

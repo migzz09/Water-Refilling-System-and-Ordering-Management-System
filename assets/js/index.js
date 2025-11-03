@@ -7,6 +7,8 @@ async function checkAuthStatus() {
   try {
     const result = await API.checkAuth();
     
+    console.log('Auth check result:', result); // Debug log
+    
     if (result.authenticated) {
       // User is logged in - show profile menu
       document.getElementById('loginBtn').style.display = 'none';
@@ -19,6 +21,7 @@ async function checkAuthStatus() {
       }
     } else {
       // User is not logged in - show login/register buttons
+      console.log('User not authenticated'); // Debug log
       document.getElementById('loginBtn').style.display = 'inline-flex';
       document.getElementById('registerBtn').style.display = 'inline-flex';
       document.getElementById('userMenu').style.display = 'none';

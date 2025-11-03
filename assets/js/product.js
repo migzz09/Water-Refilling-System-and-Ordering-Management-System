@@ -296,6 +296,7 @@ function preSelectOptions(item) {
 
 function selectWaterType(id, name) {
   state.selectedWaterType = { id, name };
+  console.log('Water type selected:', state.selectedWaterType); // Debug
   const options = document.querySelectorAll('[name="water_type"]');
   options.forEach(input => {
     const card = input.closest('.water-type-option');
@@ -317,6 +318,7 @@ function selectWaterType(id, name) {
 
 function selectOrderType(id, name) {
   state.selectedOrderType = { id, name };
+  console.log('Order type selected:', state.selectedOrderType); // Debug
   const options = document.querySelectorAll('[name="order_type"]');
   options.forEach(input => {
     const card = input.closest('.order-type-option');
@@ -337,12 +339,22 @@ function selectOrderType(id, name) {
 }
 
 function updateConfirmButton() {
+  console.log('Updating confirm button:', { // Debug
+    selectedWaterType: state.selectedWaterType,
+    selectedOrderType: state.selectedOrderType,
+    shouldEnable: !!(state.selectedWaterType && state.selectedOrderType)
+  });
   document.getElementById('confirmSelection').disabled = !(state.selectedWaterType && state.selectedOrderType);
 }
 
 // Change modal quantity (called by +/- buttons)
 function modalChangeQuantity(change) {
-  const newQty = Math.max(1, (state.selectedQuantity || 1) + change);
+  const currentQty = state.selectedQuantity || 1;
+  const newQty = currentQty + change;
+  
+  // Enforce boundaries
+  if (newQty < 1 || newQty > 99) return;
+  
   state.selectedQuantity = newQty;
   const qtyEl = document.getElementById('modalQuantityValue');
   if (qtyEl) qtyEl.textContent = String(newQty);
@@ -354,8 +366,7 @@ function updateModalQtyControls() {
   const plus = document.getElementById('modalQtyPlus');
   const qty = state.selectedQuantity || 1;
   if (minus) {
-    minus.disabled = qty <= 1;
-    if (minus.disabled) {
+    if (qty <= 1) {
       minus.classList.add('disabled');
       minus.setAttribute('aria-disabled', 'true');
     } else {
@@ -364,8 +375,13 @@ function updateModalQtyControls() {
     }
   }
   if (plus) {
-    plus.disabled = false;
-    plus.setAttribute('aria-disabled', 'false');
+    if (qty >= 99) {
+      plus.classList.add('disabled');
+      plus.setAttribute('aria-disabled', 'true');
+    } else {
+      plus.classList.remove('disabled');
+      plus.setAttribute('aria-disabled', 'false');
+    }
   }
 }
 
@@ -592,14 +608,84 @@ function removeItem(id, water_type_id, order_type_id) {
   updateCart();
 }
 
-function editItem(id, water_type_id, order_type_id) {
+async function editItem(id, water_type_id, order_type_id) {
   const item = state.cart.find(item => 
     item.id === id && 
     item.water_type_id === water_type_id && 
     item.order_type_id === order_type_id
   );
-  if (item) {
-    openModal(item.id, item.name, item.price, item.image, true, item);
+  if (!item) return;
+
+  // Set editing state
+  state.editingItem = item;
+  state.selectedProduct = {
+    id: item.id,
+    name: item.name,
+    price: item.price,
+    image: item.image
+  };
+  state.selectedQuantity = item.quantity;
+  state.selectedWaterType = item.water_type_id;
+  state.selectedOrderType = item.order_type_id;
+
+  // Show modal
+  const modal = document.getElementById('selectionModal');
+  modal.classList.add('active');
+
+  // Set modal title
+  const modalTitle = document.getElementById('modalTitle');
+  if (modalTitle) {
+    modalTitle.textContent = `Edit ${item.name} Container`;
+  }
+
+  // Set quantity
+  const quantityValue = document.getElementById('modalQuantityValue');
+  if (quantityValue) {
+    quantityValue.textContent = item.quantity;
+  }
+
+  // Load water types and order types
+  try {
+    const [waterTypesResponse, orderTypesResponse] = await Promise.all([
+      fetch('/WRSOMS/api/common/water_types.php'),
+      fetch('/WRSOMS/api/common/order_types.php')
+    ]);
+
+    if (waterTypesResponse.ok) {
+      const waterTypes = await waterTypesResponse.json();
+      renderWaterTypes(waterTypes);
+      
+      // Pre-select current water type
+      setTimeout(() => {
+        const waterInput = document.querySelector(`input[name="waterType"][value="${item.water_type_id}"]`);
+        if (waterInput) {
+          waterInput.checked = true;
+          selectWaterType(item.water_type_id);
+        }
+      }, 50);
+    }
+
+    if (orderTypesResponse.ok) {
+      const orderTypes = await orderTypesResponse.json();
+      renderOrderTypes(orderTypes);
+      
+      // Pre-select current order type
+      setTimeout(() => {
+        const orderInput = document.querySelector(`input[name="orderType"][value="${item.order_type_id}"]`);
+        if (orderInput) {
+          orderInput.checked = true;
+          selectOrderType(item.order_type_id);
+        }
+      }, 50);
+    }
+
+    // Enable confirm button
+    const confirmBtn = document.getElementById('confirmSelection');
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+    }
+  } catch (error) {
+    console.error('Error loading options for editing:', error);
   }
 }
 
@@ -651,10 +737,14 @@ function checkout() {
   authCheck
     .then(data => {
       if (data && data.authenticated) {
-        window.location.href = 'checkout.html';
+        // Check if we're on index.html (root) or in pages folder
+        const isRootPage = window.location.pathname.includes('/index.html') || window.location.pathname.endsWith('/WRSOMS/');
+        window.location.href = isRootPage ? 'pages/checkout.html' : 'checkout.html';
       } else {
         alert('Please login to proceed with checkout');
-        window.location.href = 'login.html';
+        // Check if we're on index.html (root) or in pages folder
+        const isRootPage = window.location.pathname.includes('/index.html') || window.location.pathname.endsWith('/WRSOMS/');
+        window.location.href = isRootPage ? 'pages/login.html' : 'login.html';
       }
     })
     .catch(error => console.error('Error checking session:', error));

@@ -4,325 +4,482 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transaction History - WaterWorld</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../assets/css/design-system.css">
+    <link rel="stylesheet" href="../assets/css/index.css">
+    <link rel="stylesheet" href="../assets/css/product.css">
+    <link rel="stylesheet" href="../assets/css/header.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        /* Prevent text wrapping in navbar */
+        .brand-name {
+            white-space: nowrap;
         }
 
+        .nav-link {
+            white-space: nowrap;
+        }
+
+        .nav-menu {
+            flex-wrap: nowrap;
+        }
+
+        /* Page-specific overrides for better layout */
         body {
-            background-color: #f9fbfc;
-            color: #333;
-            line-height: 1.6;
-            overflow-x: hidden;
+            padding-top: 120px; /* Increased to match hero padding (8rem ≈ 128px) and prevent header overlap */
+            background: #F7FAFC;
+            min-height: 100vh;
         }
 
-        header {
-            background: #ffffffcc;
-            backdrop-filter: blur(10px);
-            padding: 1rem 5%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #e5e5e5;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #008CBA;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        nav ul {
-            list-style: none;
-            display: flex;
-            gap: 1.5rem;
-        }
-
-        nav ul li a {
-            text-decoration: none;
-            color: #333;
-            font-weight: 500;
-            position: relative;
-            padding-bottom: 4px;
-            transition: color 0.3s;
-        }
-
-        nav ul li a::after {
-            content: "";
-            position: absolute;
-            width: 0;
-            height: 2px;
-            bottom: 0;
-            left: 0;
-            background: #008CBA;
-            transition: width 0.3s;
-        }
-
-        nav ul li a:hover {
-            color: #008CBA;
-        }
-
-        nav ul li a:hover::after {
-            width: 100%;
-        }
-
-        .welcome {
-            color: #008CBA;
-            font-size: 1rem;
-            font-weight: 500;
-            margin-left: 1rem;
-        }
-
-        .container {
+        /* Enhanced container with card design - ONLY for content area */
+        body > .container {
             padding: 2rem 5%;
             max-width: 1200px;
             margin: 0 auto;
         }
 
-        .title {
-            text-align: center;
-            font-size: 2rem;
-            font-weight: bold;
-            color: #008CBA;
+        /* Page header with icon */
+        .page-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
             margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #E2E8F0;
         }
 
+        .page-header-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Page title with modern typography */
+        .title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1A202C;
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Modern search bar with icon */
         .search-bar {
+            position: relative;
             margin-bottom: 2rem;
-            text-align: center;
+        }
+        
+        .search-bar i {
+            position: absolute;
+            left: 1.25rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6B7280;
+            font-size: 1.1rem;
         }
 
         .search-bar input {
-            padding: 0.75rem;
-            width: 60%;
-            max-width: 600px;
-            border: 1px solid #ccc;
-            border-radius: 30px;
+            padding: 1rem 1.5rem 1rem 3.5rem;
+            width: 100%;
+            border-radius: 12px;
+            border: 2px solid #E2E8F0;
             font-size: 1rem;
-            transition: border-color 0.3s;
+            background: white;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
         }
 
         .search-bar input:focus {
-            border-color: #008CBA;
             outline: none;
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
+        /* Transaction list container with admin-style card */
         .transaction-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            max-height: 70vh;
-            overflow-y: auto;
-            padding-right: 1rem;
+            background: white;
+            border-radius: 12px;
+            padding: 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            min-height: 400px;
+            overflow: hidden;
         }
 
+        /* Date headers with admin colors */
         .date-header {
-            background: #f0f8fb;
-            padding: 0.5rem 1rem;
-            font-weight: bold;
-            color: #008CBA;
-            border-bottom: 1px solid #e5e5e5;
+            background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+            padding: 0.875rem 1.5rem;
+            font-weight: 600;
+            color: #1E40AF;
+            font-size: 0.875rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #BFDBFE;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
+        .date-header i {
+            color: #3B82F6;
+        }
+
+        /* Transaction items with hover effect and icons */
         .transaction-item {
-            background: #ffffffcc;
-            padding: 1rem;
+            background: white;
+            padding: 1.25rem 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
-            transition: background 0.3s;
-            border-bottom: 1px solid #e5e5e5;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid #F3F4F6;
         }
 
         .transaction-item:hover {
-            background: #f0f8fb;
+            background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
+            transform: translateX(4px);
+            padding-left: 1.75rem;
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
         }
 
         .transaction-details {
-            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+        }
+
+        .transaction-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .transaction-icon.refill {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        }
+
+        .transaction-icon.buy {
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+        }
+
+        .transaction-icon.combo {
+            background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+        }
+
+        .transaction-info {
+            flex: 1;
         }
 
         .transaction-type {
-            font-weight: bold;
-            color: #008CBA;
+            font-weight: 600;
+            color: #1A202C;
+            font-size: 1rem;
             margin-bottom: 0.25rem;
         }
 
         .transaction-time {
-            font-size: 0.8rem;
-            color: #666;
+            font-size: 0.8125rem;
+            color: #6B7280;
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .transaction-time i {
+            font-size: 0.75rem;
         }
 
         .transaction-amount {
-            font-weight: bold;
-            color: #008CBA;
+            font-weight: 700;
+            color: #3B82F6;
+            font-size: 1.125rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .receipt-modal {
+        .transaction-amount i {
+            font-size: 0.875rem;
+        }
+
+        /* Enhanced receipt modal */
+        #receipt-modal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            inset: 0;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            background: rgba(17, 24, 39, 0.7);
+            z-index: 1200;
+            backdrop-filter: blur(4px);
         }
 
         .receipt-content {
-            background: #fff;
+            background: white;
             padding: 2rem;
-            border-radius: 10px;
-            max-width: 400px;
-            width: 90%;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            width: 92%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             position: relative;
-            font-size: 0.9rem;
-            line-height: 1.5;
-            border: 2px dashed #ccc;
-            clip-path: polygon(0 0, 100% 0, 100% 85%, 95% 100%, 5% 100%, 0 85%);
-            animation: slideIn 0.3s ease-out;
-            background-image: linear-gradient(to bottom, #fff, #f9fbfc);
+            animation: modalSlideIn 0.3s ease-out;
         }
 
-        @keyframes slideIn {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
 
         .receipt-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            text-align: center;
+            font-weight: 700;
+            font-size: 1.5rem;
             margin-bottom: 1.5rem;
-            color: #008CBA;
-        }
-
-        .receipt-details p {
+            color: #1A202C;
+            text-align: center;
+            border-bottom: 2px solid #E2E8F0;
+            padding-bottom: 1rem;
             display: flex;
-            justify-content: space-between;
-            margin: 0.75rem 0;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
         }
 
-        .receipt-details p strong {
-            color: #333;
-        }
-
-        .receipt-details .total {
-            font-weight: bold;
-            border-top: 1px dashed #ccc;
-            padding-top: 0.75rem;
-            margin-top: 1rem;
-        }
-
-        .back-btn {
-            display: block;
-            margin: 1rem auto 0;
-            padding: 0.5rem 1rem;
-            background: #008CBA;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .back-btn:hover {
-            background: #006b9a;
+        .receipt-title i {
+            color: #3B82F6;
+            font-size: 1.75rem;
         }
 
         .close {
             position: absolute;
             top: 1rem;
             right: 1rem;
-            font-size: 1.5rem;
             cursor: pointer;
-            color: #888;
+            font-size: 1.5rem;
+            color: #9CA3AF;
+            transition: all 0.2s;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: #F3F4F6;
         }
 
         .close:hover {
-            color: #333;
+            color: #1F2937;
+            background: #E5E7EB;
+        }
+
+        .receipt-details p {
+            margin: 1rem 0;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9375rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            background: #F9FAFB;
+        }
+
+        .receipt-details p strong {
+            color: #4B5563;
+            font-weight: 600;
+        }
+
+        .receipt-details p span {
+            color: #1A202C;
+            font-weight: 500;
+        }
+
+        .receipt-details .total {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 2px solid #3B82F6;
+            font-size: 1.125rem;
+            background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+        }
+
+        .receipt-details .total strong {
+            color: #1E40AF;
+        }
+
+        .receipt-details .total span {
+            color: #3B82F6;
+            font-weight: 700;
+        }
+
+        .back-btn {
+            display: block;
+            margin: 1.5rem auto 0;
+            padding: 0.875rem 2.5rem;
+            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Empty state styling */
+        .transaction-list > p {
+            text-align: center;
+            color: #6B7280;
+            font-size: 1rem;
+            padding: 4rem 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .transaction-list > p i {
+            font-size: 3rem;
+            color: #D1D5DB;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .title {
+                font-size: 1.5rem;
+            }
+
+            .page-header-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+
+            .transaction-list {
+                padding: 0;
+            }
+
+            .receipt-content {
+                padding: 1.5rem;
+            }
         }
     </style>
 </head>
 <body>
+        <!-- Navigation -->
+        <nav class="navbar glass">
+            <div class="container">
+                <div class="nav-content">
+                    <div class="nav-brand">
+                        <img src="../assets/images/ww_logo.png" alt="WaterWorld Logo" class="nav-logo">
+                        <span class="brand-name">Water World</span>
+                    </div>
 
-    <header>
-        <div class="logo">WaterWorld</div>
-        <nav>
-            <ul>
-                <li><a href="../index.php">Home</a></li>
-                <li><a href="product.html">Order</a></li>
-                <li><a href="order_tracking.php">Track</a></li>
-                <li><a href="usertransaction_history.php">History</a></li>
-                <li><a href="logout.php">Logout</a></li>
-                <li class="welcome">Welcome, !</li>
-            </ul>
+                    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                        <span class="icon-menu"></span>
+                    </button>
+
+                    <div class="nav-menu" id="navMenu">
+                        <a href="../index.html" class="nav-link">
+                            <i class="fa fa-home"></i>
+                            Home
+                        </a>
+                        <a href="product.html" class="nav-link">
+                            <i class="fa fa-shopping-cart"></i>
+                            Products
+                        </a>
+                        <a href="order-tracking.html" class="nav-link">
+                            <i class="fa fa-search"></i>
+                            Track Order
+                        </a>
+                        <a href="../index.html#services" class="nav-link">
+                            <i class="fa fa-tint"></i>
+                            Services
+                        </a>
+                        <a href="../index.html#contact" class="nav-link">
+                            <i class="fa fa-envelope"></i>
+                            Contact
+                        </a>
+                    </div>
+
+                    <div class="nav-actions" id="navActions">
+                        <a href="login.html" class="btn btn-outline btn-sm" id="loginBtn">
+                            <i class="fa fa-sign-in"></i>
+                            Login
+                        </a>
+                        <a href="register.html" class="btn btn-primary btn-sm" id="registerBtn">
+                            <i class="fa fa-user-plus"></i>
+                            Register
+                        </a>
+                        <div class="user-menu" id="userMenu" style="display: none;">
+                            <button class="btn btn-outline btn-sm profile-btn" onclick="toggleUserDropdown()" aria-label="Profile" title="Profile">
+                                <i class="fa fa-user-circle"></i>
+                                <span id="userName">Profile</span>
+                                <i class="fa fa-chevron-down"></i>
+                            </button>
+                            <div class="user-dropdown" id="userDropdown" style="display: none;">
+                                <a href="product.html" class="dropdown-item"><i class="fa fa-shopping-cart"></i> View Products</a>
+                                <a href="usertransaction-history.html" class="dropdown-item"><i class="fa fa-history"></i> Order History</a>
+                                <a href="order-tracking.html" class="dropdown-item"><i class="fa fa-search"></i> Track Order</a>
+                                <a href="feedback.html" class="dropdown-item"><i class="fa fa-comment"></i> Feedback</a>
+                                <a href="settings.html" class="dropdown-item"><i class="fa fa-cog"></i> Settings</a>
+                                <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
+                                <a href="#" onclick="logout()" class="dropdown-item"><i class="fa fa-sign-out"></i> Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </nav>
-    </header>
 
     <div class="container">
-        <div class="search-bar">
-            <input type="text" id="searchInput" placeholder="Type a digit to filter reference IDs" value="">
+        <div class="page-header">
+            <div class="page-header-icon">
+                <i class="fa fa-history"></i>
+            </div>
+            <h1 class="title">Transaction History</h1>
         </div>
-        <div class="title">Transaction History</div>
+        <div class="search-bar">
+            <i class="fa fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search by reference ID..." value="">
+        </div>
         <section class="transaction-list">
-            
-                <p>No delivered transactions found.</p>
-            
-                <?php
-                    $currentDate = '';
-                ?>
-                
-                    <?php
-                        $transactionDate = date('Y-m-d', strtotime($transaction['order_date']));
-                        $dateHeader = date('F d, Y', strtotime($transaction['order_date']));
-                        $time = date('h:i a', strtotime($transaction['order_date']));
-                        $transactionType = '';
-                        switch ($transaction['order_type_id']) {
-                            case 1:
-                                $transactionType = 'Refill';
-                                break;
-                            case 2:
-                                $transactionType = 'Buy Container';
-                                break;
-                            case 3:
-                                $transactionType = 'Refill and Buy Container';
-                                break;
-                            default:
-                                $transactionType = 'Unknown';
-                        }
-                        if ($currentDate !== $transactionDate) {
-                            echo '<div class="date-header">' . htmlspecialchars($dateHeader) . '</div>';
-                            $currentDate = $transactionDate;
-                        }
-                    ?>
-                    <div class="transaction-item" onclick="showReceipt('')">
-                        <div class="transaction-details">
-                            <div class="transaction-type"></div>
-                            <div class="transaction-time"></div>
-                        </div>
-                        <div class="transaction-amount">₱</div>
-                    </div>
-                
-            
+            <p><i class="fa fa-inbox"></i>No delivered transactions found.</p>
         </section>
 
         <div id="receipt-modal" class="receipt-modal">
             <div class="receipt-content">
                 <span class="close" onclick="closeReceipt()">&times;</span>
-                <div class="receipt-title">Transaction Details</div>
+                <div class="receipt-title">
+                    <i class="fa fa-file-text-o"></i>
+                    Transaction Details
+                </div>
                 <div class="receipt-details">
                     <p><strong>Type:</strong> <span id="receipt-type"></span></p>
                     <p><strong>Amount:</strong> <span id="receipt-amount"></span></p>
@@ -353,53 +510,86 @@
         const receiptTotal = document.getElementById('receipt-total');
         const receiptStatus = document.getElementById('receipt-status');
 
-        searchInput.addEventListener('input', function() {
-            const searchQuery = this.value.trim();
-            fetch(`usertransaction_history.php?search=${encodeURIComponent(searchQuery)}`)
+                // Function to load transactions
+        function loadTransactions(searchQuery = '') {
+            fetch(`../usertransaction_history.php?search=${encodeURIComponent(searchQuery)}`)
                 .then(response => response.json())
                 .then(data => {
                     transactionList.innerHTML = '';
                     if (data.transactions.length === 0) {
-                        transactionList.innerHTML = '<p>No delivered transactions found.</p>';
+                        transactionList.innerHTML = '<p><i class="fa fa-inbox"></i><span>No delivered transactions found.</span></p>';
                     } else {
                         let currentDate = '';
                         data.transactions.forEach(transaction => {
                             const transactionDate = new Date(transaction.order_date).toISOString().split('T')[0];
                             const dateHeader = new Date(transaction.order_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
                             const time = new Date(transaction.order_date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
+                            
                             let transactionType = '';
+                            let iconClass = '';
+                            let iconType = '';
+                            
                             switch (transaction.order_type_id) {
                                 case 1:
                                     transactionType = 'Refill';
+                                    iconClass = 'refill';
+                                    iconType = 'fa-tint';
                                     break;
                                 case 2:
                                     transactionType = 'Buy Container';
+                                    iconClass = 'buy';
+                                    iconType = 'fa-shopping-bag';
                                     break;
                                 case 3:
                                     transactionType = 'Refill and Buy Container';
+                                    iconClass = 'combo';
+                                    iconType = 'fa-cubes';
                                     break;
                                 default:
                                     transactionType = 'Unknown';
+                                    iconClass = 'refill';
+                                    iconType = 'fa-question';
                             }
+                            
                             if (currentDate !== transactionDate) {
-                                transactionList.innerHTML += `<div class="date-header">${dateHeader}</div>`;
+                                transactionList.innerHTML += `<div class="date-header"><i class="fa fa-calendar"></i>${dateHeader}</div>`;
                                 currentDate = transactionDate;
                             }
+                            
                             const item = document.createElement('div');
                             item.className = 'transaction-item';
                             item.onclick = () => showReceipt(JSON.stringify(transaction));
                             item.innerHTML = `
                                 <div class="transaction-details">
-                                    <div class="transaction-type">${transactionType}</div>
-                                    <div class="transaction-time">${time}</div>
+                                    <div class="transaction-icon ${iconClass}">
+                                        <i class="fa ${iconType}"></i>
+                                    </div>
+                                    <div class="transaction-info">
+                                        <div class="transaction-type">${transactionType}</div>
+                                        <div class="transaction-time"><i class="fa fa-clock-o"></i>${time}</div>
+                                    </div>
                                 </div>
-                                <div class="transaction-amount">₱${parseFloat(transaction.total_amount).toFixed(2)}</div>
+                                <div class="transaction-amount">
+                                    <i class="fa fa-peso-sign">₱</i>${parseFloat(transaction.total_amount).toFixed(2)}
+                                </div>
                             `;
                             transactionList.appendChild(item);
                         });
                     }
                 })
-                .catch(error => console.error('Error fetching data:', error));
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                    transactionList.innerHTML = '<p><i class="fa fa-exclamation-triangle"></i><span>Error loading transactions. Please try again.</span></p>';
+                });
+        }
+
+        // Load transactions on page load
+        loadTransactions();
+
+        // Load transactions when user types in search
+        searchInput.addEventListener('input', function() {
+            const searchQuery = this.value.trim();
+            loadTransactions(searchQuery);
         });
 
         function showReceipt(transactionData) {
@@ -469,6 +659,12 @@
         window.addEventListener("scroll", revealOnScroll);
         revealOnScroll();
     </script>
+
+    <!-- Page scripts (same as index.html, adjusted paths) -->
+    <script src="../assets/js/api-helper.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/product.js"></script>
+    <script src="../assets/js/index.js"></script>
 
 </body>
 </html>

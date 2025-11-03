@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 03, 2025 at 07:46 AM
+-- Generation Time: Nov 03, 2025 at 08:01 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -31,7 +31,7 @@ CREATE TABLE `accounts` (
   `account_id` int(11) NOT NULL,
   `customer_id` int(11) DEFAULT NULL,
   `username` varchar(50) NOT NULL,
-  `password` varchar(50) NOT NULL,
+  `password` varchar(255) NOT NULL,
   `otp` varchar(6) DEFAULT NULL,
   `otp_expires` timestamp NOT NULL DEFAULT (current_timestamp() + interval 10 minute),
   `is_verified` tinyint(1) DEFAULT 0
@@ -42,7 +42,7 @@ CREATE TABLE `accounts` (
 --
 
 INSERT INTO `accounts` (`account_id`, `customer_id`, `username`, `password`, `otp`, `otp_expires`, `is_verified`) VALUES
-(1, 1, 'user1', '$2y$10$ba3bwi5sf0bFsUhFHm9qZu/hxN0eIS4VvUbdRryUlxJ', NULL, '2025-11-03 06:44:45', 1);
+(1, 1, 'user1', '$2y$10$CGQbbPlFZKz5g/3tA8dLP.klKT0B8eaYOi5VygHCbV80psw3XgVoO', NULL, '2025-11-03 06:56:31', 1);
 
 -- --------------------------------------------------------
 
@@ -187,7 +187,7 @@ CREATE TABLE `customers` (
 --
 
 INSERT INTO `customers` (`customer_id`, `account_id`, `first_name`, `middle_name`, `last_name`, `customer_contact`, `email`, `street`, `barangay`, `city`, `province`, `date_created`) VALUES
-(1, NULL, 'user1', NULL, 'user1', '09663085901', 'migzzuwu@gmail.com', 'Milkweed', 'Rizal', 'Taguig', 'Metro Manila', '2025-11-03 06:43:40');
+(1, NULL, 'user1', NULL, 'user1', '09663085901', 'migzzuwu@gmail.com', 'Milkweed', 'Rizal', 'Taguig', 'Metro Manila', '2025-11-03 06:56:15');
 
 -- --------------------------------------------------------
 

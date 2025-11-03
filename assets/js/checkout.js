@@ -480,7 +480,7 @@ function renderCart(cart) {
   const cartItems = document.getElementById('cartItems');
   let total = 0;
 
-  cartItems.innerHTML = cart.map(item => {
+  cartItems.innerHTML = cart.map((item, index) => {
     const isPurchaseNew = item.order_type_name === 'Purchase New Container/s';
     const unitPrice = isPurchaseNew ? 250 : Number(item.price || 0);
     const itemTotal = unitPrice * item.quantity;
@@ -492,7 +492,12 @@ function renderCart(cart) {
             ${item.name} Container
             <div class="cart-item-subtitle">${item.water_type_name}, ${item.order_type_name}</div>
           </div>
-          <div class="cart-item-qty">Quantity: <strong>${item.quantity}</strong></div>
+          <div class="cart-item-qty">
+            Quantity: <strong>${item.quantity}</strong>
+            <button onclick="openSelectionModal(${index})" class="btn-edit-qty" style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; font-size: 0.85rem; border: 1px solid var(--primary-blue); background: white; color: var(--primary-blue); border-radius: var(--radius-sm); cursor: pointer;" title="Edit order">
+              <i class="fa fa-edit"></i> Edit
+            </button>
+          </div>
         </div>
         <div class="cart-item-price">₱${itemTotal.toFixed(2)}${isPurchaseNew ? ' <div style="font-size:0.85em;color:#666;">(Already filled)</div>' : ''}</div>
       </div>
@@ -945,8 +950,27 @@ function onCloseAddressForm() {
 }
 
 function closeReceipt() {
+  // Clear the cart after successful order
+  clearCart();
+  
   document.getElementById('receiptModal').classList.remove('active');
   window.location.href = 'product.html';
+}
+
+// Clear cart function
+async function clearCart() {
+  try {
+    // Clear server-side cart
+    await API.post('/orders/update_cart.php', { cart: [] });
+    
+    // Clear local cart
+    window.cart = [];
+    
+    // Also clear localStorage cart for consistency
+    localStorage.removeItem('cart');
+  } catch (error) {
+    console.error('Error clearing cart:', error);
+  }
 }
 
 function toggleUserDropdown() {
@@ -974,3 +998,192 @@ function logout() {
 }
 
 // Delivery fees removed — no calculation required
+
+// Selection Modal Functions for editing cart items
+let currentEditingIndex = null;
+let modalQuantity = 1;
+let selectedWaterType = null;
+let selectedOrderType = null;
+let waterTypes = [];
+let orderTypes = [];
+let containers = [];
+
+async function openSelectionModal(index) {
+  console.log('openSelectionModal called with index:', index);
+  const cart = window.cart || [];
+  console.log('Cart:', cart);
+  if (!cart[index]) {
+    console.error('No item found at index:', index);
+    alert('Error: Cart item not found. Please refresh the page.');
+    return;
+  }
+  
+  const item = cart[index];
+  console.log('Editing item:', item);
+  currentEditingIndex = index;
+  modalQuantity = item.quantity;
+  selectedWaterType = item.water_type_id;
+  selectedOrderType = item.order_type_id;
+  
+  // Load water types and order types if not already loaded
+  if (waterTypes.length === 0) {
+    try {
+      const waterTypesData = await API.get('/common/water_types.php');
+      console.log('Water types response:', waterTypesData);
+      waterTypes = Array.isArray(waterTypesData) ? waterTypesData : (waterTypesData.data || waterTypesData.water_types || []);
+      console.log('Parsed water types:', waterTypes);
+      
+      const orderTypesData = await API.get('/common/order_types.php');
+      console.log('Order types response:', orderTypesData);
+      orderTypes = Array.isArray(orderTypesData) ? orderTypesData : (orderTypesData.data || orderTypesData.order_types || []);
+      console.log('Parsed order types:', orderTypes);
+    } catch (error) {
+      console.error('Error loading options:', error);
+      alert('Error loading water and order types. Please refresh the page.');
+      return;
+    }
+  }
+  
+  // Populate modal
+  document.getElementById('modalItemName').textContent = item.name + ' Container';
+  document.getElementById('modalQuantityValue').textContent = modalQuantity;
+  
+  // Render water type options
+  const waterTypeContainer = document.getElementById('waterTypeOptions');
+  waterTypeContainer.innerHTML = waterTypes.map(wt => `
+    <label class="option-card ${wt.water_type_id === selectedWaterType ? 'selected' : ''}" style="display: flex; align-items: center; padding: 0.75rem; border: 2px solid ${wt.water_type_id === selectedWaterType ? 'var(--primary-blue)' : '#e5e5e5'}; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;">
+      <input type="radio" name="waterType" value="${wt.water_type_id}" ${wt.water_type_id === selectedWaterType ? 'checked' : ''} onchange="selectWaterType(${wt.water_type_id})" style="margin-right: 0.75rem;">
+      <span style="font-weight: 500;">${wt.type_name}</span>
+    </label>
+  `).join('');
+  
+  // Render order type options
+  const orderTypeContainer = document.getElementById('orderTypeOptions');
+  orderTypeContainer.innerHTML = orderTypes.map(ot => `
+    <label class="option-card ${ot.order_type_id === selectedOrderType ? 'selected' : ''}" style="display: flex; align-items: center; padding: 0.75rem; border: 2px solid ${ot.order_type_id === selectedOrderType ? 'var(--primary-blue)' : '#e5e5e5'}; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;">
+      <input type="radio" name="orderType" value="${ot.order_type_id}" ${ot.order_type_id === selectedOrderType ? 'checked' : ''} onchange="selectOrderType(${ot.order_type_id})" style="margin-right: 0.75rem;">
+      <span style="font-weight: 500;">${ot.type_name}</span>
+    </label>
+  `).join('');
+  
+  // Show modal
+  const modal = document.getElementById('selectionModal');
+  console.log('Modal element:', modal);
+  if (modal) {
+    modal.style.display = 'flex';
+    console.log('Modal should now be visible');
+  } else {
+    console.error('Modal element not found!');
+  }
+}
+
+function closeSelectionModal() {
+  document.getElementById('selectionModal').style.display = 'none';
+  currentEditingIndex = null;
+  modalQuantity = 1;
+  selectedWaterType = null;
+  selectedOrderType = null;
+}
+
+function selectWaterType(waterTypeId) {
+  selectedWaterType = parseInt(waterTypeId);
+  console.log('Selected water type:', selectedWaterType);
+  
+  // Update visual selection
+  document.querySelectorAll('#waterTypeOptions .option-card').forEach(card => {
+    const radio = card.querySelector('input[type="radio"]');
+    if (radio && parseInt(radio.value) === selectedWaterType) {
+      card.classList.add('selected');
+      card.style.borderColor = 'var(--primary-blue)';
+      card.style.backgroundColor = 'rgba(74, 144, 164, 0.05)';
+    } else {
+      card.classList.remove('selected');
+      card.style.borderColor = '#e5e5e5';
+      card.style.backgroundColor = 'white';
+    }
+  });
+}
+
+function selectOrderType(orderTypeId) {
+  selectedOrderType = parseInt(orderTypeId);
+  console.log('Selected order type:', selectedOrderType);
+  
+  // Update visual selection
+  document.querySelectorAll('#orderTypeOptions .option-card').forEach(card => {
+    const radio = card.querySelector('input[type="radio"]');
+    if (radio && parseInt(radio.value) === selectedOrderType) {
+      card.classList.add('selected');
+      card.style.borderColor = 'var(--primary-blue)';
+      card.style.backgroundColor = 'rgba(74, 144, 164, 0.05)';
+    } else {
+      card.classList.remove('selected');
+      card.style.borderColor = '#e5e5e5';
+      card.style.backgroundColor = 'white';
+    }
+  });
+}
+
+function modalChangeQuantity(delta) {
+  const newQuantity = modalQuantity + delta;
+  if (newQuantity >= 1 && newQuantity <= 99) {
+    modalQuantity = newQuantity;
+    document.getElementById('modalQuantityValue').textContent = modalQuantity;
+  }
+}
+
+function confirmSelection() {
+  console.log('confirmSelection called');
+  console.log('currentEditingIndex:', currentEditingIndex);
+  console.log('selectedWaterType:', selectedWaterType);
+  console.log('selectedOrderType:', selectedOrderType);
+  
+  if (currentEditingIndex === null) {
+    alert('No item selected for editing');
+    return;
+  }
+  if (!selectedWaterType || !selectedOrderType) {
+    alert('Please select both water type and order type');
+    return;
+  }
+  
+  const cart = window.cart || [];
+  if (!cart[currentEditingIndex]) {
+    alert('Error: Cart item not found.');
+    return;
+  }
+  
+  // Find the selected water type and order type names
+  const waterType = waterTypes.find(wt => wt.water_type_id === selectedWaterType);
+  const orderType = orderTypes.find(ot => ot.order_type_id === selectedOrderType);
+  
+  console.log('Found waterType:', waterType);
+  console.log('Found orderType:', orderType);
+  
+  // Update cart item
+  cart[currentEditingIndex].water_type_id = selectedWaterType;
+  cart[currentEditingIndex].water_type_name = waterType ? waterType.type_name : '';
+  cart[currentEditingIndex].order_type_id = selectedOrderType;
+  cart[currentEditingIndex].order_type_name = orderType ? orderType.type_name : '';
+  cart[currentEditingIndex].quantity = modalQuantity;
+  
+  // Update global cart
+  window.cart = cart;
+  
+  // Save to server via API
+  API.post('/orders/update_cart.php', { cart: cart })
+    .then(() => {
+      console.log('Cart updated on server');
+    })
+    .catch(error => {
+      console.error('Error updating cart on server:', error);
+    });
+  
+  // Refresh cart display
+  renderCart(cart);
+  
+  // Update vehicle info based on new quantities
+  updateVehicleInfo(cart);
+  
+  // Close modal
+  closeSelectionModal();
+}

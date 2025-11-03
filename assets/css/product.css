@@ -383,7 +383,7 @@
     inset: 0;
     background: rgba(44, 95, 111, 0.6);
     backdrop-filter: blur(4px);
-    z-index: 1002;
+    z-index: 1150;
     align-items: center;
     justify-content: center;
 }

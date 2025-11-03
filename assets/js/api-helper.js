@@ -15,7 +15,8 @@ const API = {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
-                }
+                },
+                credentials: 'same-origin' // Ensure session cookies are sent
             });
             return await response.json();
         } catch (error) {
@@ -34,6 +35,7 @@ const API = {
                 headers: {
                     'Content-Type': 'application/json'
                 },
+                credentials: 'same-origin', // Ensure session cookies are sent
                 body: JSON.stringify(data)
             });
             // Try to parse JSON; if response is not JSON, fallback to text

@@ -85,12 +85,21 @@ try {
         $_SESSION['customer_id'] = $user['customer_id'];
         $_SESSION['username'] = $user['username'];
         
+        // Force session to be written before response
+        session_write_close();
+        session_start(); // Restart for any further operations
+        
+        // Debug: Log session info
+        error_log("Session set - customer_id: " . $_SESSION['customer_id']);
+        error_log("Session ID: " . session_id());
+        
         echo json_encode([
             'success' => true,
             'message' => 'Login successful',
             'data' => [
                 'customer_id' => $user['customer_id'],
-                'username' => $user['username']
+                'username' => $user['username'],
+                'session_id' => session_id() // For debugging
             ]
         ]);
     } else {

@@ -68,6 +68,8 @@
               <a href="product.html" class="dropdown-item"><i class="fa fa-shopping-cart"></i> View Products</a>
               <a href="usertransaction-history.html" class="dropdown-item"><i class="fa fa-history"></i> Order History</a>
               <a href="order-tracking.html" class="dropdown-item"><i class="fa fa-search"></i> Track Order</a>
+              <a href="feedback.html" class="dropdown-item"><i class="fa fa-comment"></i> Feedback</a>
+              <a href="settings.html" class="dropdown-item"><i class="fa fa-cog"></i> Settings</a>
               <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
               <a href="#" onclick="logout()" class="dropdown-item"><i class="fa fa-sign-out"></i> Logout</a>
             </div>
@@ -202,6 +204,54 @@
       <div class="modal-actions">
         <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
         <button class="btn btn-primary" onclick="confirmOrder()">Confirm & Place Order</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Selection Modal (for editing cart items) -->
+  <div class="modal-overlay" id="selectionModal" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 id="modalTitle">Edit Order</h3>
+        <button class="close-modal" onclick="closeSelectionModal()" aria-label="Close modal">
+          <i class="fa fa-times" aria-hidden="true"></i>
+          <span class="sr-only">Close</span>
+        </button>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem;">
+        <div style="margin-bottom: 1.5rem;">
+          <p id="modalItemName" style="font-weight: 600; font-size: 1.1rem; color: var(--text-primary); margin-bottom: 0.5rem;"></p>
+        </div>
+        
+        <!-- Water Type Selection -->
+        <div style="margin-bottom: 1.5rem;">
+          <h4 style="font-size: 1rem; color: var(--text-primary); margin-bottom: 0.75rem;">Water Type</h4>
+          <div id="waterTypeOptions" style="display: grid; gap: 0.75rem;">
+            <!-- Water type options will be inserted here -->
+          </div>
+        </div>
+
+        <!-- Order Type Selection -->
+        <div style="margin-bottom: 1.5rem;">
+          <h4 style="font-size: 1rem; color: var(--text-primary); margin-bottom: 0.75rem;">Order Type</h4>
+          <div id="orderTypeOptions" style="display: grid; gap: 0.75rem;">
+            <!-- Order type options will be inserted here -->
+          </div>
+        </div>
+
+        <!-- Quantity Control -->
+        <div style="margin-bottom: 1rem;">
+          <h4 style="font-size: 1rem; color: var(--text-primary); margin-bottom: 0.75rem;">Quantity</h4>
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <button class="qty-btn" onclick="modalChangeQuantity(-1)" style="width: 40px; height: 40px; font-size: 20px; border-radius: var(--radius-md); border: 2px solid var(--primary-blue); background: white; color: var(--primary-blue); cursor: pointer; transition: all 0.2s;">-</button>
+            <span id="modalQuantityValue" style="font-size: 1.5rem; font-weight: 700; min-width: 50px; text-align: center; color: var(--primary-blue-dark);">1</span>
+            <button class="qty-btn" onclick="modalChangeQuantity(1)" style="width: 40px; height: 40px; font-size: 20px; border-radius: var(--radius-md); border: 2px solid var(--primary-blue); background: white; color: var(--primary-blue); cursor: pointer; transition: all 0.2s;">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions" style="padding: 1rem 1.5rem 1.5rem;">
+        <button class="btn btn-outline" onclick="closeSelectionModal()" style="flex: 1;">Cancel</button>
+        <button class="btn btn-primary" id="confirmSelection" onclick="confirmSelection()" style="flex: 1;">Update</button>
       </div>
     </div>
   </div>

@@ -37,10 +37,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
+                credentials: 'same-origin', // Ensure cookies are sent/received
                 body: JSON.stringify(formData)
             });
 
             const result = await response.json();
+            
+            // Debug: Log response
+            console.log('Login response:', result);
 
             if (result.success) {
                 // Login successful
