@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 31, 2025 at 07:27 PM
+-- Generation Time: Nov 03, 2025 at 07:46 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -42,7 +42,7 @@ CREATE TABLE `accounts` (
 --
 
 INSERT INTO `accounts` (`account_id`, `customer_id`, `username`, `password`, `otp`, `otp_expires`, `is_verified`) VALUES
-(1, 1, 'user1', '$2y$10$WzZYPxDv4W6cVAdjMBXY0uU5irPeCFQesZb6OaHfsFQ', NULL, '2025-10-31 18:26:52', 1);
+(1, 1, 'user1', '$2y$10$ba3bwi5sf0bFsUhFHm9qZu/hxN0eIS4VvUbdRryUlxJ', NULL, '2025-11-03 06:44:45', 1);
 
 -- --------------------------------------------------------
 
@@ -131,6 +131,19 @@ INSERT INTO `batch_status` (`batch_status_id`, `status_name`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `checkouts`
+--
+
+CREATE TABLE `checkouts` (
+  `checkout_id` int(11) NOT NULL,
+  `customer_id` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `notes` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `containers`
 --
 
@@ -174,7 +187,7 @@ CREATE TABLE `customers` (
 --
 
 INSERT INTO `customers` (`customer_id`, `account_id`, `first_name`, `middle_name`, `last_name`, `customer_contact`, `email`, `street`, `barangay`, `city`, `province`, `date_created`) VALUES
-(1, NULL, 'user1', NULL, 'user1', '09663085901', 'migzzuwu@gmail.com', 'Milkweed', 'Rizal', 'Taguig', 'Metro Manila', '2025-10-31 18:26:13');
+(1, NULL, 'user1', NULL, 'user1', '09663085901', 'migzzuwu@gmail.com', 'Milkweed', 'Rizal', 'Taguig', 'Metro Manila', '2025-11-03 06:43:40');
 
 -- --------------------------------------------------------
 
@@ -285,6 +298,7 @@ INSERT INTO `inventory` (`container_id`, `container_type`, `stock`, `last_update
 CREATE TABLE `orders` (
   `reference_id` varchar(6) NOT NULL,
   `customer_id` int(11) DEFAULT NULL,
+  `checkout_id` int(11) DEFAULT NULL,
   `order_type_id` int(11) DEFAULT NULL,
   `batch_id` int(11) DEFAULT NULL,
   `order_date` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -470,6 +484,13 @@ ALTER TABLE `batch_status`
   ADD UNIQUE KEY `status_name` (`status_name`);
 
 --
+-- Indexes for table `checkouts`
+--
+ALTER TABLE `checkouts`
+  ADD PRIMARY KEY (`checkout_id`),
+  ADD KEY `idx_checkouts_customer_id` (`customer_id`);
+
+--
 -- Indexes for table `containers`
 --
 ALTER TABLE `containers`
@@ -528,7 +549,8 @@ ALTER TABLE `orders`
   ADD KEY `customer_id` (`customer_id`),
   ADD KEY `order_type_id` (`order_type_id`),
   ADD KEY `batch_id` (`batch_id`),
-  ADD KEY `order_status_id` (`order_status_id`);
+  ADD KEY `order_status_id` (`order_status_id`),
+  ADD KEY `idx_orders_checkout_id` (`checkout_id`);
 
 --
 -- Indexes for table `order_details`
@@ -611,6 +633,12 @@ ALTER TABLE `batch_employees`
 --
 ALTER TABLE `batch_status`
   MODIFY `batch_status_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `checkouts`
+--
+ALTER TABLE `checkouts`
+  MODIFY `checkout_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `containers`
@@ -746,7 +774,8 @@ ALTER TABLE `orders`
   ADD CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`customer_id`) ON DELETE SET NULL,
   ADD CONSTRAINT `orders_ibfk_2` FOREIGN KEY (`order_type_id`) REFERENCES `order_types` (`order_type_id`) ON DELETE SET NULL,
   ADD CONSTRAINT `orders_ibfk_3` FOREIGN KEY (`batch_id`) REFERENCES `batches` (`batch_id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `orders_ibfk_4` FOREIGN KEY (`order_status_id`) REFERENCES `order_status` (`status_id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `orders_ibfk_4` FOREIGN KEY (`order_status_id`) REFERENCES `order_status` (`status_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `orders_ibfk_checkout` FOREIGN KEY (`checkout_id`) REFERENCES `checkouts` (`checkout_id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `order_details`
