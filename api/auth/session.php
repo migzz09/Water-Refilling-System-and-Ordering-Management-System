@@ -7,17 +7,18 @@ session_start();
 header('Content-Type: application/json');
 
 try {
-    if (isset($_SESSION['customer_id'])) {
+    if (isset($_SESSION['customer_id']) || isset($_SESSION['is_admin'])) {
         // User is logged in
         echo json_encode([
             'success' => true,
             'authenticated' => true,
             'user' => [
-                'customer_id' => $_SESSION['customer_id'],
+                'customer_id' => $_SESSION['customer_id'] ?? null,
                 'username' => $_SESSION['username'] ?? null,
                 'email' => $_SESSION['email'] ?? null,
                 'first_name' => $_SESSION['first_name'] ?? null,
-                'last_name' => $_SESSION['last_name'] ?? null
+                'last_name' => $_SESSION['last_name'] ?? null,
+                'is_admin' => $_SESSION['is_admin'] ?? 0
             ],
             'message' => 'User is authenticated'
         ]);

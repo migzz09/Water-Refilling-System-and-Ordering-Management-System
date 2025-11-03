@@ -20,11 +20,27 @@ if (!isset($pdo) || !$pdo) {
 
 header('Content-Type: application/json');
 
-if (!isset($_SESSION['customer_id'])) {
+// Admin authentication check
+error_log("Manage Orders - Session check: is_admin=" . ($_SESSION['is_admin'] ?? 'NOT SET'));
+error_log("Manage Orders - Session ID: " . session_id());
+error_log("Manage Orders - All session vars: " . print_r($_SESSION, true));
+
+if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] != 1) {
     http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+    ob_end_clean();
+    echo json_encode([
+        'success' => false, 
+        'message' => 'Unauthorized - Admin access required',
+        'debug' => [
+            'session_id' => session_id(),
+            'is_admin_set' => isset($_SESSION['is_admin']),
+            'is_admin_value' => $_SESSION['is_admin'] ?? null
+        ]
+    ]);
     exit;
 }
+
+// Set timezone
 
 date_default_timezone_set('Asia/Manila');
 $today = date('Y-m-d');
