@@ -51,9 +51,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 successMessage.textContent = result.message;
                 successContainer.style.display = 'block';
                 
-                // Redirect to homepage after short delay
+                // Check if user is admin or if redirect parameter is set
+                const urlParams = new URLSearchParams(window.location.search);
+                const redirect = urlParams.get('redirect');
+                const isAdmin = result.data && (result.data.is_admin === 1 || result.data.is_admin === '1');
+                
+                // Debug logging
+                console.log('Login response:', result);
+                console.log('is_admin value:', result.data?.is_admin);
+                console.log('is_admin type:', typeof result.data?.is_admin);
+                console.log('isAdmin check result:', isAdmin);
+                
+                // Determine redirect destination
+                let redirectUrl = '../index.html';
+                if (isAdmin || redirect === 'admin') {
+                    redirectUrl = '/WRSOMS/pages/admin/admin-dashboard.html';
+                    console.log('Redirecting to admin dashboard');
+                } else {
+                    console.log('Redirecting to index');
+                }
+                
+                // Redirect after short delay
                 setTimeout(() => {
-                    window.location.href = '../index.html';
+                    window.location.href = redirectUrl;
                 }, 1000);
             } else {
                 // Login failed

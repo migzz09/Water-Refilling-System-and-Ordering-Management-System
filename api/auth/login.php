@@ -50,7 +50,8 @@ if (!empty($errors)) {
 // Authenticate user
 try {
     $stmt = $pdo->prepare("
-        SELECT a.customer_id, a.username, a.password, a.is_verified
+        SELECT a.customer_id, a.username, a.password, a.is_verified, 
+               COALESCE(a.is_admin, 0) as is_admin
         FROM accounts a
         WHERE a.username = ? AND a.is_verified = 1
     ");
@@ -64,6 +65,8 @@ try {
         error_log("Password length in DB: " . strlen($user['password']));
         error_log("Password starts with: " . substr($user['password'], 0, 10));
         error_log("Is verified: " . $user['is_verified']);
+        error_log("Is admin value: " . ($user['is_admin'] ?? 'NULL'));
+        error_log("Is admin type: " . gettype($user['is_admin'] ?? null));
     }
 
     // Check if user exists and verify password
@@ -84,6 +87,7 @@ try {
         // Login successful
         $_SESSION['customer_id'] = $user['customer_id'];
         $_SESSION['username'] = $user['username'];
+        $_SESSION['is_admin'] = (int)$user['is_admin']; // Cast to integer
         
         // Force session to be written before response
         session_write_close();
@@ -99,7 +103,11 @@ try {
             'data' => [
                 'customer_id' => $user['customer_id'],
                 'username' => $user['username'],
+<<<<<<< HEAD
                 'session_id' => session_id() // For debugging
+=======
+                'is_admin' => (int)$user['is_admin'] // Return as integer
+>>>>>>> 6331eec0d731e826fbf0e3fd0d86819f75212fa7
             ]
         ]);
     } else {

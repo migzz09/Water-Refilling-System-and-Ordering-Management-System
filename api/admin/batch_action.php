@@ -16,9 +16,10 @@ $input = json_decode(file_get_contents('php://input'), true);
 $action = $input['action'] ?? '';
 $batchId = isset($input['batch_id']) ? (int)$input['batch_id'] : 0;
 
-if (!isset($_SESSION['customer_id'])) {
+// Admin authentication check
+if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] != 1) {
     http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+    echo json_encode(['success' => false, 'message' => 'Unauthorized - Admin access required']);
     exit;
 }
 
