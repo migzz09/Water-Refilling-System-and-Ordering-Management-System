@@ -1,189 +1,282 @@
-/* WaterWorld - admin Page Styles */
+/* Admin dashboard overrides built on top of design-system variables */
 
-body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .container {
-            max-width: 900px;
-            width: 90%;
-            padding: 15px;
-            box-sizing: border-box;
-        }
-        h1, h2, h3 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 15px;
-            font-size: 20px;
-        }
-        .form-container, .table-container {
-            background-color: #fff;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 6px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        }
-        .form-container label {
-            display: block;
-            margin: 8px 0 4px;
-            font-weight: bold;
-            font-size: 12px;
-        }
-        .form-container input, .form-container select {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            box-sizing: border-box;
-            font-size: 12px;
-        }
-        .form-container button {
-            background-color: #007bff;
-            color: #fff;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        .form-container button:hover {
-            background-color: #0056b3;
-        }
-        .success, .error {
-            text-align: center;
-            margin: 10px 0;
-            padding: 8px;
-            border-radius: 3px;
-            font-size: 12px;
-        }
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-        .table-wrapper {
-            width: 100%;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-        }
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-        th, td {
-            padding: 8px;
-            text-align: left;
-            font-size: 12px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-        }
-        th:nth-child(1) { width: 10%; } /* Order Ref */
-        th:nth-child(2) { width: 15%; } /* Order Date */
-        th:nth-child(3) { width: 10%; } /* Total Amount */
-        th:nth-child(4) { width: 10%; } /* Order Status */
-        th:nth-child(5) { width: 10%; } /* Payment Status */
-        th:nth-child(6) { width: 10%; } /* Delivery Status */
-        th:nth-child(7) { width: 10%; } /* Batch Status */
-        th:nth-child(8) { width: 15%; } /* Customer */
-        th:nth-child(9) { width: 20%; } /* Actions */
-        .action-buttons form {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .action-buttons label {
-            font-size: 10px;
-            font-weight: bold;
-            margin: 2px 0;
-        }
-        .action-buttons select {
-            padding: 4px;
-            border-radius: 3px;
-            font-size: 10px;
-            width: 100%;
-        }
-        .action-buttons button {
-            padding: 4px 8px;
-            font-size: 10px;
-        }
-        .pagination {
-            text-align: center;
-            margin: 15px 0;
-        }
-        .pagination a, .pagination span {
-            display: inline-block;
-            margin: 0 5px;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-            text-decoration: none;
-            color: #007bff;
-            font-size: 12px;
-        }
-        .pagination a:hover {
-            background-color: #007bff;
-            color: #fff;
-        }
-        .pagination .current {
-            background-color: #007bff;
-            color: #fff;
-            border-color: #007bff;
-        }
-        .pagination .disabled {
-            color: #999;
-            cursor: not-allowed;
-        }
-        .back-button {
-            text-align: center;
-            margin: 15px 0;
-        }
-        .back-button a {
-            color: #007bff;
-            text-decoration: none;
-            font-size: 14px;
-        }
-        .back-button a:hover {
-            text-decoration: underline;
-        }
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-                width: 95%;
-            }
-            th, td {
-                font-size: 10px;
-                padding: 6px;
-            }
-            .action-buttons label {
-                font-size: 9px;
-                margin: 1px 0;
-            }
-            .action-buttons select, .action-buttons button {
-                font-size: 9px;
-                padding: 3px;
-            }
-            h1, h2, h3 {
-                font-size: 16px;
-            }
-            .pagination a, .pagination span {
-                padding: 6px 10px;
-                font-size: 10px;
-            }
-        }
+/* Layout */
+.sidebar {
+    width: 240px;
+    /* Use a slightly less green blue to improve contrast with the brand text */
+    background: var(--primary-blue);
+    color: var(--text-white);
+    position: fixed;
+    height: 100vh;
+    padding: 24px 16px;
+    z-index: 1000;
+}
+
+.sidebar .nav-logo {
+    height: 40px;
+    width: auto;
+}
+
+.logo-container.nav-brand {
+    /* reduce horizontal gap between logo and brand text */
+    gap: 1px;
+}
+
+.sidebar .brand-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-left: 4px; /* tightened spacing */
+    /* Use the same gradient text treatment as the site header */
+    background: linear-gradient(135deg, var(--primary-blue-dark) 0%, var(--secondary-teal) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    /* Slight text shadow to improve legibility on darker sidebar */
+    text-shadow: 0 1px 0 rgba(0,0,0,0.25);
+}
+
+.sidebar ul {
+    list-style: none;
+    margin-top: 1rem;
+    padding-left: 0;
+}
+
+.sidebar ul li {
+    padding: 12px 8px;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+.sidebar ul li:hover {
+    background: rgba(255,255,255,0.04);
+}
+
+.sidebar ul li.active {
+    background: var(--primary-blue);
+    color: var(--text-white);
+}
+
+.content {
+    margin-left: 240px;
+    padding: 24px;
+    width: calc(100% - 240px);
+    min-height: 100vh;
+    background: var(--bg-white);
+}
+
+/* Header and metrics */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(226,232,240,0.8);
+}
+.header .title {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.header .date-time {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.quick-actions { margin-bottom: 24px; }
+.quick-actions button {
+    background: var(--primary-blue);
+    color: var(--text-white);
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.quick-actions button:hover { background: var(--primary-blue-dark); }
+
+.metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.metric-card {
+    background: var(--bg-white);
+    padding: 18px;
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    text-align: left;
+}
+.metric-card h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+.metric-card p {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.metric-card-inner {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+.metric-icon {
+    display: inline-flex;
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.06);
+    color: var(--text-white);
+    font-size: 20px;
+}
+.metric-text h3 { margin: 0 0 6px 0; }
+.metric-text p { margin: 0; }
+
+/* dashboard container to center content and limit width */
+.dashboard-inner {
+    max-width: 1400px; /* wider admin canvas so batch columns can fit */
+    margin: 0 auto;
+}
+
+/* Manage Orders specific improvements */
+.orders-list { margin-top: 8px; }
+.orders-card { padding: 12px; }
+
+/* Make batch cards flow into responsive columns to avoid long vertical scroll */
+.batches-grid {
+    display: grid;
+    /* more flexible minimum card width so cards can wrap earlier and avoid horizontal overflow */
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 16px;
+}
+
+/* Constrain table height and enable internal scrolling so each card stays compact */
+.metric-card .table-responsive {
+    /* Allow tables to size naturally on wide screens; enable internal scrolling only on small viewports */
+    max-height: none;
+    overflow: visible;
+}
+
+/* Allow long text to wrap instead of stretching the table */
+.recent-orders-table td, .recent-orders-table th {
+    white-space: normal;
+    word-break: break-word;
+}
+
+/* Reduce padding and font-size in the orders table to fit more columns */
+.recent-orders-table th, .recent-orders-table td {
+    padding: 8px 10px;
+    font-size: 0.88rem;
+}
+
+/* Tighten action button styles inside tables */
+.recent-orders-table .btn {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    border-radius: 6px;
+}
+
+/* Make unassigned orders card full-width below the batch grid */
+.unassigned-container {
+    margin-top: 12px;
+}
+
+/* Media tweaks for narrow screens */
+@media (max-width: 900px) {
+    .dashboard-inner { padding: 0 12px; }
+    .metric-card .table-responsive { max-height: 320px; overflow: auto; }
+    .recent-orders-table th, .recent-orders-table td { font-size: 0.80rem; padding: 6px 8px; }
+}
+
+/* subtle hover on cards */
+.metric-card { transition: transform 0.18s ease, box-shadow 0.18s ease; }
+.metric-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
+
+/* Prevent header action buttons from overflowing the card: allow wrapping for the inner flex group */
+.metric-card > .d-flex > .d-flex {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+/* Slightly tighter styling for small action buttons inside metric cards */
+.metric-card .btn.btn-sm {
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    white-space: normal; /* allow text to wrap if narrow */
+}
+
+/* Ensure regular buttons inside cards can wrap and don't force horizontal scroll */
+.metric-card .btn { white-space: normal; }
+
+/* Sidebar buttons/links styling */
+.sidebar ul li button, .sidebar ul li a {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-size: 16px;
+    padding: 8px 6px;
+}
+
+.header .title {
+    color: var(--text-primary);
+}
+
+.metric-card h3 {
+    color: var(--text-secondary);
+}
+
+.metric-card p {
+    color: var(--text-primary);
+    font-size: 1.25rem;
+}
+
+/* Tables */
+.batch-table, .recent-orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-card);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.batch-table th, .batch-table td, .recent-orders-table th, .recent-orders-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+
+.batch-table th, .recent-orders-table th {
+    background: var(--primary-blue);
+    color: var(--text-white);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.82rem;
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+    .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .content { margin-left: 0; width: 100%; padding: 16px; }
+}
