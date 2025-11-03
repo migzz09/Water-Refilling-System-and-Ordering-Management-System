@@ -84,18 +84,18 @@ try {
     }
 
     if ($user && $passwordValid) {
-        // Login successful
+        // Login successful - Set session variables
         $_SESSION['customer_id'] = $user['customer_id'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['is_admin'] = (int)$user['is_admin']; // Cast to integer
         
-        // Force session to be written before response
-        session_write_close();
-        session_start(); // Restart for any further operations
-        
-        // Debug: Log session info
-        error_log("Session set - customer_id: " . $_SESSION['customer_id']);
+        // Debug: Log session info BEFORE write
+        error_log("=== LOGIN SUCCESS ===");
         error_log("Session ID: " . session_id());
+        error_log("Setting customer_id: " . $user['customer_id']);
+        error_log("Setting username: " . $user['username']);
+        error_log("Setting is_admin: " . (int)$user['is_admin']);
+        error_log("Session after set: " . print_r($_SESSION, true));
         
         echo json_encode([
             'success' => true,
@@ -103,11 +103,8 @@ try {
             'data' => [
                 'customer_id' => $user['customer_id'],
                 'username' => $user['username'],
-<<<<<<< HEAD
+                'is_admin' => (int)$user['is_admin'], // Return as integer
                 'session_id' => session_id() // For debugging
-=======
-                'is_admin' => (int)$user['is_admin'] // Return as integer
->>>>>>> 6331eec0d731e826fbf0e3fd0d86819f75212fa7
             ]
         ]);
     } else {

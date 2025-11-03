@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Admin Login</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .debug-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #4A90A4;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #4A90A4;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        button {
+            background: #4A90A4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2C5F6F;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #4A90A4;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h1>🔧 Admin Login Debug Tool</h1>
+        <p>This page helps diagnose issues with admin login and routing.</p>
+        
+        <div class="section">
+            <h3>1. Check Current Session</h3>
+            <button onclick="checkSession()">Check Session</button>
+            <div id="session-result"></div>
+        </div>
+        
+        <div class="section">
+            <h3>2. Check All User Accounts</h3>
+            <p class="warning">This will show which users have admin privileges</p>
+            <button onclick="checkAdminUsers()">List Admin Users</button>
+            <div id="admin-users-result"></div>
+        </div>
+        
+        <div class="section">
+            <h3>3. Test Login Flow</h3>
+            <form onsubmit="testLogin(event)">
+                <div style="margin-bottom: 10px;">
+                    <label>Username:</label>
+                    <input type="text" id="test-username" value="admin" style="padding: 8px; margin-left: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label>Password:</label>
+                    <input type="password" id="test-password" value="admin123" style="padding: 8px; margin-left: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <button type="submit">Test Login</button>
+            </form>
+            <div id="login-result"></div>
+        </div>
+        
+        <div class="section">
+            <h3>4. Database Fix Tools</h3>
+            <p class="warning">Use these tools to fix admin access issues</p>
+            <button onclick="showFixTools()">Show Fix SQL Queries</button>
+            <div id="fix-tools-result"></div>
+        </div>
+    </div>
+
+    <script>
+        async function checkSession() {
+            const resultDiv = document.getElementById('session-result');
+            resultDiv.innerHTML = '<p>Checking...</p>';
+            
+            try {
+                const response = await fetch('/WRSOMS/api/auth/session.php', {
+                    credentials: 'same-origin'
+                });
+                
+                const data = await response.json();
+                
+                let html = '<h4>Session Data:</h4><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                
+                if (data.authenticated && data.user) {
+                    html += '<h4>Analysis:</h4><ul>';
+                    html += '<li>✅ User is authenticated</li>';
+                    html += '<li>Customer ID: ' + data.user.customer_id + '</li>';
+                    html += '<li>Username: ' + data.user.username + '</li>';
+                    html += '<li>is_admin value: <strong>' + data.user.is_admin + '</strong> (type: ' + typeof data.user.is_admin + ')</li>';
+                    
+                    if (data.user.is_admin === 1 || data.user.is_admin === '1' || data.user.is_admin === true) {
+                        html += '<li class="success">✅ User HAS admin privileges</li>';
+                    } else {
+                        html += '<li class="error">❌ User DOES NOT have admin privileges</li>';
+                        html += '<li class="warning">⚠️ is_admin value is: ' + data.user.is_admin + ' (should be 1)</li>';
+                    }
+                    html += '</ul>';
+                } else {
+                    html += '<p class="error">❌ No active session</p>';
+                }
+                
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                resultDiv.innerHTML = '<p class="error">Error: ' + error.message + '</p>';
+            }
+        }
+        
+        async function checkAdminUsers() {
+            const resultDiv = document.getElementById('admin-users-result');
+            resultDiv.innerHTML = '<p>Loading...</p>';
+            
+            // Create a simple PHP test file to check users
+            const html = `
+                <h4>SQL Query to Check Admin Users:</h4>
+                <pre>SELECT customer_id, username, email, is_admin, is_verified 
+FROM accounts 
+ORDER BY is_admin DESC, username;</pre>
+                <p class="warning">Run this query in phpMyAdmin to see all users and their admin status:</p>
+                <ol>
+                    <li>Open phpMyAdmin: <a href="http://localhost/phpmyadmin" target="_blank">http://localhost/phpmyadmin</a></li>
+                    <li>Select the <strong>wrsoms</strong> database</li>
+                    <li>Click the <strong>SQL</strong> tab</li>
+                    <li>Copy and paste the query above</li>
+                    <li>Click <strong>Go</strong></li>
+                </ol>
+                <p>Look for the <code>is_admin</code> column - it should be <strong>1</strong> for admin users</p>
+            `;
+            
+            resultDiv.innerHTML = html;
+        }
+        
+        async function testLogin(event) {
+            event.preventDefault();
+            const resultDiv = document.getElementById('login-result');
+            resultDiv.innerHTML = '<p>Testing login...</p>';
+            
+            const username = document.getElementById('test-username').value;
+            const password = document.getElementById('test-password').value;
+            
+            try {
+                const response = await fetch('/WRSOMS/api/auth/login.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                let html = '<h4>Login Response:</h4><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                
+                if (data.success && data.data) {
+                    html += '<h4>Analysis:</h4><ul>';
+                    html += '<li class="success">✅ Login successful</li>';
+                    html += '<li>Customer ID: ' + data.data.customer_id + '</li>';
+                    html += '<li>Username: ' + data.data.username + '</li>';
+                    html += '<li>is_admin value: <strong>' + data.data.is_admin + '</strong> (type: ' + typeof data.data.is_admin + ')</li>';
+                    
+                    if (data.data.is_admin === 1 || data.data.is_admin === '1') {
+                        html += '<li class="success">✅ This is an ADMIN account</li>';
+                        html += '<li>Should redirect to: <code>/WRSOMS/pages/admin/admin-dashboard.html</code></li>';
+                    } else {
+                        html += '<li class="warning">⚠️ This is a REGULAR USER account</li>';
+                        html += '<li>Should redirect to: <code>/index.html</code></li>';
+                    }
+                    html += '</ul>';
+                } else {
+                    html += '<p class="error">❌ Login failed: ' + (data.message || 'Unknown error') + '</p>';
+                }
+                
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                resultDiv.innerHTML = '<p class="error">Error: ' + error.message + '</p>';
+            }
+        }
+        
+        function showFixTools() {
+            const resultDiv = document.getElementById('fix-tools-result');
+            
+            const html = `
+                <h4>Common Fix Scenarios:</h4>
+                
+                <div style="background: white; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px;">
+                    <h5>Fix 1: Make a user an admin</h5>
+                    <p>If you know the username but they're not admin, run this in phpMyAdmin:</p>
+                    <pre>UPDATE accounts SET is_admin = 1 WHERE username = 'admin';</pre>
+                </div>
+                
+                <div style="background: white; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px;">
+                    <h5>Fix 2: Create a new admin user</h5>
+                    <p>To create a new admin account (password will be 'admin123'):</p>
+                    <pre>INSERT INTO accounts (username, email, password, first_name, last_name, is_admin, is_verified)
+VALUES ('admin', 'admin@waterworld.ph', 'admin123', 'Admin', 'User', 1, 1);</pre>
+                    <p class="warning">⚠️ This creates an unhashed password. You should change it after first login.</p>
+                </div>
+                
+                <div style="background: white; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px;">
+                    <h5>Fix 3: Check if is_admin column exists</h5>
+                    <p>Verify the accounts table has the is_admin column:</p>
+                    <pre>SHOW COLUMNS FROM accounts;</pre>
+                    <p>If <code>is_admin</code> is missing, add it:</p>
+                    <pre>ALTER TABLE accounts ADD COLUMN is_admin TINYINT(1) DEFAULT 0;</pre>
+                </div>
+                
+                <div style="background: white; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px;">
+                    <h5>Fix 4: Reset all admin flags</h5>
+                    <p>Remove admin access from all users except specific one:</p>
+                    <pre>UPDATE accounts SET is_admin = 0;
+UPDATE accounts SET is_admin = 1 WHERE username = 'admin';</pre>
+                </div>
+                
+                <h4>How to Apply These Fixes:</h4>
+                <ol>
+                    <li>Open phpMyAdmin: <a href="http://localhost/phpmyadmin" target="_blank">http://localhost/phpmyadmin</a></li>
+                    <li>Select the <strong>wrsoms</strong> database</li>
+                    <li>Click the <strong>SQL</strong> tab</li>
+                    <li>Copy and paste the appropriate query from above</li>
+                    <li>Click <strong>Go</strong></li>
+                    <li>Try logging in again</li>
+                </ol>
+            `;
+            
+            resultDiv.innerHTML = html;
+        }
+        
+        // Auto-run session check on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('Debug page loaded');
+        });
+    </script>
+</body>
+</html>

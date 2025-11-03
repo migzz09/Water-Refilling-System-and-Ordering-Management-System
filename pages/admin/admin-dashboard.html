@@ -720,14 +720,6 @@
             // Update active state on sidebar
             updateActiveNav('showInventoryManagement()');
             
-            // Initialize default stock if not set
-            if (!localStorage.getItem('container_stock_1')) {
-                localStorage.setItem('container_stock_1', '50'); // Round containers
-            }
-            if (!localStorage.getItem('container_stock_2')) {
-                localStorage.setItem('container_stock_2', '50'); // Slim containers
-            }
-            
             // Load vehicle capacity settings
             const tricycleCapacity = localStorage.getItem('vehicleCapacity_Tricycle') || '5';
             const carCapacity = localStorage.getItem('vehicleCapacity_Car') || '10';
@@ -738,28 +730,19 @@
                 if (carInput) carInput.value = carCapacity;
             }, 100);
             
-            // Load data
+            // Load data from database
             loadInventoryData();
         }
 
         function loadInventoryData() {
-            // Load container data - the API returns array directly, not {success, data}
-            fetch('/WRSOMS/api/common/containers.php', { credentials: 'same-origin' })
+            // Load inventory data from database
+            fetch('/WRSOMS/api/admin/inventory.php', { credentials: 'same-origin' })
                 .then(r => r.json())
-                .then(containers => {
-                    // Check if it's an error response
-                    if (containers.error) throw new Error(containers.error);
-                    // Enhance with stock data from localStorage
-                    const containersWithStock = containers.map(c => {
-                        const stockKey = 'container_stock_' + c.container_id;
-                        const stock = parseInt(localStorage.getItem(stockKey) || '0');
-                        return {
-                            ...c,
-                            size: c.container_type === 'Round' ? '5 Gallons' : '3 Gallons',
-                            stock_quantity: stock
-                        };
-                    });
-                    renderContainerStock(containersWithStock);
+                .then(response => {
+                    if (!response.success) {
+                        throw new Error(response.message || 'Failed to load inventory');
+                    }
+                    renderContainerStock(response.data);
                 })
                 .catch(err => {
                     console.error('Error loading inventory:', err);
@@ -875,7 +858,7 @@
         }
 
         function updateStock(containerId, containerType) {
-            const quantity = prompt('Add stock for ' + containerType + '. Enter quantity to add:', '10');
+            const quantity = prompt('Enter new stock quantity for ' + containerType + ':', '0');
             if (quantity === null || quantity === '') return;
             
             const qty = parseInt(quantity);
@@ -884,14 +867,31 @@
                 return;
             }
             
-            // Update stock in localStorage
-            const stockKey = 'container_stock_' + containerId;
-            const currentStock = parseInt(localStorage.getItem(stockKey) || '0');
-            const newStock = currentStock + qty;
-            localStorage.setItem(stockKey, newStock.toString());
-            
-            alert('Stock updated successfully. Added ' + qty + ' units. New total: ' + newStock);
-            loadInventoryData();
+            // Update stock in database
+            fetch('/WRSOMS/api/admin/inventory.php', {
+                method: 'PUT',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    container_id: containerId,
+                    stock: qty
+                })
+            })
+            .then(r => r.json())
+            .then(response => {
+                if (response.success) {
+                    alert('Stock updated successfully. New stock: ' + qty);
+                    loadInventoryData(); // Reload to show updated data
+                } else {
+                    alert('Error updating stock: ' + response.message);
+                }
+            })
+            .catch(err => {
+                console.error('Error updating stock:', err);
+                alert('Failed to update stock. Please try again.');
+            });
         }
 
         function logout() {

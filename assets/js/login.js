@@ -51,10 +51,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 successMessage.textContent = result.message;
                 successContainer.style.display = 'block';
                 
-                // Check if user is admin or if redirect parameter is set
-                const urlParams = new URLSearchParams(window.location.search);
-                const redirect = urlParams.get('redirect');
-                const isAdmin = result.data && (result.data.is_admin === 1 || result.data.is_admin === '1');
+                // Check if user is admin (actual permission check, not URL parameter)
+                const isAdmin = result.data && (result.data.is_admin === 1 || result.data.is_admin === '1' || result.data.is_admin === true);
                 
                 // Debug logging
                 console.log('Login response:', result);
@@ -62,13 +60,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('is_admin type:', typeof result.data?.is_admin);
                 console.log('isAdmin check result:', isAdmin);
                 
-                // Determine redirect destination
-                let redirectUrl = '../index.html';
-                if (isAdmin || redirect === 'admin') {
+                // Determine redirect destination based ONLY on actual admin status
+                let redirectUrl;
+                if (isAdmin) {
                     redirectUrl = '/WRSOMS/pages/admin/admin-dashboard.html';
-                    console.log('Redirecting to admin dashboard');
+                    console.log('User IS admin - redirecting to admin dashboard');
                 } else {
-                    console.log('Redirecting to index');
+                    redirectUrl = '/WRSOMS/index.html';
+                    console.log('User is NOT admin - redirecting to main page');
                 }
                 
                 // Redirect after short delay
