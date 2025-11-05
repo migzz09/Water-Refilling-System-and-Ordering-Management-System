@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 03, 2025 at 08:01 AM
+-- Generation Time: Nov 05, 2025 at 05:51 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -32,17 +32,24 @@ CREATE TABLE `accounts` (
   `customer_id` int(11) DEFAULT NULL,
   `username` varchar(50) NOT NULL,
   `password` varchar(255) NOT NULL,
+  `password_changed_at` datetime DEFAULT NULL,
   `otp` varchar(6) DEFAULT NULL,
   `otp_expires` timestamp NOT NULL DEFAULT (current_timestamp() + interval 10 minute),
-  `is_verified` tinyint(1) DEFAULT 0
+  `is_verified` tinyint(1) DEFAULT 0,
+  `is_admin` tinyint(1) NOT NULL DEFAULT 0,
+  `profile_photo` varchar(255) DEFAULT NULL,
+  `deletion_token` varchar(255) DEFAULT NULL,
+  `deletion_expires` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `accounts`
 --
 
-INSERT INTO `accounts` (`account_id`, `customer_id`, `username`, `password`, `otp`, `otp_expires`, `is_verified`) VALUES
-(1, 1, 'user1', '$2y$10$CGQbbPlFZKz5g/3tA8dLP.klKT0B8eaYOi5VygHCbV80psw3XgVoO', NULL, '2025-11-03 06:56:31', 1);
+INSERT INTO `accounts` (`account_id`, `customer_id`, `username`, `password`, `password_changed_at`, `otp`, `otp_expires`, `is_verified`, `is_admin`, `profile_photo`, `deletion_token`, `deletion_expires`) VALUES
+(1, 1, 'user1', '$2y$10$CGQbbPlFZKz5g/3tA8dLP.klKT0B8eaYOi5VygHCbV80psw3XgVoO', '2025-11-03 19:43:20', NULL, '2025-11-03 06:56:31', 1, 0, NULL, NULL, NULL),
+(2, 2, 'user2', '$2y$10$0ODklyfOXkVEB3w6wd9rlu/fC0mF7835Hljr7zk8dMkV/.l6.Rygi', '2025-11-03 19:43:20', NULL, '2025-11-03 11:40:04', 1, 0, 'profile_2_1762176603.jpg', NULL, NULL),
+(3, NULL, 'admin', 'admin123', NULL, NULL, '2025-11-03 16:55:21', 1, 1, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -96,6 +103,15 @@ CREATE TABLE `batches` (
   `delivery_time` time DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `batches`
+--
+
+INSERT INTO `batches` (`batch_id`, `batch_date`, `batch_status_id`, `vehicle`, `notes`, `vehicle_type`, `batch_number`, `pickup_time`, `delivery_time`) VALUES
+(1, '2025-11-03 16:00:00', 3, 'Tricycle #112', 'Auto-created batch', 'Tricycle', 1, NULL, NULL),
+(2, '2025-11-03 16:00:00', 3, 'Car #188', 'Auto-created batch', 'Car', 1, NULL, NULL),
+(3, '2025-11-05 16:00:00', 3, 'Car #289', 'Auto-created batch', 'Car', 1, NULL, NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -140,6 +156,19 @@ CREATE TABLE `checkouts` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `notes` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `checkouts`
+--
+
+INSERT INTO `checkouts` (`checkout_id`, `customer_id`, `created_at`, `notes`) VALUES
+(1, 1, '2025-11-03 08:06:35', ''),
+(2, 1, '2025-11-03 08:35:42', ''),
+(3, 2, '2025-11-03 09:23:52', ''),
+(4, 2, '2025-11-03 15:03:20', ''),
+(5, 2, '2025-11-03 15:06:51', ''),
+(6, 2, '2025-11-05 04:09:11', ''),
+(7, 2, '2025-11-05 04:09:48', '');
 
 -- --------------------------------------------------------
 
@@ -187,7 +216,8 @@ CREATE TABLE `customers` (
 --
 
 INSERT INTO `customers` (`customer_id`, `account_id`, `first_name`, `middle_name`, `last_name`, `customer_contact`, `email`, `street`, `barangay`, `city`, `province`, `date_created`) VALUES
-(1, NULL, 'user1', NULL, 'user1', '09663085901', 'migzzuwu@gmail.com', 'Milkweed', 'Rizal', 'Taguig', 'Metro Manila', '2025-11-03 06:56:15');
+(1, NULL, 'user1', NULL, 'user1', '09663085901', 'migzzuwu@gmail.com', 'Milkweed', 'Rizal', 'Taguig', 'Metro Manila', '2025-11-03 06:56:15'),
+(2, NULL, 'user2', NULL, 'user2', '09663085905', 'jfaustino.a12345404@umak.edu.ph', 'Milkweed', 'Paco', 'Manila', 'Metro Manila', '2025-11-03 09:22:23');
 
 -- --------------------------------------------------------
 
@@ -197,12 +227,19 @@ INSERT INTO `customers` (`customer_id`, `account_id`, `first_name`, `middle_name
 
 CREATE TABLE `customer_feedback` (
   `feedback_id` int(11) NOT NULL,
-  `reference_id` varchar(6) NOT NULL,
+  `reference_id` varchar(6) DEFAULT NULL,
   `customer_id` int(11) DEFAULT NULL,
   `rating` int(11) DEFAULT NULL CHECK (`rating` >= 1 and `rating` <= 5),
   `feedback_text` text DEFAULT NULL,
   `feedback_date` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `customer_feedback`
+--
+
+INSERT INTO `customer_feedback` (`feedback_id`, `reference_id`, `customer_id`, `rating`, `feedback_text`, `feedback_date`) VALUES
+(2, NULL, 2, 3, 'Category: website\nSubject: hu\n\nhello', '2025-11-03 16:22:38');
 
 -- --------------------------------------------------------
 
@@ -220,6 +257,26 @@ CREATE TABLE `deliveries` (
   `actual_time` timestamp NULL DEFAULT NULL,
   `scheduled_time` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `deliveries`
+--
+
+INSERT INTO `deliveries` (`delivery_id`, `batch_id`, `delivery_status_id`, `delivery_date`, `notes`, `delivery_type`, `actual_time`, `scheduled_time`) VALUES
+(1, 1, 3, '2025-11-03 16:00:00', 'Auto-created pickup for order 895189', 'pickup', '2025-11-03 08:35:54', '2025-11-03 23:00:00'),
+(2, 1, 3, '2025-11-03 16:00:00', 'Auto-created delivery for order 895189', 'delivery', '2025-11-03 08:36:00', '2025-11-04 02:00:00'),
+(3, 1, 3, '2025-11-03 16:00:00', 'Auto-created pickup for order 949866', 'pickup', '2025-11-03 08:35:54', '2025-11-03 23:00:00'),
+(4, 1, 3, '2025-11-03 16:00:00', 'Auto-created delivery for order 949866', 'delivery', '2025-11-03 08:36:00', '2025-11-04 02:00:00'),
+(5, 2, 3, '2025-11-03 16:00:00', 'Auto-created pickup for order 440479', 'pickup', '2025-11-03 09:25:56', '2025-11-03 23:00:00'),
+(6, 2, 3, '2025-11-03 16:00:00', 'Auto-created delivery for order 440479', 'delivery', '2025-11-03 09:26:13', '2025-11-04 02:00:00'),
+(7, 2, 1, '2025-11-03 16:00:00', 'Auto-created pickup for order 525768', 'pickup', NULL, '2025-11-03 23:00:00'),
+(8, 2, 1, '2025-11-03 16:00:00', 'Auto-created delivery for order 525768', 'delivery', NULL, '2025-11-04 02:00:00'),
+(9, 2, 1, '2025-11-03 16:00:00', 'Auto-created pickup for order 364409', 'pickup', NULL, '2025-11-03 23:00:00'),
+(10, 2, 1, '2025-11-03 16:00:00', 'Auto-created delivery for order 364409', 'delivery', NULL, '2025-11-04 02:00:00'),
+(11, 3, 3, '2025-11-05 16:00:00', 'Auto-created pickup for order 376012', 'pickup', '2025-11-05 04:30:31', '2025-11-05 23:00:00'),
+(12, 3, 3, '2025-11-05 16:00:00', 'Auto-created delivery for order 376012', 'delivery', '2025-11-05 04:30:37', '2025-11-06 02:00:00'),
+(13, 3, 3, '2025-11-05 16:00:00', 'Auto-created pickup for order 949158', 'pickup', '2025-11-05 04:30:31', '2025-11-05 23:00:00'),
+(14, 3, 3, '2025-11-05 16:00:00', 'Auto-created delivery for order 949158', 'delivery', '2025-11-05 04:30:37', '2025-11-06 02:00:00');
 
 -- --------------------------------------------------------
 
@@ -286,8 +343,8 @@ CREATE TABLE `inventory` (
 --
 
 INSERT INTO `inventory` (`container_id`, `container_type`, `stock`, `last_updated`) VALUES
-(1, 'Round', 98, '2025-10-31 17:43:07'),
-(2, 'Slim', 94, '2025-10-27 12:37:50');
+(1, 'Round', 90, '2025-11-05 04:18:54'),
+(2, 'Slim', 90, '2025-11-05 04:18:59');
 
 -- --------------------------------------------------------
 
@@ -307,6 +364,19 @@ CREATE TABLE `orders` (
   `total_amount` decimal(10,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `orders`
+--
+
+INSERT INTO `orders` (`reference_id`, `customer_id`, `checkout_id`, `order_type_id`, `batch_id`, `order_date`, `delivery_date`, `order_status_id`, `total_amount`) VALUES
+('364409', 2, 5, 1, 2, '2025-11-03 15:06:51', '2025-11-04', 1, 70.00),
+('376012', 2, 6, 1, 3, '2025-11-05 04:09:11', '2025-11-06', 3, 250.00),
+('440479', 2, 3, 1, 2, '2025-11-03 09:23:52', '2025-11-04', 3, 200.00),
+('525768', 2, 4, 1, 2, '2025-11-03 15:03:20', '2025-11-04', 1, 70.00),
+('895189', 1, 1, 1, 1, '2025-11-03 08:06:35', '2025-11-04', 3, 40.00),
+('949158', 2, 7, 1, 3, '2025-11-05 04:09:48', '2025-11-06', 3, 570.00),
+('949866', 1, 2, 1, 1, '2025-11-03 08:35:42', '2025-11-04', 3, 80.00);
+
 -- --------------------------------------------------------
 
 --
@@ -323,6 +393,24 @@ CREATE TABLE `order_details` (
   `quantity` int(11) NOT NULL,
   `subtotal` decimal(10,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `order_details`
+--
+
+INSERT INTO `order_details` (`order_detail_id`, `reference_id`, `batch_number`, `container_id`, `water_type_id`, `order_type_id`, `quantity`, `subtotal`) VALUES
+(1, '895189', 1, 1, 2, 1, 1, 40.00),
+(2, '949866', 1, 1, 2, 1, 2, 80.00),
+(3, '440479', 1, 1, 1, 1, 5, 200.00),
+(4, '525768', 1, 1, 1, 1, 1, 40.00),
+(5, '525768', 1, 2, 3, 1, 1, 30.00),
+(6, '364409', 1, 1, 1, 1, 1, 40.00),
+(7, '364409', 1, 2, 3, 1, 1, 30.00),
+(8, '376012', 1, 1, 2, 2, 1, 250.00),
+(9, '949158', 1, 1, 3, 1, 1, 40.00),
+(10, '949158', 1, 1, 1, 2, 1, 250.00),
+(11, '949158', 1, 2, 3, 2, 1, 250.00),
+(12, '949158', 1, 2, 1, 1, 1, 30.00);
 
 -- --------------------------------------------------------
 
@@ -379,6 +467,19 @@ CREATE TABLE `payments` (
   `amount_paid` decimal(10,2) NOT NULL,
   `transaction_reference` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `payments`
+--
+
+INSERT INTO `payments` (`payment_id`, `reference_id`, `payment_method_id`, `payment_status_id`, `payment_date`, `amount_paid`, `transaction_reference`) VALUES
+(1, '895189', 1, 1, '2025-11-03 08:06:35', 40.00, NULL),
+(2, '949866', 1, 1, '2025-11-03 08:35:42', 80.00, NULL),
+(3, '440479', 1, 1, '2025-11-03 09:23:52', 200.00, NULL),
+(4, '525768', 1, 1, '2025-11-03 15:03:20', 70.00, NULL),
+(5, '364409', 1, 1, '2025-11-03 15:06:51', 70.00, NULL),
+(6, '376012', 1, 1, '2025-11-05 04:09:11', 250.00, NULL),
+(7, '949158', 1, 1, '2025-11-05 04:09:48', 570.00, NULL);
 
 -- --------------------------------------------------------
 
@@ -614,13 +715,13 @@ ALTER TABLE `water_types`
 -- AUTO_INCREMENT for table `accounts`
 --
 ALTER TABLE `accounts`
-  MODIFY `account_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `account_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `batches`
 --
 ALTER TABLE `batches`
-  MODIFY `batch_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `batch_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `batch_employees`
@@ -638,7 +739,7 @@ ALTER TABLE `batch_status`
 -- AUTO_INCREMENT for table `checkouts`
 --
 ALTER TABLE `checkouts`
-  MODIFY `checkout_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `checkout_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `containers`
@@ -650,19 +751,19 @@ ALTER TABLE `containers`
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `customer_feedback`
 --
 ALTER TABLE `customer_feedback`
-  MODIFY `feedback_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `feedback_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `deliveries`
 --
 ALTER TABLE `deliveries`
-  MODIFY `delivery_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `delivery_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `delivery_status`
@@ -680,7 +781,7 @@ ALTER TABLE `employees`
 -- AUTO_INCREMENT for table `order_details`
 --
 ALTER TABLE `order_details`
-  MODIFY `order_detail_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `order_detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `order_status`
@@ -698,7 +799,7 @@ ALTER TABLE `order_types`
 -- AUTO_INCREMENT for table `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `payment_methods`
@@ -751,7 +852,7 @@ ALTER TABLE `customers`
 -- Constraints for table `customer_feedback`
 --
 ALTER TABLE `customer_feedback`
-  ADD CONSTRAINT `customer_feedback_ibfk_1` FOREIGN KEY (`reference_id`) REFERENCES `orders` (`reference_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `customer_feedback_ibfk_1` FOREIGN KEY (`reference_id`) REFERENCES `orders` (`reference_id`) ON DELETE SET NULL,
   ADD CONSTRAINT `customer_feedback_ibfk_2` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`customer_id`) ON DELETE SET NULL;
 
 --

@@ -17,7 +17,7 @@ const searchInput = document.getElementById('searchInput');
 
         searchInput.addEventListener('input', function() {
             const searchQuery = this.value.trim();
-            fetch(`usertransaction_history.php?search=${encodeURIComponent(searchQuery)}`)
+            fetch(`/WRSOMS/api/orders/transaction_history.php?search=${encodeURIComponent(searchQuery)}`)
                 .then(response => response.json())
                 .then(data => {
                     transactionList.innerHTML = '';

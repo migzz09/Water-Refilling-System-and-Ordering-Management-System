@@ -4,7 +4,7 @@
  * This file helps diagnose admin login issues
  */
 session_start();
-require_once __DIR__ . '/config/connect.php';
+require_once __DIR__ . '/../config/connect.php';
 
 header('Content-Type: text/html; charset=utf-8');
 ?>
@@ -160,7 +160,7 @@ VALUES ('admin', 'admin@waterworld.ph', 'admin123', 'System', 'Administrator', 1
     <div class="section">
         <h2>5. Test Login API</h2>
         <p>Test the login directly:</p>
-        <form method="POST" action="api/auth/login.php" target="_blank" style="margin: 10px 0;">
+        <form method="POST" action="../api/auth/login.php" target="_blank" style="margin: 10px 0;">
             <input type="text" name="username" placeholder="Username" value="admin" style="padding: 8px; margin: 5px; background: #2d2d2d; color: #d4d4d4; border: 1px solid #555;">
             <input type="password" name="password" placeholder="Password" value="admin123" style="padding: 8px; margin: 5px; background: #2d2d2d; color: #d4d4d4; border: 1px solid #555;">
             <button type="button" onclick="testLogin()" style="padding: 8px 16px; background: #4ec9b0; border: none; color: #1e1e1e; cursor: pointer; border-radius: 3px;">Test Login</button>

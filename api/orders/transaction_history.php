@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'config/connect.php';
+require_once __DIR__ . '/../../config/connect.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['customer_id']) || !isset($_SESSION['username'])) {
@@ -10,7 +10,7 @@ if (!isset($_SESSION['customer_id']) || !isset($_SESSION['username'])) {
         echo json_encode(['success' => false, 'message' => 'Unauthorized', 'transactions' => []]);
         exit();
     }
-    header('Location: pages/login.html');
+    header('Location: ../../pages/login.html');
     exit();
 }
 
@@ -81,5 +81,5 @@ if (isset($_GET['search'])) {
 }
 
 // If not AJAX request, redirect to the transaction history page
-header('Location: pages/usertransaction-history.html');
+header('Location: ../../pages/usertransaction-history.html');
 exit;

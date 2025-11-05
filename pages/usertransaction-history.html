@@ -512,7 +512,7 @@
 
                 // Function to load transactions
         function loadTransactions(searchQuery = '') {
-            fetch(`../usertransaction_history.php?search=${encodeURIComponent(searchQuery)}`)
+            fetch(`/WRSOMS/api/orders/transaction_history.php?search=${encodeURIComponent(searchQuery)}`)
                 .then(response => response.json())
                 .then(data => {
                     transactionList.innerHTML = '';
