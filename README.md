@@ -1,122 +1,100 @@
-# 💧 WaterWorld Water Station - Ordering Management System
+# Water Refilling Station Ordering Management System (WRSOMS)
 
-A modern, full-stack water refilling station ordering and management system built with HTML5, CSS3, JavaScript, PHP, and MySQL.
+A web-based ordering and management system for water refilling stations.
 
-[![PHP Version](https://img.shields.io/badge/PHP-8.0%2B-blue)](https://www.php.net/)
-[![MySQL](https://img.shields.io/badge/MySQL-5.7%2B-orange)](https://www.mysql.com/)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+## About This Project
 
-## ✨ Features
+This is a school project for our Web Development course. It allows customers to order water online and helps the admin manage orders and deliveries.
 
-- 🔐 **User Authentication** - Secure login/registration with OTP email verification
-- 🛒 **Order Management** - Place, track, and manage water delivery orders
-- 📦 **Batch Processing** - Organize deliveries into batches for efficient routing
-- 👥 **Customer Management** - Track customer information and order history
-- 📊 **Admin Dashboard** - Comprehensive analytics and order management
-- 📱 **Responsive Design** - Works seamlessly on desktop and mobile devices
-- 🎨 **Modern UI/UX** - Clean, water-themed design with smooth animations
+## Features
 
-## 🚀 Quick Start
+- Customer registration and login
+- Email verification (OTP)
+- Browse and order water containers
+- Track order status
+- Admin dashboard for managing orders
+- Delivery scheduling and batch management
 
-### Prerequisites
+## Technologies Used
 
-- PHP 8.0 or higher
-- MySQL 5.7 or higher
-- Composer
-- Web server (Apache/Nginx)
+- **Frontend:** HTML, CSS, JavaScript
+- **Backend:** PHP
+- **Database:** MySQL
+- **Email:** PHPMailer library
+
+## Setup Instructions
+
+### Requirements
+
+- XAMPP (includes Apache, PHP, and MySQL)
+- Web browser
 
 ### Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/migzz09/WRSOMS.git
-   cd WRSOMS
-   ```
+1. **Download and install XAMPP**
+   - Get it from [https://www.apachefriends.org](https://www.apachefriends.org)
 
-2. **Install dependencies**
-   ```bash
-   composer install
-   ```
+2. **Copy project to htdocs**
+   - Place the WRSOMS folder in `C:\xampp\htdocs\`
 
-3. **Configure database**
-   - Create a MySQL database named `wrsoms`
-   - Import the schema: `mysql -u root -p wrsoms < db/wrsoms.sql`
-   - Update database credentials in `config/connect.php`
+3. **Import the database**
+   - Open phpMyAdmin at `http://localhost/phpmyadmin`
+   - Create a new database named `wrsoms`
+   - Import the file `db/wrsoms.sql`
 
-4. **Configure email (for OTP)**
-   - Copy `config/config.php.example` to `config/config.php`
-   - Add your Gmail credentials for OTP functionality
+4. **Configure database connection**
+   - Open `config/connect.php`
+   - Update the database credentials if needed (default is root with no password)
 
-5. **Start your web server**
-   - Access the application at `http://localhost/WRSOMS`
+5. **Start XAMPP**
+   - Start Apache and MySQL
+   - Open browser and go to `http://localhost/WRSOMS`
 
-## 📁 Project Structure
+
+## Project Structure
 
 ```
 WRSOMS/
-├── 📄 index.html                   # Homepage entry point
-├── 📄 README.md                    # This file
-│
-├── 📁 api/                         # Backend API endpoints (PHP)
-│   ├── 📁 auth/                   # Authentication
-│   │   ├── login.php             # User login API
-│   │   ├── register.php          # User registration API
-│   │   ├── verify-otp.php        # OTP verification API
-│   │   ├── logout.php            # Logout API
-│   │   └── session.php           # Session check API
-│   ├── 📁 admin/                  # Admin operations
-│   │   └── dashboard.php         # Dashboard stats API
-│   ├── 📁 common/                 # Shared utilities
-│   │   └── cities.php            # NCR cities & barangays
-│   └── 📁 orders/                 # Order management
-│       ├── create.php            # Create order API
-│       └── track.php             # Track order API
-│
-├── 📁 assets/                      # Frontend static assets
-│   ├── 📁 css/                    # Stylesheets (14 files)
-│   │   ├── design-system.css     # Global design tokens & variables
-│   │   ├── index.css             # Homepage styles
-│   │   ├── admin.css             # Admin panel styles
-│   │   ├── register.css          # Registration page styles
-│   │   └── ...                   # Other page-specific styles
-│   ├── 📁 js/                     # JavaScript files (10 files)
-│   │   ├── api-helper.js         # API utility functions
-│   │   ├── login.js              # Login page logic
-│   │   ├── register.js           # Registration logic
-│   │   ├── index.js              # Homepage interactions
-│   │   └── ...                   # Other page-specific scripts
-│   └── 📁 images/                 # Image assets
-│       ├── Water World Facade.jpg # Storefront background
-│       └── ww_logo.png           # Company logo
-│
-├── 📁 config/                      # Configuration files
-│   └── connect.php               # Database connection settings
-│
-├── 📁 docs/                        # Documentation
-│   ├── API_ARCHITECTURE.md       # Complete API reference
-│   ├── UI_UX_DESIGN.md           # Design system guide
-│   ├── CLEANUP_SUMMARY.md        # Cleanup report
-│   └── PROJECT_STATUS.md         # Project status & checklist
-│
-├── 📁 pages/                       # HTML pages (Customer)
-│   ├── login.html                # User login page
-│   ├── register.html             # User registration page
-│   ├── verify-otp.html           # OTP verification page
-│   ├── product.html             # Product catalog and ordering page
-│   ├── order-tracking.html       # Track order status page
-│   ├── usertransaction-history.html # Order history page
-│   └── 📁 admin/                  # Admin pages
-│       ├── admin.html            # Admin login
-│       ├── admin-dashboard.html  # Admin dashboard
-│       ├── daily-report.html     # Daily reports
-│       ├── manage-orders.html    # Order management
-│       ├── status.html           # Status management
-│       └── transaction-history.html # All transactions
-│
-├── 📁 db/                          # Database files
-├── 📁 vendor/                      # Third-party dependencies
-└── 📁 php-legacy/                  # Legacy PHP pages (for reference)
+├── index.html          # Main homepage
+├── api/                # PHP backend files
+│   ├── auth/          # Login, register, OTP verification
+│   ├── admin/         # Admin operations
+│   ├── common/        # Shared utilities
+│   └── orders/        # Order management
+├── assets/            # CSS, JavaScript, and images
+│   ├── css/          # Stylesheets
+│   ├── js/           # JavaScript files
+│   └── images/       # Images and logos
+├── config/            # Database configuration
+├── db/                # Database SQL file
+├── pages/             # HTML pages
+│   ├── login.html
+│   ├── register.html
+│   ├── product.html
+│   └── admin/        # Admin pages
+├── uploads/           # User uploaded files
+├── vendor/            # PHPMailer library
+└── README.md          # This file
+```
 
-## Contributing
+## Usage
 
-This is a private project for WaterWorld Water Station.
+### Customer Side
+1. Register an account
+2. Verify email with OTP code
+3. Login and browse products
+4. Add items to cart and checkout
+5. Track your order status
+
+### Admin Side
+1. Login at `/pages/admin/admin.html`
+2. View dashboard statistics
+3. Manage customer orders
+4. Create delivery batches
+5. Generate daily reports
+
+## Credits
+
+Developed by: [Your Name/Group Name]  
+Course: Web Development  
+School Year: 2024-2025
