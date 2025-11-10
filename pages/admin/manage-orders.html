@@ -10,7 +10,6 @@
         .search-bar { max-width: 420px; }
         .orders-card { padding: 16px; border-radius: 8px; }
         .orders-empty { padding: 40px 0; }
-
     /* Table and card spacing improvements for Manage Orders */
     .batches-grid { display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
     .metric-card { padding: 18px; box-sizing: border-box; background: #fff; border-radius: 8px; flex: 1 1 360px; max-width: 420px; }
@@ -30,7 +29,7 @@
     .metric-card .table-responsive { overflow-x: auto; }
     /* Completed section styling */
     .completed-section { background: transparent; }
-    
+   
     /* Navigation tabs styling */
     .nav-tabs {
         display: flex;
@@ -68,19 +67,19 @@
         border-color: #3b82f6;
         box-shadow: 0 2px 4px rgba(59,130,246,0.4);
     }
-    
+   
     /* Prevent batch card hover from interfering */
     .metric-card {
         position: relative;
         pointer-events: auto;
         isolation: isolate;
     }
-    
+   
     .metric-card:hover {
         /* Prevent card-level hover effects */
         background: #fff !important;
     }
-    
+   
     /* Clickable row styling */
     .recent-orders-table {
         position: relative;
@@ -108,7 +107,6 @@
         background-color: #bfdbfe !important;
         transform: scale(0.999);
     }
-
         /* Simple modal for order details (no dependency on Bootstrap JS) */
         .ww-modal {
             background: white;
@@ -164,7 +162,7 @@
         }
         .ww-modal-footer {
             padding: 20px 28px;
-            border-top: 2px solid #e5e7eb;
+            border-top: 2 2px solid #e5e7eb;
             background: #f9fafb;
             border-radius: 0 0 16px 16px;
         }
@@ -192,7 +190,6 @@
             font-size: 0.95rem;
         }
     </style>
-
     <!-- Container expected by admin-dashboard loader -->
     <div class="container">
         <div class="orders-card">
@@ -205,26 +202,21 @@
                     <small class="text-muted">Manage today's batches and orders</small>
                 </div>
             </div>
-
             <div id="batchesContainer">Loading…</div>
             <div id="unassignedContainer" style="margin-top:12px;"></div>
         </div>
     </div>
-
     <script>
         (function(){
-
             // Globals and DOM references expected by the script
             var ordersMap = {};
             // If these elements are present in the parsed fragment they will be found; otherwise we fall back to querying later
             var batchesContainer = document.getElementById('batchesContainer');
             var unassignedContainer = document.getElementById('unassignedContainer');
-
             // Fallback API URL helper if not provided by the outer page
             if (typeof getApiUrl !== 'function') {
                 function getApiUrl() { return '/WRSOMS/api/admin/manage_orders.php'; }
             }
-
             function escapeHtml(s) {
                 return String(s == null ? '' : s)
                     .replace(/&/g, '&amp;')
@@ -233,11 +225,9 @@
                     .replace(/"/g, '&quot;')
                     .replace(/'/g, '&#039;');
             }
-
             function renderOrderRow(o, batchStatus, batchId) {
                 // store order object for modal usage
                 if (o && o.reference_id) ordersMap[o.reference_id] = o;
-
                 return `
                     <tr class="order-row" data-ref="${escapeHtml(o.reference_id)}" ${batchId ? `data-batch="${escapeHtml(batchId)}"` : ''}>
                         <td><a href="#" class="order-ref-link" data-ref="${escapeHtml(o.reference_id)}">${escapeHtml(o.reference_id)}</a></td>
@@ -250,7 +240,6 @@
                     </tr>
                 `;
             }
-
             function renderBatch(batch, idx) {
                 const orders = batch.orders || [];
                 const pickupTime = batch.pickup_time ? batch.pickup_time : '—';
@@ -262,9 +251,32 @@
                 const capacity = typeof batch.capacity !== 'undefined' ? batch.capacity : null;
                 const isFull = batch.is_full === true || batch.is_full === '1' || batch.is_full === 1;
                 const isCompleted = batch.is_completed === true || batch.is_completed === '1' || batch.is_completed === 1;
-
                 const tableRows = orders.length ? orders.map(o => renderOrderRow(o, batch.batch_status, batch.batch_id)).join('') : `<tr><td colspan="8" class="text-center text-muted">No orders in this batch</td></tr>`;
-
+                // Determine batch status more strictly
+                const isDelivered = batch.delivery_status === 'Delivered' || batch.delivery_status === 'Completed';
+                const isPickupCompleted = batch.pickup_status === 'Completed' || batch.pickup_status === 'Picked Up';
+                const isDeliveryInProgress = batch.delivery_status === 'In Progress' || batch.delivery_status === 'Dispatched';
+                // Show buttons based on current status
+                let buttonsHtml = '';
+                if (isDelivered) {
+                    buttonsHtml = '<div class="text-muted small">Completed</div>';
+                } else if (isDeliveryInProgress) {
+                    buttonsHtml = `
+                        <button class="btn btn-sm btn-dark action-btn" data-action="complete_delivery"
+                            onclick="performBatchAction('${escapeHtml(batch.batch_id)}', 'complete_delivery', this)">Complete Delivery</button>
+                    `;
+                } else if (isPickupCompleted) {
+                    buttonsHtml = `
+                        <button class="btn btn-sm btn-warning action-btn" data-action="start_delivery"
+                            onclick="performBatchAction('${escapeHtml(batch.batch_id)}', 'start_delivery', this)">Start Delivery</button>
+                    `;
+                } else {
+                    buttonsHtml = `
+                        <button class="btn btn-sm btn-primary action-btn" data-action="start_pickup"
+                            onclick="performBatchAction('${escapeHtml(batch.batch_id)}', 'start_pickup', this)">Start Pickup</button>
+                    `;
+                }
+                // Modified batch card header with sequential buttons
                 return `
                     <div class="metric-card mb-3" data-batch-id="${escapeHtml(batch.batch_id)}">
                         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -272,14 +284,9 @@
                                 <strong>${escapeHtml(header)}</strong>
                                 <div class="text-muted small">Pickup: <span class="pickup-time">${escapeHtml(pickupTime)}</span> &nbsp;|&nbsp; Delivery: <span class="delivery-time">${escapeHtml(deliveryTime)}</span></div>
                                 <div class="text-muted small">Pickup status: <span class="pickup-status">${escapeHtml(pickupStatus)}</span> &nbsp;|&nbsp; Delivery status: <span class="delivery-status">${escapeHtml(deliveryStatus)}</span></div>
-                                ${isCompleted ? `<div style="margin-top:6px;"><span class="badge bg-secondary rounded-pill" title="Batch completed">Completed</span></div>` : (isFull ? `<div style="margin-top:6px;"><span class="badge bg-success rounded-pill" title="Ready for pickup/delivery">Full (${escapeHtml(String(totalQty || 0))}/${escapeHtml(String(capacity || 'N/A'))}) — Ready</span></div>` : '')}
                             </div>
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-outline-secondary btn-sm" data-toggle="collapse" data-target="#batchBody${idx}" aria-expanded="false">Toggle</button>
-                                <button class="btn btn-sm btn-primary" onclick="performBatchAction(${escapeHtml(batch.batch_id)}, 'start_pickup', this)">Start Pickup</button>
-                                <button class="btn btn-sm btn-success" onclick="performBatchAction(${escapeHtml(batch.batch_id)}, 'complete_pickup', this)">Complete Pickup</button>
-                                <button class="btn btn-sm btn-warning" onclick="performBatchAction(${escapeHtml(batch.batch_id)}, 'start_delivery', this)">Start Delivery</button>
-                                <button class="btn btn-sm btn-dark" onclick="performBatchAction(${escapeHtml(batch.batch_id)}, 'complete_delivery', this)">Complete Delivery</button>
+                            <div class="d-flex gap-2 batch-actions" data-batch-id="${escapeHtml(batch.batch_id)}">
+                                ${buttonsHtml}
                             </div>
                         </div>
                         <div id="batchBody${idx}" class="collapse show">
@@ -304,7 +311,6 @@
                     </div>
                 `;
             }
-
             function renderUnassigned(list) {
                 if (!list.length) {
                     unassignedContainer.innerHTML = '';
@@ -334,13 +340,11 @@
                     </div>
                 `;
             }
-
             // Initial fetch
             function loadData() {
                 const apiUrl = getApiUrl();
                 batchesContainer.innerHTML = '<p class="text-muted">Loading batches and orders…</p>';
                 unassignedContainer.innerHTML = '';
-
                 fetch(apiUrl, { credentials: 'same-origin' })
                 .then(r => r.json())
                 .then(res => {
@@ -348,16 +352,13 @@
                     const data = res.data || {};
                     const batches = data.batches || [];
                     const unassigned = data.unassigned || [];
-
                     if (!batches.length && !unassigned.length) {
                         batchesContainer.innerHTML = '<p class="text-muted orders-empty">No batches or orders found for today.</p>';
                         return;
                     }
-
                     // Group batches by vehicle type so Car and Tricycle batches render in separate sections
                     const tricycleBatches = batches.filter(b => (b.vehicle_type || '').toLowerCase() === 'tricycle');
                     const carBatches = batches.filter(b => (b.vehicle_type || '').toLowerCase() === 'car');
-
                     const isCompleted = (b) => {
                         // Treat batch as completed when its delivery_status indicates 'Delivered' or batch_status contains 'completed'
                         const ds = (b.delivery_status || '') + '';
@@ -366,13 +367,11 @@
                         if (bs.toLowerCase().indexOf('completed') !== -1) return true;
                         return false;
                     };
-
                     // Split active vs completed
                     const activeTricycle = tricycleBatches.filter(b => !isCompleted(b));
                     const completedTricycle = tricycleBatches.filter(b => isCompleted(b));
                     const activeCar = carBatches.filter(b => !isCompleted(b));
                     const completedCar = carBatches.filter(b => isCompleted(b));
-
                     // Compute aggregates per vehicle type (active only)
                     const sumQuantity = (arr) => arr.reduce((s, x) => s + (Number(x.total_quantity) || 0), 0);
                     const sumCapacity = (arr) => arr.reduce((s, x) => s + (Number(x.capacity) || 0), 0);
@@ -380,7 +379,6 @@
                     const tricycleTotalCapacity = sumCapacity(activeTricycle) || (activeTricycle.length ? activeTricycle.length * 5 : 0);
                     const carTotalAssigned = sumQuantity(activeCar);
                     const carTotalCapacity = sumCapacity(activeCar) || (activeCar.length ? activeCar.length * 10 : 0);
-
                     // Build tabbed controls for filtering (include Completed tab)
                     let out = '';
                     out += `<div class="mb-3">
@@ -391,7 +389,6 @@
                             <li class="nav-item"><button class="nav-link vehicle-tab-btn" data-target="completed" type="button">Completed</button></li>
                         </ul>
                     </div>`;
-
                     // Active sections
                     if (activeTricycle.length) {
                         out += '<section class="vehicle-section mb-3" data-vehicle="tricycle">';
@@ -405,7 +402,6 @@
                         out += `<div class="batches-grid">${activeCar.map((b, i) => renderBatch(b, 'car-' + i)).join('')}</div>`;
                         out += '</section>';
                     }
-
                     // Completed sections: render separate vehicle-type completed groups (Tricycle and Car)
                     if (completedTricycle.length) {
                         out += '<section class="vehicle-section mb-3 completed-section" data-vehicle="tricycle">';
@@ -419,12 +415,9 @@
                         out += `<div class="batches-grid">${completedCar.map((b, i) => renderBatch(b, 'completed-car-' + i)).join('')}</div>`;
                         out += '</section>';
                     }
-
                     // If no batches for either active types or completed groups, render a fallback empty message
                     if (!activeTricycle.length && !activeCar.length && !completedTricycle.length && !completedCar.length) out += '<p class="text-muted orders-empty">No batches or orders found for today.</p>';
-
                     batchesContainer.innerHTML = out;
-
                     // Wire up vehicle tab buttons
                     document.querySelectorAll('.vehicle-tab-btn').forEach(btn => {
                         btn.addEventListener('click', function() {
@@ -449,7 +442,6 @@
                         });
                     });
                     renderUnassigned(unassigned);
-
                     // Wire up simple collapse toggles (Bootstrap's JS should already be loaded by the parent page)
                     // Wire up collapse toggles for batch cards
                     document.querySelectorAll('[data-toggle="collapse"]').forEach(btn => {
@@ -462,18 +454,17 @@
                             btn.classList.toggle('active');
                         });
                     });
-
                     // Wire up entire row click to open modal (including the link)
                     document.querySelectorAll('tr.order-row').forEach(row => {
                         row.addEventListener('click', function(e) {
                             // Don't trigger if clicking on a button (but allow links)
                             if (e.target.tagName === 'BUTTON') return;
-                            
+                           
                             // Prevent default for links
                             if (e.target.tagName === 'A') {
                                 e.preventDefault();
                             }
-                            
+                           
                             const ref = this.getAttribute('data-ref');
                             const ord = ordersMap[ref];
                             if (ord) showOrderModal(ord);
@@ -485,14 +476,19 @@
                     batchesContainer.innerHTML = '<p class="text-danger">Error loading orders. Check the API or session.</p>';
                 });
             }
-
             // initial call
             loadData();
-
             // Perform batch action: start/complete pickup/delivery
             window.performBatchAction = function(batchId, action, btn) {
-                if (!confirm('Confirm action "' + action + '" for batch ' + batchId + '?')) return;
+                const actionMessages = {
+                    start_pickup: "Start pickup for this batch?",
+                    complete_pickup: "Mark pickup as completed for this batch?",
+                    start_delivery: "Start delivery for this batch?",
+                    complete_delivery: "Mark delivery as completed for this batch?"
+                };
+                if (!confirm(actionMessages[action] || 'Confirm action?')) return;
                 if (btn) btn.disabled = true;
+               
                 fetch('/WRSOMS/api/admin/batch_action.php', {
                     method: 'POST',
                     credentials: 'same-origin',
@@ -502,58 +498,98 @@
                 .then(r => r.json())
                 .then(res => {
                     if (!res.success) throw new Error(res.message || 'Action failed');
-                    // Try to update status cells in-place if API returned batch status info
-                    const data = res.data || {};
-                    const updatedBatchId = data.batch_id || (data.batch && data.batch.batch_id) || null;
-                    const updatedBatchStatus = data.batch_status || (data.batch && data.batch.batch_status) || null;
-                    const pickupStatus = data.pickup_status || null;
-                    const deliveryStatus = data.delivery_status || null;
-                    if (updatedBatchId) {
-                        // update batch header pickup/delivery statuses if present
-                        const card = document.querySelector(`.metric-card[data-batch-id="${updatedBatchId}"]`);
-                        if (card) {
-                            if (pickupStatus !== null) {
-                                const el = card.querySelector('.pickup-status');
-                                if (el) el.textContent = pickupStatus;
+                   
+                    const card = document.querySelector(`.metric-card[data-batch-id="${batchId}"]`);
+                    if (card) {
+                        const pickupStatusEl = card.querySelector('.pickup-status');
+                        const deliveryStatusEl = card.querySelector('.delivery-status');
+                        const pickupTimeEl = card.querySelector('.pickup-time');
+                        const deliveryTimeEl = card.querySelector('.delivery-time');
+                        const actionsDiv = card.querySelector('.batch-actions');
+                        // Update status and buttons based on action
+                        switch(action) {
+                            case 'start_pickup':
+                                if (pickupStatusEl) pickupStatusEl.textContent = 'In Progress';
+                                if (actionsDiv) {
+                                    actionsDiv.innerHTML = `
+                                        <button class="btn btn-sm btn-success action-btn" data-action="complete_pickup"
+                                            onclick="performBatchAction('${batchId}', 'complete_pickup', this)">Complete Pickup</button>
+                                    `;
+                                }
+                                break;
+                               
+                            case 'complete_pickup':
+                                if (pickupStatusEl) pickupStatusEl.textContent = 'Completed';
+                                if (pickupTimeEl) pickupTimeEl.textContent = new Date().toLocaleString();
+                                if (actionsDiv) {
+                                    actionsDiv.innerHTML = `
+                                        <button class="btn btn-sm btn-warning action-btn" data-action="start_delivery"
+                                            onclick="performBatchAction('${batchId}', 'start_delivery', this)">Start Delivery</button>
+                                    `;
+                                }
+                                break;
+                               
+                            case 'start_delivery':
+                                if (deliveryStatusEl) deliveryStatusEl.textContent = 'In Progress';
+                                if (actionsDiv) {
+                                    actionsDiv.innerHTML = `
+                                        <button class="btn btn-sm btn-dark action-btn" data-action="complete_delivery"
+                                            onclick="performBatchAction('${batchId}', 'complete_delivery', this)">Complete Delivery</button>
+                                    `;
+                                }
+                                break;
+                               
+                            case 'complete_delivery':
+                                if (deliveryStatusEl) deliveryStatusEl.textContent = 'Delivered';
+                                if (deliveryTimeEl) deliveryTimeEl.textContent = new Date().toLocaleString();
+                                if (actionsDiv) {
+                                    actionsDiv.innerHTML = '<div class="text-muted small">Completed</div>';
+                                }
+                                break;
+                        }
+                        // Update all order statuses within the batch
+                        const orderRows = card.querySelectorAll('tr.order-row');
+                        orderRows.forEach(row => {
+                            const statusCell = row.querySelector('.status');
+                            if (statusCell) {
+                                switch(action) {
+                                    case 'start_pickup':
+                                        statusCell.textContent = 'Pickup In Progress';
+                                        break;
+                                    case 'complete_pickup':
+                                        statusCell.textContent = 'Pickup Completed';
+                                        break;
+                                    case 'start_delivery':
+                                        statusCell.textContent = 'Out for Delivery';
+                                        break;
+                                    case 'complete_delivery':
+                                        statusCell.textContent = 'Delivered';
+                                        break;
+                                }
                             }
-                            if (deliveryStatus !== null) {
-                                const el2 = card.querySelector('.delivery-status');
-                                if (el2) el2.textContent = deliveryStatus;
-                            }
-                        }
-
-                        // Only update per-order status cells when the delivery lifecycle changes (start/complete delivery)
-                        if (action && action.indexOf('delivery') !== -1 && deliveryStatus) {
-                            document.querySelectorAll(`tr.order-row[data-batch="${updatedBatchId}"]`).forEach(r => {
-                                const el = r.querySelector('.status');
-                                if (el) el.textContent = deliveryStatus;
-                            });
-                        }
-
-                        // If the action completed the delivery, reload full data so completed batch moves to Completed tab
-                        if (action === 'complete_delivery') {
-                            loadData();
-                            alert('Success: ' + (res.message || 'Action completed'));
-                        } else {
-                            alert('Success: ' + (res.message || 'Action completed'));
-                        }
-                    } else {
-                        // fallback to full reload
-                        alert('Success: ' + (res.message || 'Action completed'));
-                        loadData();
+                        });
+                        // Show success message
+                        const successMessages = {
+                            start_pickup: "Pickup started successfully",
+                            complete_pickup: "Pickup completed successfully",
+                            start_delivery: "Delivery started successfully",
+                            complete_delivery: "Delivery completed successfully"
+                        };
+                        alert(successMessages[action] || 'Action completed successfully');
                     }
                 })
                 .catch(err => {
                     console.error('Batch action error', err);
-                    alert('Error: ' + err.message);
+                    alert('Error: ' + (err.message || 'Failed to perform action'));
                 })
-                .finally(() => { if (btn) btn.disabled = false; });
+                .finally(() => {
+                    if (btn) btn.disabled = false;
+                });
             };
-
             // Modal builder & display
             function formatItemsHtml(items) {
                 if (!items || !items.length) return '<div style="text-align:center; padding:30px; color:#9ca3af; font-size:0.95rem;">No items in this order</div>';
-                
+               
                 return `<table style="width:100%; border-collapse:collapse;">
                     <thead>
                         <tr style="background:#f9fafb;">
@@ -577,18 +613,17 @@
                     `).join('')}</tbody>
                 </table>`;
             }
-
             function showOrderModal(o) {
                 // Render a receipt-style modal using the existing checkout/receipt layout
                 let backdrop = document.getElementById('wwOrderModalBackdrop');
-                
+               
                 // Determine status badge color
                 const status = o.delivery_status || o.order_status || 'Unknown';
                 let statusColor = '#6b7280';
                 if (status.toLowerCase().includes('delivered') || status.toLowerCase().includes('completed')) statusColor = '#10b981';
                 else if (status.toLowerCase().includes('pending')) statusColor = '#f59e0b';
                 else if (status.toLowerCase().includes('dispatched')) statusColor = '#3b82f6';
-                
+               
                 const receiptHtml = `
                     <div class="ww-modal" role="dialog" aria-modal="true" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); max-width:850px; width:92%; max-height:calc(100vh - 40px); overflow:hidden; display:flex; flex-direction:column; background:white; border-radius:16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);">
                         <!-- Header -->
@@ -604,7 +639,7 @@
                             </div>
                             <button class="close-btn" id="wwModalCloseBtn" style="font-size:2rem; width:40px; height:40px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:8px; line-height:1; background:#f3f4f6; color:#111827; box-shadow:none;">×</button>
                         </div>
-                        
+                       
                         <!-- Body -->
                         <div class="ww-modal-body" style="flex: 1; overflow-y:auto; padding:0 28px 20px 28px; background:white;">
                             <!-- Order Info Grid -->
@@ -624,7 +659,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+                           
                             <!-- Customer & Address in Single Row -->
                             <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
                                 <div style="background:#f9fafb; padding:18px; border-radius:10px; border:1px solid #e5e7eb;">
@@ -641,7 +676,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+                           
                             <!-- Order Items -->
                             <div style="background:#ffffff; border-radius:10px; border:1px solid #e5e7eb; overflow:hidden;">
                                 <div style="background:#111827; padding:14px 18px;">
@@ -650,23 +685,19 @@
                                 ${formatItemsHtml(o.items)}
                             </div>
                         </div>
-                        
+                       
                         <!-- Footer -->
                         <div class="ww-modal-footer" style="padding:18px 28px; display:flex; justify-content:space-between; align-items:center; border-top:2px solid #e5e7eb; background:white; border-radius:0 0 16px 16px;">
                             <div style="font-size:1.4rem; font-weight:800; color:#111827;">Total: <span style="color:#3b82f6;">₱${Number(o.total_amount||0).toFixed(2)}</span></div>
                             <button class="close-btn" id="wwModalCloseBtn2" style="padding:10px 24px; font-size:0.95rem;">Close</button>
                         </div>
                     </div>`;
-
                 if (!backdrop) {
                     backdrop = document.createElement('div');
                     backdrop.id = 'wwOrderModalBackdrop';
                     backdrop.className = 'ww-modal-backdrop';
                     backdrop.style.position = 'fixed';
                     backdrop.style.top = '0';
-                    backdrop.style.left = '0';
-                    backdrop.style.width = '100%';
-                    backdrop.style.height = '100%';
                     backdrop.style.zIndex = '2147483647';
                     backdrop.style.display = 'none';
                     backdrop.style.alignItems = 'center';
@@ -676,14 +707,12 @@
                     backdrop.style.background = 'rgba(0,0,0,0.45)';
                     backdrop.innerHTML = receiptHtml;
                     (document.documentElement || document.body).appendChild(backdrop);
-
                     backdrop.addEventListener('click', function(ev) {
                         if (ev.target === backdrop) backdrop.style.display = 'none';
                     });
                 } else {
                     backdrop.innerHTML = receiptHtml;
                 }
-
                 function show() {
                     backdrop.style.display = 'flex';
                     const c1 = document.getElementById('wwModalCloseBtn');
@@ -691,12 +720,8 @@
                     if (c1) c1.onclick = () => backdrop.style.display = 'none';
                     if (c2) c2.onclick = () => backdrop.style.display = 'none';
                 }
-
                 show();
             }
-
-            // Per-order actions removed: system uses batch-level lifecycle actions only
-
             // Search behavior (client-side filtering)
             document.getElementById('ordersSearchForm').addEventListener('submit', function(e) {
                 e.preventDefault();
@@ -708,7 +733,6 @@
                     document.getElementById('unassignedContainer').style.display = '';
                     return;
                 }
-
                 // find matching reference ids using ordersMap (populated during render)
                 const matches = new Set();
                 Object.keys(ordersMap).forEach(ref => {
@@ -726,13 +750,11 @@
                     ].filter(Boolean).join(' ').toLowerCase();
                     if (hay.indexOf(q) !== -1) matches.add(ref);
                 });
-
                 // Show/hide order rows based on matches
                 document.querySelectorAll('tr.order-row').forEach(r => {
                     const ref = r.getAttribute('data-ref');
                     if (matches.has(ref)) r.style.display = ''; else r.style.display = 'none';
                 });
-
                 // Hide batch cards with no visible orders
                 document.querySelectorAll('.metric-card').forEach(card => {
                     const rows = card.querySelectorAll('tr.order-row');
@@ -740,7 +762,6 @@
                     rows.forEach(rr => { if (rr.style.display !== 'none') anyVisible = true; });
                     card.style.display = anyVisible ? '' : 'none';
                 });
-
                 // Handle unassigned orders visibility
                 const ua = document.getElementById('unassignedContainer');
                 if (ua) {
