@@ -30,10 +30,15 @@ if (!$action || !$referenceId) {
 }
 
 try {
+    // ensure PDO throws exceptions
+    if ($pdo->getAttribute(PDO::ATTR_ERRMODE) !== PDO::ERRMODE_EXCEPTION) {
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    }
+
     $pdo->beginTransaction();
 
     // Verify order exists
-    $stmt = $pdo->prepare("SELECT reference_id, order_status_id, batch_id FROM orders WHERE reference_id = ? LIMIT 1");
+    $stmt = $pdo->prepare("SELECT reference_id, order_status_id, batch_id, customer_id FROM orders WHERE reference_id = ? LIMIT 1");
     $stmt->execute([$referenceId]);
     $order = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$order) throw new Exception('Order not found');
@@ -92,20 +97,69 @@ try {
         $targetRefs = $one ? [$one] : [];
     }
 
-    // Attach status_name via join for each updated row
+    // Attach status_name and account mapping for each updated row
     $updatedList = [];
+    $notifications_created = 0;
+    $notification_errors = [];
+
     if (count($targetRefs)) {
         $refs = array_map(function($r){ return $r['reference_id']; }, $targetRefs);
         // Prepare an IN clause safely
         $placeholders = implode(',', array_fill(0, count($refs), '?'));
-        $q = $pdo->prepare("SELECT o.reference_id, o.order_status_id, os.status_name AS order_status FROM orders o LEFT JOIN order_status os ON o.order_status_id = os.status_id WHERE o.reference_id IN ($placeholders)");
+        $q = $pdo->prepare("
+            SELECT 
+                o.reference_id, 
+                o.order_status_id, 
+                os.status_name AS order_status,
+                o.customer_id,
+                a.account_id
+            FROM orders o
+            LEFT JOIN order_status os ON o.order_status_id = os.status_id
+            LEFT JOIN customers c ON o.customer_id = c.customer_id
+            LEFT JOIN accounts a ON a.customer_id = c.customer_id
+            WHERE o.reference_id IN ($placeholders)
+        ");
         $q->execute($refs);
         $updatedList = $q->fetchAll(PDO::FETCH_ASSOC);
+
+        // Insert notifications for each updated order (for linked accounts)
+        if (!empty($updatedList)) {
+            $ins = $pdo->prepare("INSERT INTO notifications (user_id, message, reference_id, notification_type, is_read, created_at) VALUES (:user_id, :message, :reference_id, :type, 0, NOW())");
+            foreach ($updatedList as $row) {
+                $acct = isset($row['account_id']) ? (int)$row['account_id'] : null;
+                if ($acct && $acct > 0) {
+                    $statusName = $row['order_status'] ?? '';
+                    $msg = "Your order #{$row['reference_id']} has been {$statusName}";
+                    try {
+                        $ins->execute([
+                            ':user_id' => $acct,
+                            ':message' => $msg,
+                            ':reference_id' => $row['reference_id'],
+                            ':type' => 'order_status'
+                        ]);
+                        $notifications_created++;
+                    } catch (Exception $e) {
+                        $notification_errors[] = "ref {$row['reference_id']}: " . $e->getMessage();
+                        error_log("Notification insert failed for ref {$row['reference_id']}: " . $e->getMessage());
+                        // continue inserting others
+                    }
+                } else {
+                    // No linked account found; note for debugging
+                    $notification_errors[] = "ref {$row['reference_id']}: no linked account (account_id=null)";
+                }
+            }
+        }
     }
 
     $pdo->commit();
     ob_end_clean();
-    echo json_encode(['success' => true, 'message' => 'Order action performed', 'data' => ['updated' => $updatedList]]);
+    echo json_encode([
+        'success' => true,
+        'message' => 'Order action performed',
+        'data' => ['updated' => $updatedList],
+        'notifications_created' => $notifications_created,
+        'notification_errors' => $notification_errors
+    ]);
 } catch (Exception $e) {
     $pdo->rollBack();
     ob_end_clean();
@@ -114,3 +168,4 @@ try {
 }
 
 exit;
+?>
