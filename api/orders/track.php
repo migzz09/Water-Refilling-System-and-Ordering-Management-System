@@ -103,14 +103,14 @@ try {
             // Check delivery rows first (highest priority)
             foreach ($deliveries as $d) {
                 if (strtolower($d['delivery_type']) === 'delivery') {
-                    // status ids: 1=Pending,2=Dispatched,3=Delivered
+                    // status ids: 1=Pending, 2=In Progress, 3=Completed
                     if ((int)$d['delivery_status_id'] === 3) {
                         $userMessage = 'Your order has been delivered.';
                         break;
                     } elseif ((int)$d['delivery_status_id'] === 2) {
                         $userMessage = 'Your order is on the way.';
-                        // don't break yet; a delivered row (3) should still take precedence
-                        // but if no delivered row exists, this is the best available message
+                        // don't break yet; a completed row (3) should still take precedence
+                        // but if no completed row exists, this is the best available message
                     }
                 }
             }

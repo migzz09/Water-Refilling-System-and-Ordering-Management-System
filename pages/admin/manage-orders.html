@@ -38,33 +38,40 @@
         margin: 0 0 20px 0;
         list-style: none;
         border-bottom: none;
-        background: #ffffff;
+        background: #f9fafb;
         border-radius: 10px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     .nav-item {
         margin: 0;
     }
-    .vehicle-tab-btn {
-        background: white;
-        border: 2px solid #e5e7eb;
+    .nav-link.vehicle-tab-btn,
+    .vehicle-tab-btn,
+    button.vehicle-tab-btn {
+        background: #ffffff !important;
+        border: 2px solid #d1d5db !important;
         padding: 12px 24px;
         cursor: pointer;
         font-weight: 700;
-        color: #374151;
+        color: #111827 !important;
         border-radius: 6px;
         transition: all 0.2s ease;
         font-size: 0.95rem;
+        text-decoration: none;
     }
-    .vehicle-tab-btn:hover {
-        color: #1f2937;
-        background: #f9fafb;
-        border-color: #d1d5db;
+    .nav-link.vehicle-tab-btn:hover,
+    .vehicle-tab-btn:hover,
+    button.vehicle-tab-btn:hover {
+        color: #000000 !important;
+        background: #f3f4f6 !important;
+        border-color: #9ca3af !important;
     }
-    .vehicle-tab-btn.active {
-        color: #ffffff;
-        background: #3b82f6;
-        border-color: #3b82f6;
+    .nav-link.vehicle-tab-btn.active,
+    .vehicle-tab-btn.active,
+    button.vehicle-tab-btn.active {
+        color: #ffffff !important;
+        background: #3b82f6 !important;
+        border-color: #3b82f6 !important;
         box-shadow: 0 2px 4px rgba(59,130,246,0.4);
     }
    
@@ -198,7 +205,10 @@
                     <input id="ordersSearchInput" type="search" placeholder="Search reference, customer, address..." class="form-control" />
                     <button type="submit" class="btn btn-primary">Search</button>
                 </form>
-                <div class="text-end">
+                <div class="text-end d-flex gap-2 align-items-center">
+                    <button id="archiveCompletedBtn" class="btn btn-warning" title="Archive all completed orders">
+                        <i class="fa fa-archive"></i> Archive Completed
+                    </button>
                     <small class="text-muted">Manage today's batches and orders</small>
                 </div>
             </div>
@@ -244,33 +254,58 @@
                 const orders = batch.orders || [];
                 const pickupTime = batch.pickup_time ? batch.pickup_time : '—';
                 const deliveryTime = batch.delivery_time ? batch.delivery_time : '—';
-                const pickupStatus = batch.pickup_status || '—';
-                const deliveryStatus = batch.delivery_status || '—';
+                const pickupStatusDisplay = batch.pickup_status || '—';
+                const deliveryStatusDisplay = batch.delivery_status || '—';
+                
+                console.log(`[renderBatch] Batch ${batch.batch_id}:`, {
+                    pickup_status: batch.pickup_status,
+                    delivery_status: batch.delivery_status,
+                    batch_status: batch.batch_status
+                });
+                
                 const header = `Vehicle: ${escapeHtml(batch.vehicle_type)} — Batch #${escapeHtml(batch.batch_number)} — Orders: ${orders.length}`;
                 const totalQty = typeof batch.total_quantity !== 'undefined' ? batch.total_quantity : null;
                 const capacity = typeof batch.capacity !== 'undefined' ? batch.capacity : null;
                 const isFull = batch.is_full === true || batch.is_full === '1' || batch.is_full === 1;
                 const isCompleted = batch.is_completed === true || batch.is_completed === '1' || batch.is_completed === 1;
                 const tableRows = orders.length ? orders.map(o => renderOrderRow(o, batch.batch_status, batch.batch_id)).join('') : `<tr><td colspan="8" class="text-center text-muted">No orders in this batch</td></tr>`;
-                // Determine batch status more strictly
-                const isDelivered = batch.delivery_status === 'Delivered' || batch.delivery_status === 'Completed';
-                const isPickupCompleted = batch.pickup_status === 'Completed' || batch.pickup_status === 'Picked Up';
-                const isDeliveryInProgress = batch.delivery_status === 'In Progress' || batch.delivery_status === 'Dispatched';
-                // Show buttons based on current status
+                // Determine batch status more strictly - only show one button at a time in sequential order
+                const pickupStatus = (batch.pickup_status || '').toLowerCase();
+                const deliveryStatus = (batch.delivery_status || '').toLowerCase();
+                
+                console.log(`Batch ${batch.batch_id}: pickup="${pickupStatus}", delivery="${deliveryStatus}"`);
+                
+                // Show buttons based on current status - strictly sequential
+                // Database values: 1=Pending, 2=In Progress, 3=Completed, 4=Failed
                 let buttonsHtml = '';
-                if (isDelivered) {
-                    buttonsHtml = '<div class="text-muted small">Completed</div>';
-                } else if (isDeliveryInProgress) {
+                
+                // Step 4: Delivery completed (final state) - delivery is "completed"
+                if (deliveryStatus === 'completed') {
+                    buttonsHtml = '<div class="text-muted small" style="font-weight: 600; color: #10b981 !important;">✓ Completed</div>';
+                }
+                // Step 3: Delivery in progress - show complete delivery button
+                else if (deliveryStatus === 'in progress') {
                     buttonsHtml = `
                         <button class="btn btn-sm btn-dark action-btn" data-action="complete_delivery"
                             onclick="performBatchAction('${escapeHtml(batch.batch_id)}', 'complete_delivery', this)">Complete Delivery</button>
                     `;
-                } else if (isPickupCompleted) {
+                }
+                // Step 2: Pickup completed - show start delivery button
+                else if (pickupStatus === 'completed') {
                     buttonsHtml = `
                         <button class="btn btn-sm btn-warning action-btn" data-action="start_delivery"
                             onclick="performBatchAction('${escapeHtml(batch.batch_id)}', 'start_delivery', this)">Start Delivery</button>
                     `;
-                } else {
+                }
+                // Step 1.5: Pickup in progress - show complete pickup button
+                else if (pickupStatus === 'in progress') {
+                    buttonsHtml = `
+                        <button class="btn btn-sm btn-success action-btn" data-action="complete_pickup"
+                            onclick="performBatchAction('${escapeHtml(batch.batch_id)}', 'complete_pickup', this)">Complete Pickup</button>
+                    `;
+                }
+                // Step 1: Initial state (pickup pending or no status) - show start pickup button
+                else {
                     buttonsHtml = `
                         <button class="btn btn-sm btn-primary action-btn" data-action="start_pickup"
                             onclick="performBatchAction('${escapeHtml(batch.batch_id)}', 'start_pickup', this)">Start Pickup</button>
@@ -283,7 +318,7 @@
                             <div>
                                 <strong>${escapeHtml(header)}</strong>
                                 <div class="text-muted small">Pickup: <span class="pickup-time">${escapeHtml(pickupTime)}</span> &nbsp;|&nbsp; Delivery: <span class="delivery-time">${escapeHtml(deliveryTime)}</span></div>
-                                <div class="text-muted small">Pickup status: <span class="pickup-status">${escapeHtml(pickupStatus)}</span> &nbsp;|&nbsp; Delivery status: <span class="delivery-status">${escapeHtml(deliveryStatus)}</span></div>
+                                <div class="text-muted small">Pickup status: <span class="pickup-status">${escapeHtml(pickupStatusDisplay)}</span> &nbsp;|&nbsp; Delivery status: <span class="delivery-status">${escapeHtml(deliveryStatusDisplay)}</span></div>
                             </div>
                             <div class="d-flex gap-2 batch-actions" data-batch-id="${escapeHtml(batch.batch_id)}">
                                 ${buttonsHtml}
@@ -383,10 +418,10 @@
                     let out = '';
                     out += `<div class="mb-3">
                         <ul class="nav nav-tabs" role="tablist" id="vehicleTabs">
-                            <li class="nav-item"><button class="nav-link active vehicle-tab-btn" data-target="all" type="button">All</button></li>
-                            <li class="nav-item"><button class="nav-link vehicle-tab-btn" data-target="tricycle" type="button">Tricycle</button></li>
-                            <li class="nav-item"><button class="nav-link vehicle-tab-btn" data-target="car" type="button">Car</button></li>
-                            <li class="nav-item"><button class="nav-link vehicle-tab-btn" data-target="completed" type="button">Completed</button></li>
+                            <li class="nav-item"><button class="nav-link active vehicle-tab-btn" data-target="all" type="button" style="color: #111827 !important; background: #ffffff !important;">All</button></li>
+                            <li class="nav-item"><button class="nav-link vehicle-tab-btn" data-target="tricycle" type="button" style="color: #111827 !important; background: #ffffff !important;">Tricycle</button></li>
+                            <li class="nav-item"><button class="nav-link vehicle-tab-btn" data-target="car" type="button" style="color: #111827 !important; background: #ffffff !important;">Car</button></li>
+                            <li class="nav-item"><button class="nav-link vehicle-tab-btn" data-target="completed" type="button" style="color: #111827 !important; background: #ffffff !important;">Completed</button></li>
                         </ul>
                     </div>`;
                     // Active sections
@@ -418,25 +453,56 @@
                     // If no batches for either active types or completed groups, render a fallback empty message
                     if (!activeTricycle.length && !activeCar.length && !completedTricycle.length && !completedCar.length) out += '<p class="text-muted orders-empty">No batches or orders found for today.</p>';
                     batchesContainer.innerHTML = out;
-                    // Wire up vehicle tab buttons
+                    // Wire up vehicle tab buttons with proper filtering
                     document.querySelectorAll('.vehicle-tab-btn').forEach(btn => {
                         btn.addEventListener('click', function() {
-                            // toggle active class
-                            document.querySelectorAll('#vehicleTabs .nav-link').forEach(n => n.classList.remove('active'));
+                            console.log('Tab clicked:', this.getAttribute('data-target'));
+                            
+                            // Remove active class from all tabs and reset to inactive colors
+                            document.querySelectorAll('.vehicle-tab-btn').forEach(n => {
+                                n.classList.remove('active');
+                                n.style.color = '#111827';
+                                n.style.background = '#ffffff';
+                                n.style.borderColor = '#d1d5db';
+                            });
+                            
+                            // Set active tab with blue background and white text
                             this.classList.add('active');
+                            this.style.color = '#ffffff';
+                            this.style.background = '#3b82f6';
+                            this.style.borderColor = '#3b82f6';
+                            
                             const target = this.getAttribute('data-target');
+                            
                             if (target === 'all') {
+                                // Show all active sections (hide completed)
                                 document.querySelectorAll('.vehicle-section').forEach(s => {
-                                    // show only active sections (hide completed)
-                                    if (s.classList.contains('completed-section')) s.style.display = 'none'; else s.style.display = 'block';
+                                    if (s.classList.contains('completed-section')) {
+                                        s.style.display = 'none';
+                                    } else {
+                                        s.style.display = 'block';
+                                    }
                                 });
                             } else if (target === 'completed') {
+                                // Show only completed sections (hide active)
                                 document.querySelectorAll('.vehicle-section').forEach(s => {
-                                    if (s.classList.contains('completed-section')) s.style.display = 'block'; else s.style.display = 'none';
+                                    if (s.classList.contains('completed-section')) {
+                                        s.style.display = 'block';
+                                    } else {
+                                        s.style.display = 'none';
+                                    }
                                 });
                             } else {
+                                // Show only the selected vehicle type (tricycle or car), hide completed
                                 document.querySelectorAll('.vehicle-section').forEach(s => {
-                                    if (s.getAttribute('data-vehicle') === target && !s.classList.contains('completed-section')) s.style.display = 'block'; else s.style.display = 'none';
+                                    const vehicleType = s.getAttribute('data-vehicle');
+                                    const isCompleted = s.classList.contains('completed-section');
+                                    
+                                    if (vehicleType === target && !isCompleted) {
+                                        s.style.display = 'block';
+                                    } else {
+                                        s.style.display = 'none';
+                                    }
                                 });
                             }
                         });
@@ -771,6 +837,46 @@
                     ua.style.display = anyVisible ? '' : 'none';
                 }
             });
+            
+            // Archive completed orders button
+            const archiveBtn = document.getElementById('archiveCompletedBtn');
+            if (archiveBtn) {
+                archiveBtn.addEventListener('click', function() {
+                    if (!confirm('Archive all completed orders for today?\n\nThis will move completed orders to the archive table and clear them from the active list.\n\nYou can still view them in reports and order history.')) {
+                        return;
+                    }
+                    
+                    archiveBtn.disabled = true;
+                    archiveBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Archiving...';
+                    
+                    const formData = new FormData();
+                    formData.append('archive_type', 'manual');
+                    formData.append('date_filter', new Date().toISOString().split('T')[0]);
+                    
+                    fetch('/WRSOMS/api/admin/archive_completed.php', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        body: formData
+                    })
+                    .then(r => r.json())
+                    .then(res => {
+                        if (!res.success) throw new Error(res.message || 'Archive failed');
+                        
+                        alert(`✅ ${res.message}\n\n${res.data.orders_archived} orders archived successfully!`);
+                        
+                        // Reload the page to show updated data
+                        loadData();
+                    })
+                    .catch(err => {
+                        console.error('Archive error:', err);
+                        alert('❌ Error: ' + (err.message || 'Failed to archive orders'));
+                    })
+                    .finally(() => {
+                        archiveBtn.disabled = false;
+                        archiveBtn.innerHTML = '<i class="fa fa-archive"></i> Archive Completed';
+                    });
+                });
+            }
         })();
     </script>
 </body>

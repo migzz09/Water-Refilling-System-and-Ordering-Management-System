@@ -21,6 +21,3 @@ ALTER TABLE `orders` ADD CONSTRAINT IF NOT EXISTS `orders_ibfk_checkout` FOREIGN
 
 COMMIT;
 
--- Note:
--- 1) After adding this, update your order creation logic (`api/orders/create.php`) to create a checkout row and set orders.checkout_id when multiple items are placed in one cart.
--- 2) You may need to backfill checkouts for existing grouped orders depending on how your app stores cart/transaction state.

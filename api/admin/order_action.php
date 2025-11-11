@@ -65,10 +65,10 @@ try {
             // Update all orders in the same checkout
             // Map action to order_status_id
             switch ($action) {
-                case 'start_pickup': $newStatus = 2; break; // Dispatched
+                case 'start_pickup': $newStatus = 2; break; // In Progress
                 case 'complete_pickup': $newStatus = 2; break;
                 case 'start_delivery': $newStatus = 2; break;
-                case 'complete_delivery': $newStatus = 3; break; // Delivered
+                case 'complete_delivery': $newStatus = 3; break; // Completed
                 default: throw new Exception('Unknown action');
             }
             $u = $pdo->prepare("UPDATE orders SET order_status_id = ? WHERE checkout_id = ?");

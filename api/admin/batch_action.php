@@ -58,27 +58,27 @@ try {
 
     switch ($action) {
         case 'start_pickup':
-            // mark pickup rows as Dispatched (2)
+            // mark pickup rows as In Progress (2)
             $updateDelivery('pickup', 2, false);
-            // set batch status to Dispatched (2)
+            // set batch status to In Progress (2)
             $pdo->prepare("UPDATE batches SET batch_status_id = 2 WHERE batch_id = ?")->execute([$batchId]);
             break;
         case 'complete_pickup':
-            // mark pickup as Delivered (3) and set actual_time
+            // mark pickup as Completed (3) and set actual_time
             $updateDelivery('pickup', 3, true);
             break;
         case 'start_delivery':
-            // mark delivery rows as Dispatched (2)
+            // mark delivery rows as In Progress (2)
             $updateDelivery('delivery', 2, false);
-            // update orders to Dispatched
+            // update orders to In Progress
             $updateOrdersStatus(2);
-            // set batch status to Dispatched
+            // set batch status to In Progress
             $pdo->prepare("UPDATE batches SET batch_status_id = 2 WHERE batch_id = ?")->execute([$batchId]);
             break;
         case 'complete_delivery':
-            // mark delivery as Delivered (3) and set actual_time
+            // mark delivery as Completed (3) and set actual_time
             $updateDelivery('delivery', 3, true);
-            // update orders to Delivered
+            // update orders to Completed
             $updateOrdersStatus(3);
             // set batch status to Completed (3)
             $pdo->prepare("UPDATE batches SET batch_status_id = 3 WHERE batch_id = ?")->execute([$batchId]);

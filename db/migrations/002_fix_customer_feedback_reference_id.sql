@@ -1,7 +1,3 @@
--- Migration: Fix customer_feedback table to allow general feedback without order reference
--- Date: 2025-11-03
--- Description: Drop foreign key constraint and allow reference_id to be NULL for general feedback
-
 -- Drop the foreign key constraint
 ALTER TABLE `customer_feedback` 
 DROP FOREIGN KEY `customer_feedback_ibfk_1`;

@@ -54,7 +54,7 @@ try {
     $recent_orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Batch overview - show batches with today's PENDING orders only
-    // Exclude completed/delivered orders
+    // Exclude completed orders
     $stmt = $pdo->prepare("
         SELECT 
             b.vehicle_type, 
@@ -84,7 +84,7 @@ try {
     }
     
     // Get count of unassigned PENDING orders for today (orders without batch or batch = 0)
-    // Exclude completed orders (status_id 3 = Delivered)
+    // Exclude completed orders (status_id 3 = Completed)
     $stmt = $pdo->prepare("
         SELECT COUNT(*) as unassigned_count
         FROM orders
@@ -115,26 +115,90 @@ try {
     error_log("Unassigned orders count: " . $unassigned_orders);
     error_log("Today's orders debug: " . json_encode($todays_orders_debug));
 
-    // Order history (all time, latest 20)
+    // Order history (all time, latest 20 from active orders)
     $stmt = $pdo->prepare("
         SELECT 
             o.reference_id, 
             o.order_date, 
+            o.delivery_date,
             o.total_amount, 
             os.status_name as order_status,
             c.first_name,
             c.last_name,
+            c.customer_contact,
             b.vehicle_type,
-            b.batch_number
+            b.batch_number,
+            pm.method_name as payment_method,
+            ps.status_name as payment_status,
+            'active' as source
         FROM orders o
         LEFT JOIN order_status os ON o.order_status_id = os.status_id
         LEFT JOIN customers c ON o.customer_id = c.customer_id
         LEFT JOIN batches b ON o.batch_id = b.batch_id
+        LEFT JOIN payments p ON o.reference_id = p.reference_id
+        LEFT JOIN payment_methods pm ON p.payment_method_id = pm.payment_method_id
+        LEFT JOIN payment_status ps ON p.payment_status_id = ps.payment_status_id
         ORDER BY o.order_date DESC
         LIMIT 20
     ");
     $stmt->execute();
     $order_history = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Add archived orders to order history
+    $stmt_archived = $pdo->prepare("
+        SELECT 
+            reference_id,
+            order_data,
+            delivery_date,
+            total_amount,
+            archived_at
+        FROM archived_orders
+        ORDER BY archived_at DESC
+        LIMIT 20
+    ");
+    $stmt_archived->execute();
+    $archived_orders = $stmt_archived->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Parse archived orders and add to order_history
+    foreach ($archived_orders as $archived) {
+        $order_data = json_decode($archived['order_data'], true);
+        if ($order_data) {
+            // Extract batch info from JSON
+            $batch_info = $order_data['batch'] ?? null;
+            $vehicle_type = $batch_info['vehicle_type'] ?? null;
+            $batch_number = $batch_info['batch_number'] ?? null;
+            
+            // Extract customer info
+            $customer_name = $order_data['customer']['name'] ?? 'N/A N/A';
+            $name_parts = explode(' ', $customer_name);
+            $first_name = $name_parts[0] ?? '';
+            $last_name = isset($name_parts[1]) ? implode(' ', array_slice($name_parts, 1)) : '';
+            
+            $order_history[] = [
+                'reference_id' => $archived['reference_id'],
+                'order_date' => $order_data['order_date'] ?? $archived['archived_at'],
+                'delivery_date' => $archived['delivery_date'],
+                'total_amount' => $archived['total_amount'],
+                'order_status' => 'Archived',
+                'first_name' => $first_name,
+                'last_name' => $last_name,
+                'customer_contact' => $order_data['customer']['contact'] ?? 'N/A',
+                'vehicle_type' => $vehicle_type,
+                'batch_number' => $batch_number,
+                'payment_method' => $order_data['payment_method'] ?? 'N/A',
+                'payment_status' => $order_data['order_status'] ?? 'N/A',
+                'source' => 'archived'
+            ];
+        }
+    }
+    
+    // Sort combined order history by date descending
+    usort($order_history, function($a, $b) {
+        return strtotime($b['order_date']) - strtotime($a['order_date']);
+    });
+    
+    // Limit to 40 total (20 active + 20 archived mixed)
+    $order_history = array_slice($order_history, 0, 40);
 
     // Clear any accidental output and respond with clean JSON
     ob_end_clean();

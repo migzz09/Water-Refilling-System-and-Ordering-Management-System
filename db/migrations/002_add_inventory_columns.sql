@@ -1,6 +1,3 @@
--- Migration: Add inventory management columns
--- Date: 2025-11-03
--- Description: Add size and stock_quantity columns to containers table for inventory management
 
 -- Add size column to containers table
 ALTER TABLE `containers` 

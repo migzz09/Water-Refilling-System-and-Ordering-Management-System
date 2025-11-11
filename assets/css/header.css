@@ -9,11 +9,15 @@
   font-size: 1.5rem !important;
   font-weight: 600 !important;
   color: var(--primary-blue-dark) !important;
+  flex-shrink: 0;
+  min-width: 180px;
+  white-space: nowrap;
 }
 
 .nav-logo {
   height: 48px !important;
   width: auto !important;
+  flex-shrink: 0;
 }
 
 .brand-name {
@@ -46,7 +50,16 @@
 
 /* Slight adjustments for small screens */
 @media (max-width: 768px) {
-  .nav-brand { font-size: 1.25rem !important; }
-  .nav-logo { height: 40px !important; }
-  .profile-btn span { display: none !important; }
+  .nav-brand { 
+    font-size: 1.25rem !important;
+    min-width: 160px;
+  }
+  
+  .nav-logo {
+    height: 40px !important;
+  }
+  
+  .profile-btn span { 
+    display: none !important; 
+  }
 }

@@ -209,13 +209,62 @@
                     </header>
                     <section class="quick-actions" aria-label="Quick actions">
                         <button type="button" onclick="loadOrderHistoryData()" aria-label="Refresh order history">Refresh Data</button>
+                        <button type="button" onclick="exportOrderHistoryCSV()" style="background: #10b981;">Export CSV</button>
                     </section>
-                    <section class="metric-card" role="region" aria-label="Order History">
-                        <h3>Complete Order History</h3>
-                        <div style="margin-bottom: 12px;">
-                            <input type="text" id="searchInput" placeholder="Search by Order ID, Customer Name..." 
-                                   style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; width: 100%; max-width: 400px;">
+                    
+                    <!-- Filters Section -->
+                    <section class="metric-card" role="region" aria-label="Filters" style="margin-bottom: 20px;">
+                        <h3>Filters</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 5px;">Search Order/Customer</label>
+                                <input type="text" id="searchInput" placeholder="Order ID or Customer..." 
+                                       style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; width: 100%;">
+                            </div>
+                            
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 5px;">Batch</label>
+                                <select id="filterBatch" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; width: 100%;">
+                                    <option value="">All Batches</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 5px;">Status</label>
+                                <select id="filterStatus" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; width: 100%;">
+                                    <option value="">All Statuses</option>
+                                    <option value="active">Active Only</option>
+                                    <option value="archived">Archived Only</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 5px;">From Date</label>
+                                <input type="date" id="filterDateFrom" 
+                                       style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; width: 100%;">
+                            </div>
+                            
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 5px;">To Date</label>
+                                <input type="date" id="filterDateTo" 
+                                       style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; width: 100%;">
+                            </div>
+                            
+                            <div style="display: flex; align-items: flex-end; gap: 10px;">
+                                <button type="button" onclick="applyOrderHistoryFilters()" 
+                                        style="padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                                    Apply Filters
+                                </button>
+                                <button type="button" onclick="resetOrderHistoryFilters()" 
+                                        style="padding: 8px 16px; background: #64748b; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                                    Reset
+                                </button>
+                            </div>
                         </div>
+                    </section>
+                    
+                    <section class="metric-card" role="region" aria-label="Order History">
+                        <h3>Complete Order History (<span id="orderHistoryCount">0</span> orders)</h3>
                         <div style="overflow-x: auto;">
                             <table class="order-history-table" aria-describedby="order-history-table-desc">
                                 <caption id="order-history-table-desc" class="sr-only">Complete order history with customer details</caption>
@@ -244,11 +293,11 @@
             // Load order history data
             loadOrderHistoryData();
             
-            // Add search functionality
+            // Add real-time search functionality
             setTimeout(() => {
                 const searchInput = document.getElementById('searchInput');
                 if (searchInput) {
-                    searchInput.addEventListener('input', filterOrderHistory);
+                    searchInput.addEventListener('input', applyOrderHistoryFilters);
                 }
             }, 100);
         }
@@ -260,6 +309,10 @@
                     if (!res.success) throw new Error(res.message || 'Failed to load');
                     const data = res.data || {};
                     cachedOrderHistory = data.order_history || [];
+                    
+                    // Populate batch filter dropdown
+                    populateBatchFilter(cachedOrderHistory);
+                    
                     renderOrderHistory(cachedOrderHistory);
                 })
                 .catch(err => {
@@ -270,10 +323,173 @@
                     }
                 });
         }
+        
+        function populateBatchFilter(orders) {
+            const batchFilter = document.getElementById('filterBatch');
+            if (!batchFilter) return;
+            
+            // Get unique batches
+            const batches = new Set();
+            orders.forEach(o => {
+                if (o.vehicle_type && o.batch_number) {
+                    batches.add(`${o.vehicle_type} #${o.batch_number}`);
+                }
+            });
+            
+            // Clear and repopulate
+            batchFilter.innerHTML = '<option value="">All Batches</option>';
+            Array.from(batches).sort().forEach(batch => {
+                const option = document.createElement('option');
+                option.value = batch;
+                option.textContent = batch;
+                batchFilter.appendChild(option);
+            });
+        }
+        
+        function applyOrderHistoryFilters() {
+            if (!cachedOrderHistory) return;
+            
+            const searchTerm = document.getElementById('searchInput')?.value.toLowerCase().trim() || '';
+            const batchFilter = document.getElementById('filterBatch')?.value || '';
+            const statusFilter = document.getElementById('filterStatus')?.value || '';
+            const dateFrom = document.getElementById('filterDateFrom')?.value || '';
+            const dateTo = document.getElementById('filterDateTo')?.value || '';
+            
+            let filtered = cachedOrderHistory.filter(o => {
+                // Search filter (order ID or customer name)
+                if (searchTerm) {
+                    const customerName = `${o.first_name || ''} ${o.last_name || ''}`.toLowerCase();
+                    const orderId = (o.reference_id || '').toLowerCase();
+                    if (!orderId.includes(searchTerm) && !customerName.includes(searchTerm)) {
+                        return false;
+                    }
+                }
+                
+                // Batch filter
+                if (batchFilter) {
+                    const orderBatch = o.vehicle_type && o.batch_number 
+                        ? `${o.vehicle_type} #${o.batch_number}` 
+                        : '';
+                    if (orderBatch !== batchFilter) return false;
+                }
+                
+                // Status filter (active/archived)
+                if (statusFilter) {
+                    if (statusFilter === 'active' && o.source === 'archived') return false;
+                    if (statusFilter === 'archived' && o.source !== 'archived') return false;
+                }
+                
+                // Date range filter
+                if (dateFrom || dateTo) {
+                    const orderDate = o.order_date ? o.order_date.split(' ')[0] : '';
+                    if (dateFrom && orderDate < dateFrom) return false;
+                    if (dateTo && orderDate > dateTo) return false;
+                }
+                
+                return true;
+            });
+            
+            renderOrderHistory(filtered);
+        }
+        
+        function resetOrderHistoryFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('filterBatch').value = '';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterDateFrom').value = '';
+            document.getElementById('filterDateTo').value = '';
+            
+            renderOrderHistory(cachedOrderHistory);
+        }
+        
+        function exportOrderHistoryCSV() {
+            if (!cachedOrderHistory || cachedOrderHistory.length === 0) {
+                alert('No data to export');
+                return;
+            }
+            
+            // Apply current filters to get the displayed data
+            const searchTerm = document.getElementById('searchInput')?.value.toLowerCase().trim() || '';
+            const batchFilter = document.getElementById('filterBatch')?.value || '';
+            const statusFilter = document.getElementById('filterStatus')?.value || '';
+            const dateFrom = document.getElementById('filterDateFrom')?.value || '';
+            const dateTo = document.getElementById('filterDateTo')?.value || '';
+            
+            let filtered = cachedOrderHistory.filter(o => {
+                if (searchTerm) {
+                    const customerName = `${o.first_name || ''} ${o.last_name || ''}`.toLowerCase();
+                    const orderId = (o.reference_id || '').toLowerCase();
+                    if (!orderId.includes(searchTerm) && !customerName.includes(searchTerm)) {
+                        return false;
+                    }
+                }
+                
+                if (batchFilter) {
+                    const orderBatch = o.vehicle_type && o.batch_number 
+                        ? `${o.vehicle_type} #${o.batch_number}` 
+                        : '';
+                    if (orderBatch !== batchFilter) return false;
+                }
+                
+                if (statusFilter) {
+                    if (statusFilter === 'active' && o.source === 'archived') return false;
+                    if (statusFilter === 'archived' && o.source !== 'archived') return false;
+                }
+                
+                if (dateFrom || dateTo) {
+                    const orderDate = o.order_date ? o.order_date.split(' ')[0] : '';
+                    if (dateFrom && orderDate < dateFrom) return false;
+                    if (dateTo && orderDate > dateTo) return false;
+                }
+                
+                return true;
+            });
+            
+            if (filtered.length === 0) {
+                alert('No visible data to export');
+                return;
+            }
+            
+            // Create CSV with detailed columns
+            let csv = 'Order ID,First Name,Last Name,Contact Number,Order Date,Delivery Date,Amount,Payment Method,Payment Status,Batch,Order Status\n';
+            
+            filtered.forEach(o => {
+                const orderId = o.reference_id || 'N/A';
+                const firstName = o.first_name || 'N/A';
+                const lastName = o.last_name || 'N/A';
+                const contact = o.customer_contact || 'N/A';
+                const orderDate = o.order_date || 'N/A';
+                const deliveryDate = o.delivery_date || 'N/A';
+                const amount = o.total_amount || '0';
+                const paymentMethod = o.payment_method || 'N/A';
+                const paymentStatus = o.payment_status || 'N/A';
+                const batch = o.vehicle_type && o.batch_number 
+                    ? `${o.vehicle_type} #${o.batch_number}` 
+                    : 'Unassigned';
+                const status = o.source === 'archived' ? 'Archived' : (o.order_status || 'N/A');
+                
+                csv += `"${orderId}","${firstName}","${lastName}","${contact}","${orderDate}","${deliveryDate}",${amount},"${paymentMethod}","${paymentStatus}","${batch}","${status}"\n`;
+            });
+            
+            // Download with UTF-8 BOM to fix encoding
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `order_history_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        }
 
         function renderOrderHistory(orders) {
             const historyBody = document.getElementById('orderHistoryBody');
             if (!historyBody) return;
+            
+            // Update count
+            const countElement = document.getElementById('orderHistoryCount');
+            if (countElement) {
+                countElement.textContent = orders.length;
+            }
             
             historyBody.innerHTML = '';
             if (orders.length === 0) {
@@ -284,6 +500,13 @@
                 orders.forEach(o => {
                     const customerName = o.first_name && o.last_name ? `${o.first_name} ${o.last_name}` : 'N/A';
                     const batchInfo = o.vehicle_type && o.batch_number ? `${o.vehicle_type} #${o.batch_number}` : 'Unassigned';
+                    
+                    // Add archived badge if order is from archived source
+                    const isArchived = o.source === 'archived';
+                    const statusBadge = isArchived 
+                        ? `<span class="badge" style="background: #fef3c7; color: #92400e;">Archived</span>`
+                        : `<span class="badge ${getStatusClass(o.order_status)}">${escapeHtml(o.order_status || 'N/A')}</span>`;
+                    
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td><strong>${escapeHtml(o.reference_id)}</strong></td>
@@ -291,36 +514,11 @@
                         <td>${formatDateTime(o.order_date)}</td>
                         <td>${money(o.total_amount)}</td>
                         <td>${escapeHtml(batchInfo)}</td>
-                        <td><span class="badge ${getStatusClass(o.order_status)}">${escapeHtml(o.order_status || 'N/A')}</span></td>
+                        <td>${statusBadge}</td>
                     `;
                     historyBody.appendChild(tr);
                 });
             }
-        }
-
-        function filterOrderHistory() {
-            const searchInput = document.getElementById('searchInput');
-            if (!searchInput || !cachedOrderHistory) return;
-            
-            const searchTerm = searchInput.value.toLowerCase().trim();
-            if (searchTerm === '') {
-                renderOrderHistory(cachedOrderHistory);
-                return;
-            }
-            
-            const filtered = cachedOrderHistory.filter(o => {
-                const customerName = o.first_name && o.last_name ? `${o.first_name} ${o.last_name}`.toLowerCase() : '';
-                const refId = (o.reference_id || '').toLowerCase();
-                const status = (o.order_status || '').toLowerCase();
-                const batchInfo = o.vehicle_type && o.batch_number ? `${o.vehicle_type} ${o.batch_number}`.toLowerCase() : '';
-                
-                return refId.includes(searchTerm) || 
-                       customerName.includes(searchTerm) || 
-                       status.includes(searchTerm) ||
-                       batchInfo.includes(searchTerm);
-            });
-            
-            renderOrderHistory(filtered);
         }
 
         function toggleReportSidebar() {
@@ -580,7 +778,7 @@
 
         function loadManageOrders(e) {
             if (e) e.preventDefault();
-            fetch('manage-orders.html')
+            fetch('manage-orders.html?v=' + Date.now())
                 .then(response => response.text())
                 .then(data => {
                     const parser = new DOMParser();
