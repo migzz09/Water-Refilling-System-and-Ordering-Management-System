@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="../assets/css/index.css">
     <link rel="stylesheet" href="../assets/css/product.css">
     <link rel="stylesheet" href="../assets/css/header.css">
+    <link rel="stylesheet" href="../assets/css/notifications.css">
     <style>
         /* Prevent text wrapping in navbar */
         .brand-name { white-space: nowrap; }
@@ -744,6 +745,25 @@
                         <i class="fa fa-user-plus"></i>
                         Register
                     </a>
+                    
+                    <!-- Notifications (hidden by default; JS will reveal only when logged in) -->
+                    <div class="notifications-menu" id="notificationsMenu" style="display: none;">
+                        <button class="btn btn-outline btn-sm notifications-btn" onclick="toggleNotifications()" aria-label="Notifications" title="Notifications">
+                            <i class="fa fa-bell"></i>
+                            <span class="notifications-badge" id="notificationsBadge" style="display: none;">0</span>
+                        </button>
+
+                        <div class="notifications-dropdown" id="notificationsDropdown" style="display: none;">
+                            <div class="notifications-header">
+                                <h3>Notifications</h3>
+                                <button class="mark-all-read" id="markAllReadBtn" onclick="markAllAsRead()">Mark all read</button>
+                            </div>
+                            <div class="notifications-list" id="notificationsList">
+                                <div class="empty-notifications">No notifications</div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="user-menu" id="userMenu">
                         <button class="btn btn-outline btn-sm profile-btn" onclick="toggleUserDropdown()" aria-label="Profile" title="Profile">
                             <i class="fa fa-user-circle"></i>
@@ -1157,6 +1177,7 @@
     <!-- Scripts -->
     <script src="../assets/js/api-helper.js"></script>
     <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/notifications.js"></script>
     <script>
         // Tab switching
         document.querySelectorAll('.sidebar-link').forEach(link => {

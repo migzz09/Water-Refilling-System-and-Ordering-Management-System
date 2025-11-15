@@ -10,6 +10,282 @@
         .search-bar { max-width: 420px; }
         .orders-card { padding: 16px; border-radius: 8px; }
         .orders-empty { padding: 40px 0; }
+        
+        /* Toast Notification Styles */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 400px;
+        }
+        
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #3b82f6;
+            animation: slideIn 0.3s ease-out;
+            min-width: 320px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .toast::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            animation: progressBar 3s linear;
+        }
+        
+        .toast.success {
+            border-left-color: #10b981;
+        }
+        
+        .toast.success::before {
+            background: linear-gradient(90deg, #10b981, #34d399);
+        }
+        
+        .toast.error {
+            border-left-color: #ef4444;
+        }
+        
+        .toast.error::before {
+            background: linear-gradient(90deg, #ef4444, #f87171);
+        }
+        
+        .toast-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .toast.success .toast-icon {
+            color: #10b981;
+        }
+        
+        .toast.error .toast-icon {
+            color: #ef4444;
+        }
+        
+        .toast.info .toast-icon {
+            color: #3b82f6;
+        }
+        
+        .toast-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .toast-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #111827;
+            line-height: 1.3;
+        }
+        
+        .toast-message {
+            font-size: 0.875rem;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+        
+        .toast-close {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        
+        .toast-close:hover {
+            background: #f3f4f6;
+            color: #111827;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes progressBar {
+            from {
+                width: 100%;
+            }
+            to {
+                width: 0%;
+            }
+        }
+        
+        .toast.closing {
+            animation: slideOut 0.3s ease-in forwards;
+        }
+        
+        /* Confirmation Modal Styles */
+        .confirm-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease-out;
+        }
+        
+        .confirm-modal {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 440px;
+            width: 90%;
+            overflow: hidden;
+            animation: scaleIn 0.3s ease-out;
+        }
+        
+        .confirm-modal-header {
+            padding: 24px 24px 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        
+        .confirm-modal-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+        
+        .confirm-modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #111827;
+            line-height: 1.3;
+        }
+        
+        .confirm-modal-body {
+            padding: 20px 24px 24px 24px;
+        }
+        
+        .confirm-modal-message {
+            color: #6b7280;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .confirm-modal-footer {
+            padding: 16px 24px;
+            background: #f9fafb;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+        
+        .confirm-modal-btn {
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 100px;
+        }
+        
+        .confirm-modal-btn-cancel {
+            background: white;
+            color: #6b7280;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .confirm-modal-btn-cancel:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+        }
+        
+        .confirm-modal-btn-confirm {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+        
+        .confirm-modal-btn-confirm:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        
+        .confirm-modal-btn-confirm:active {
+            transform: translateY(0);
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        @keyframes scaleIn {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
     /* Table and card spacing improvements for Manage Orders */
     .batches-grid { display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
     .metric-card { padding: 18px; box-sizing: border-box; background: #fff; border-radius: 8px; flex: 1 1 360px; max-width: 420px; }
@@ -38,33 +314,40 @@
         margin: 0 0 20px 0;
         list-style: none;
         border-bottom: none;
-        background: #ffffff;
+        background: #f9fafb;
         border-radius: 10px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     .nav-item {
         margin: 0;
     }
-    .vehicle-tab-btn {
-        background: white;
-        border: 2px solid #e5e7eb;
+    .nav-link.vehicle-tab-btn,
+    .vehicle-tab-btn,
+    button.vehicle-tab-btn {
+        background: #ffffff !important;
+        border: 2px solid #d1d5db !important;
         padding: 12px 24px;
         cursor: pointer;
         font-weight: 700;
-        color: #374151;
+        color: #111827 !important;
         border-radius: 6px;
         transition: all 0.2s ease;
         font-size: 0.95rem;
+        text-decoration: none;
     }
-    .vehicle-tab-btn:hover {
-        color: #1f2937;
-        background: #f9fafb;
-        border-color: #d1d5db;
+    .nav-link.vehicle-tab-btn:hover,
+    .vehicle-tab-btn:hover,
+    button.vehicle-tab-btn:hover {
+        color: #000000 !important;
+        background: #f3f4f6 !important;
+        border-color: #9ca3af !important;
     }
-    .vehicle-tab-btn.active {
-        color: #ffffff;
-        background: #3b82f6;
-        border-color: #3b82f6;
+    .nav-link.vehicle-tab-btn.active,
+    .vehicle-tab-btn.active,
+    button.vehicle-tab-btn.active {
+        color: #ffffff !important;
+        background: #3b82f6 !important;
+        border-color: #3b82f6 !important;
         box-shadow: 0 2px 4px rgba(59,130,246,0.4);
     }
    
@@ -198,7 +481,10 @@
                     <input id="ordersSearchInput" type="search" placeholder="Search reference, customer, address..." class="form-control" />
                     <button type="submit" class="btn btn-primary">Search</button>
                 </form>
-                <div class="text-end">
+                <div class="text-end d-flex gap-2 align-items-center">
+                    <button id="archiveCompletedBtn" class="btn btn-warning" title="Archive all completed orders">
+                        <i class="fa fa-archive"></i> Archive Completed
+                    </button>
                     <small class="text-muted">Manage today's batches and orders</small>
                 </div>
             </div>
@@ -206,8 +492,223 @@
             <div id="unassignedContainer" style="margin-top:12px;"></div>
         </div>
     </div>
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+    
     <script>
         (function(){
+            // Toast Notification Function
+            function showToast(type, title, message) {
+                const container = document.getElementById('toastContainer');
+                if (!container) return;
+                
+                const icons = {
+                    success: '<i class="fa fa-check-circle"></i>',
+                    error: '<i class="fa fa-exclamation-circle"></i>',
+                    info: '<i class="fa fa-info-circle"></i>'
+                };
+                
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.innerHTML = `
+                    <div class="toast-icon">${icons[type] || icons.info}</div>
+                    <div class="toast-content">
+                        <div class="toast-title">${title}</div>
+                        <div class="toast-message">${message}</div>
+                    </div>
+                    <button class="toast-close">&times;</button>
+                `;
+                
+                container.appendChild(toast);
+                
+                // Close button handler
+                const closeBtn = toast.querySelector('.toast-close');
+                closeBtn.addEventListener('click', () => {
+                    toast.classList.add('closing');
+                    setTimeout(() => toast.remove(), 300);
+                });
+                
+                // Auto remove after 3 seconds
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.classList.add('closing');
+                        setTimeout(() => toast.remove(), 300);
+                    }
+                }, 3000);
+            }
+            
+            // Make showToast globally accessible
+            window.showToast = showToast;
+            
+            // Custom Confirmation Modal Function
+            function showConfirm(title, message) {
+                return new Promise((resolve) => {
+                    // Inject styles if not already present
+                    if (!document.getElementById('confirm-modal-styles')) {
+                        const styleEl = document.createElement('style');
+                        styleEl.id = 'confirm-modal-styles';
+                        styleEl.textContent = `
+                            .confirm-modal-overlay {
+                                position: fixed !important;
+                                top: 0 !important;
+                                left: 0 !important;
+                                right: 0 !important;
+                                bottom: 0 !important;
+                                background: rgba(0, 0, 0, 0.5) !important;
+                                backdrop-filter: blur(4px);
+                                z-index: 10000 !important;
+                                display: flex !important;
+                                align-items: center !important;
+                                justify-content: center !important;
+                                animation: fadeIn 0.2s ease-out;
+                            }
+                            .confirm-modal {
+                                background: white !important;
+                                border-radius: 16px !important;
+                                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+                                max-width: 440px !important;
+                                width: 90% !important;
+                                overflow: hidden !important;
+                                animation: scaleIn 0.3s ease-out;
+                            }
+                            .confirm-modal-header {
+                                padding: 24px 24px 16px 24px !important;
+                                display: flex !important;
+                                align-items: center !important;
+                                gap: 16px !important;
+                                border-bottom: 1px solid #f3f4f6 !important;
+                            }
+                            .confirm-modal-icon {
+                                width: 48px !important;
+                                height: 48px !important;
+                                border-radius: 12px !important;
+                                display: flex !important;
+                                align-items: center !important;
+                                justify-content: center !important;
+                                font-size: 24px !important;
+                                flex-shrink: 0 !important;
+                                background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+                                color: white !important;
+                            }
+                            .confirm-modal-title {
+                                font-size: 1.25rem !important;
+                                font-weight: 700 !important;
+                                color: #111827 !important;
+                                line-height: 1.3 !important;
+                            }
+                            .confirm-modal-body {
+                                padding: 20px 24px 24px 24px !important;
+                            }
+                            .confirm-modal-message {
+                                color: #6b7280 !important;
+                                font-size: 0.95rem !important;
+                                line-height: 1.6 !important;
+                            }
+                            .confirm-modal-footer {
+                                padding: 16px 24px !important;
+                                background: #f9fafb !important;
+                                display: flex !important;
+                                gap: 12px !important;
+                                justify-content: flex-end !important;
+                            }
+                            .confirm-modal-btn {
+                                padding: 10px 24px !important;
+                                border-radius: 8px !important;
+                                font-weight: 600 !important;
+                                font-size: 0.9rem !important;
+                                border: none !important;
+                                cursor: pointer !important;
+                                transition: all 0.2s !important;
+                                min-width: 100px !important;
+                            }
+                            .confirm-modal-btn-cancel {
+                                background: white !important;
+                                color: #6b7280 !important;
+                                border: 1px solid #e5e7eb !important;
+                            }
+                            .confirm-modal-btn-cancel:hover {
+                                background: #f9fafb !important;
+                                border-color: #d1d5db !important;
+                            }
+                            .confirm-modal-btn-confirm {
+                                background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+                                color: white !important;
+                                box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3) !important;
+                            }
+                            .confirm-modal-btn-confirm:hover {
+                                transform: translateY(-1px) !important;
+                                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
+                            }
+                            @keyframes fadeIn {
+                                from { opacity: 0; }
+                                to { opacity: 1; }
+                            }
+                            @keyframes scaleIn {
+                                from { transform: scale(0.9); opacity: 0; }
+                                to { transform: scale(1); opacity: 1; }
+                            }
+                        `;
+                        document.head.appendChild(styleEl);
+                    }
+                    
+                    const overlay = document.createElement('div');
+                    overlay.className = 'confirm-modal-overlay';
+                    overlay.innerHTML = `
+                        <div class="confirm-modal">
+                            <div class="confirm-modal-header">
+                                <div class="confirm-modal-icon">
+                                    <i class="fa fa-question-circle"></i>
+                                </div>
+                                <div class="confirm-modal-title">${title}</div>
+                            </div>
+                            <div class="confirm-modal-body">
+                                <div class="confirm-modal-message">${message}</div>
+                            </div>
+                            <div class="confirm-modal-footer">
+                                <button class="confirm-modal-btn confirm-modal-btn-cancel" data-action="cancel">
+                                    Cancel
+                                </button>
+                                <button class="confirm-modal-btn confirm-modal-btn-confirm" data-action="confirm">
+                                    Confirm
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.body.appendChild(overlay);
+                    
+                    // Focus confirm button
+                    setTimeout(() => {
+                        overlay.querySelector('.confirm-modal-btn-confirm').focus();
+                    }, 100);
+                    
+                    // Handle button clicks
+                    overlay.addEventListener('click', (e) => {
+                        const action = e.target.getAttribute('data-action');
+                        if (action === 'confirm') {
+                            overlay.remove();
+                            resolve(true);
+                        } else if (action === 'cancel' || e.target === overlay) {
+                            overlay.remove();
+                            resolve(false);
+                        }
+                    });
+                    
+                    // Handle ESC key
+                    const handleEsc = (e) => {
+                        if (e.key === 'Escape') {
+                            overlay.remove();
+                            document.removeEventListener('keydown', handleEsc);
+                            resolve(false);
+                        }
+                    };
+                    document.addEventListener('keydown', handleEsc);
+                });
+            }
+            
+            // Make showConfirm globally accessible
+            window.showConfirm = showConfirm;
+            
             // Globals and DOM references expected by the script
             var ordersMap = {};
             // If these elements are present in the parsed fragment they will be found; otherwise we fall back to querying later
@@ -244,33 +745,58 @@
                 const orders = batch.orders || [];
                 const pickupTime = batch.pickup_time ? batch.pickup_time : '—';
                 const deliveryTime = batch.delivery_time ? batch.delivery_time : '—';
-                const pickupStatus = batch.pickup_status || '—';
-                const deliveryStatus = batch.delivery_status || '—';
+                const pickupStatusDisplay = batch.pickup_status || '—';
+                const deliveryStatusDisplay = batch.delivery_status || '—';
+                
+                console.log(`[renderBatch] Batch ${batch.batch_id}:`, {
+                    pickup_status: batch.pickup_status,
+                    delivery_status: batch.delivery_status,
+                    batch_status: batch.batch_status
+                });
+                
                 const header = `Vehicle: ${escapeHtml(batch.vehicle_type)} — Batch #${escapeHtml(batch.batch_number)} — Orders: ${orders.length}`;
                 const totalQty = typeof batch.total_quantity !== 'undefined' ? batch.total_quantity : null;
                 const capacity = typeof batch.capacity !== 'undefined' ? batch.capacity : null;
                 const isFull = batch.is_full === true || batch.is_full === '1' || batch.is_full === 1;
                 const isCompleted = batch.is_completed === true || batch.is_completed === '1' || batch.is_completed === 1;
                 const tableRows = orders.length ? orders.map(o => renderOrderRow(o, batch.batch_status, batch.batch_id)).join('') : `<tr><td colspan="8" class="text-center text-muted">No orders in this batch</td></tr>`;
-                // Determine batch status more strictly
-                const isDelivered = batch.delivery_status === 'Delivered' || batch.delivery_status === 'Completed';
-                const isPickupCompleted = batch.pickup_status === 'Completed' || batch.pickup_status === 'Picked Up';
-                const isDeliveryInProgress = batch.delivery_status === 'In Progress' || batch.delivery_status === 'Dispatched';
-                // Show buttons based on current status
+                // Determine batch status more strictly - only show one button at a time in sequential order
+                const pickupStatus = (batch.pickup_status || '').toLowerCase();
+                const deliveryStatus = (batch.delivery_status || '').toLowerCase();
+                
+                console.log(`Batch ${batch.batch_id}: pickup="${pickupStatus}", delivery="${deliveryStatus}"`);
+                
+                // Show buttons based on current status - strictly sequential
+                // Database values: 1=Pending, 2=In Progress, 3=Completed, 4=Failed
                 let buttonsHtml = '';
-                if (isDelivered) {
-                    buttonsHtml = '<div class="text-muted small">Completed</div>';
-                } else if (isDeliveryInProgress) {
+                
+                // Step 4: Delivery completed (final state) - delivery is "completed"
+                if (deliveryStatus === 'completed') {
+                    buttonsHtml = '<div class="text-muted small" style="font-weight: 600; color: #10b981 !important;">✓ Completed</div>';
+                }
+                // Step 3: Delivery in progress - show complete delivery button
+                else if (deliveryStatus === 'in progress') {
                     buttonsHtml = `
                         <button class="btn btn-sm btn-dark action-btn" data-action="complete_delivery"
                             onclick="performBatchAction('${escapeHtml(batch.batch_id)}', 'complete_delivery', this)">Complete Delivery</button>
                     `;
-                } else if (isPickupCompleted) {
+                }
+                // Step 2: Pickup completed - show start delivery button
+                else if (pickupStatus === 'completed') {
                     buttonsHtml = `
                         <button class="btn btn-sm btn-warning action-btn" data-action="start_delivery"
                             onclick="performBatchAction('${escapeHtml(batch.batch_id)}', 'start_delivery', this)">Start Delivery</button>
                     `;
-                } else {
+                }
+                // Step 1.5: Pickup in progress - show complete pickup button
+                else if (pickupStatus === 'in progress') {
+                    buttonsHtml = `
+                        <button class="btn btn-sm btn-success action-btn" data-action="complete_pickup"
+                            onclick="performBatchAction('${escapeHtml(batch.batch_id)}', 'complete_pickup', this)">Complete Pickup</button>
+                    `;
+                }
+                // Step 1: Initial state (pickup pending or no status) - show start pickup button
+                else {
                     buttonsHtml = `
                         <button class="btn btn-sm btn-primary action-btn" data-action="start_pickup"
                             onclick="performBatchAction('${escapeHtml(batch.batch_id)}', 'start_pickup', this)">Start Pickup</button>
@@ -283,7 +809,7 @@
                             <div>
                                 <strong>${escapeHtml(header)}</strong>
                                 <div class="text-muted small">Pickup: <span class="pickup-time">${escapeHtml(pickupTime)}</span> &nbsp;|&nbsp; Delivery: <span class="delivery-time">${escapeHtml(deliveryTime)}</span></div>
-                                <div class="text-muted small">Pickup status: <span class="pickup-status">${escapeHtml(pickupStatus)}</span> &nbsp;|&nbsp; Delivery status: <span class="delivery-status">${escapeHtml(deliveryStatus)}</span></div>
+                                <div class="text-muted small">Pickup status: <span class="pickup-status">${escapeHtml(pickupStatusDisplay)}</span> &nbsp;|&nbsp; Delivery status: <span class="delivery-status">${escapeHtml(deliveryStatusDisplay)}</span></div>
                             </div>
                             <div class="d-flex gap-2 batch-actions" data-batch-id="${escapeHtml(batch.batch_id)}">
                                 ${buttonsHtml}
@@ -340,18 +866,50 @@
                     </div>
                 `;
             }
+            
+            // Store archived order IDs for client-side filtering
+            let archivedOrderIds = new Set();
+            
+            // Fetch archived order IDs
+            async function fetchArchivedIds() {
+                try {
+                    const resp = await fetch('/WRSOMS/api/admin/get_archived_ids.php', { credentials: 'same-origin' });
+                    const result = await resp.json();
+                    if (result.success && result.data && Array.isArray(result.data.archived_ids)) {
+                        archivedOrderIds = new Set(result.data.archived_ids);
+                        console.log(`Loaded ${archivedOrderIds.size} archived order IDs for filtering`);
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch archived IDs:', err);
+                }
+            }
+            
             // Initial fetch
             function loadData() {
                 const apiUrl = getApiUrl();
                 batchesContainer.innerHTML = '<p class="text-muted">Loading batches and orders…</p>';
                 unassignedContainer.innerHTML = '';
-                fetch(apiUrl, { credentials: 'same-origin' })
-                .then(r => r.json())
-                .then(res => {
-                    if (!res.success) throw new Error(res.message || 'Failed to load');
-                    const data = res.data || {};
-                    const batches = data.batches || [];
-                    const unassigned = data.unassigned || [];
+                
+                // Fetch archived IDs first, then load orders
+                fetchArchivedIds().then(() => {
+                    fetch(apiUrl, { credentials: 'same-origin' })
+                    .then(r => r.json())
+                    .then(res => {
+                        if (!res.success) throw new Error(res.message || 'Failed to load');
+                        const data = res.data || {};
+                        let batches = data.batches || [];
+                        let unassigned = data.unassigned || [];
+                        
+                        // CLIENT-SIDE FILTERING: Remove archived orders
+                        batches.forEach(batch => {
+                            if (batch.orders && Array.isArray(batch.orders)) {
+                                batch.orders = batch.orders.filter(order => !archivedOrderIds.has(order.reference_id));
+                            }
+                        });
+                        unassigned = unassigned.filter(order => !archivedOrderIds.has(order.reference_id));
+                        
+                        // Remove empty batches
+                        batches = batches.filter(batch => batch.orders && batch.orders.length > 0);
                     if (!batches.length && !unassigned.length) {
                         batchesContainer.innerHTML = '<p class="text-muted orders-empty">No batches or orders found for today.</p>';
                         return;
@@ -383,10 +941,10 @@
                     let out = '';
                     out += `<div class="mb-3">
                         <ul class="nav nav-tabs" role="tablist" id="vehicleTabs">
-                            <li class="nav-item"><button class="nav-link active vehicle-tab-btn" data-target="all" type="button">All</button></li>
-                            <li class="nav-item"><button class="nav-link vehicle-tab-btn" data-target="tricycle" type="button">Tricycle</button></li>
-                            <li class="nav-item"><button class="nav-link vehicle-tab-btn" data-target="car" type="button">Car</button></li>
-                            <li class="nav-item"><button class="nav-link vehicle-tab-btn" data-target="completed" type="button">Completed</button></li>
+                            <li class="nav-item"><button class="nav-link active vehicle-tab-btn" data-target="all" type="button" style="color: #111827 !important; background: #ffffff !important;">All</button></li>
+                            <li class="nav-item"><button class="nav-link vehicle-tab-btn" data-target="tricycle" type="button" style="color: #111827 !important; background: #ffffff !important;">Tricycle</button></li>
+                            <li class="nav-item"><button class="nav-link vehicle-tab-btn" data-target="car" type="button" style="color: #111827 !important; background: #ffffff !important;">Car</button></li>
+                            <li class="nav-item"><button class="nav-link vehicle-tab-btn" data-target="completed" type="button" style="color: #111827 !important; background: #ffffff !important;">Completed</button></li>
                         </ul>
                     </div>`;
                     // Active sections
@@ -418,25 +976,56 @@
                     // If no batches for either active types or completed groups, render a fallback empty message
                     if (!activeTricycle.length && !activeCar.length && !completedTricycle.length && !completedCar.length) out += '<p class="text-muted orders-empty">No batches or orders found for today.</p>';
                     batchesContainer.innerHTML = out;
-                    // Wire up vehicle tab buttons
+                    // Wire up vehicle tab buttons with proper filtering
                     document.querySelectorAll('.vehicle-tab-btn').forEach(btn => {
                         btn.addEventListener('click', function() {
-                            // toggle active class
-                            document.querySelectorAll('#vehicleTabs .nav-link').forEach(n => n.classList.remove('active'));
+                            console.log('Tab clicked:', this.getAttribute('data-target'));
+                            
+                            // Remove active class from all tabs and reset to inactive colors
+                            document.querySelectorAll('.vehicle-tab-btn').forEach(n => {
+                                n.classList.remove('active');
+                                n.style.color = '#111827';
+                                n.style.background = '#ffffff';
+                                n.style.borderColor = '#d1d5db';
+                            });
+                            
+                            // Set active tab with blue background and white text
                             this.classList.add('active');
+                            this.style.color = '#ffffff';
+                            this.style.background = '#3b82f6';
+                            this.style.borderColor = '#3b82f6';
+                            
                             const target = this.getAttribute('data-target');
+                            
                             if (target === 'all') {
+                                // Show all active sections (hide completed)
                                 document.querySelectorAll('.vehicle-section').forEach(s => {
-                                    // show only active sections (hide completed)
-                                    if (s.classList.contains('completed-section')) s.style.display = 'none'; else s.style.display = 'block';
+                                    if (s.classList.contains('completed-section')) {
+                                        s.style.display = 'none';
+                                    } else {
+                                        s.style.display = 'block';
+                                    }
                                 });
                             } else if (target === 'completed') {
+                                // Show only completed sections (hide active)
                                 document.querySelectorAll('.vehicle-section').forEach(s => {
-                                    if (s.classList.contains('completed-section')) s.style.display = 'block'; else s.style.display = 'none';
+                                    if (s.classList.contains('completed-section')) {
+                                        s.style.display = 'block';
+                                    } else {
+                                        s.style.display = 'none';
+                                    }
                                 });
                             } else {
+                                // Show only the selected vehicle type (tricycle or car), hide completed
                                 document.querySelectorAll('.vehicle-section').forEach(s => {
-                                    if (s.getAttribute('data-vehicle') === target && !s.classList.contains('completed-section')) s.style.display = 'block'; else s.style.display = 'none';
+                                    const vehicleType = s.getAttribute('data-vehicle');
+                                    const isCompleted = s.classList.contains('completed-section');
+                                    
+                                    if (vehicleType === target && !isCompleted) {
+                                        s.style.display = 'block';
+                                    } else {
+                                        s.style.display = 'none';
+                                    }
                                 });
                             }
                         });
@@ -470,23 +1059,45 @@
                             if (ord) showOrderModal(ord);
                         });
                     });
-                })
-                .catch(err => {
-                    console.error('Manage orders load error', err);
-                    batchesContainer.innerHTML = '<p class="text-danger">Error loading orders. Check the API or session.</p>';
+                    })
+                    .catch(err => {
+                        console.error('Manage orders load error', err);
+                        batchesContainer.innerHTML = '<p class="text-danger">Error loading orders. Check the API or session.</p>';
+                    });
                 });
             }
             // initial call
             loadData();
             // Perform batch action: start/complete pickup/delivery
-            window.performBatchAction = function(batchId, action, btn) {
-                const actionMessages = {
-                    start_pickup: "Start pickup for this batch?",
-                    complete_pickup: "Mark pickup as completed for this batch?",
-                    start_delivery: "Start delivery for this batch?",
-                    complete_delivery: "Mark delivery as completed for this batch?"
+            // CRITICAL: Must be on window for inline onclick handlers to work
+            if (typeof window.performBatchAction !== 'undefined') {
+                console.log('performBatchAction already exists, overwriting...');
+            }
+            window.performBatchAction = async function(batchId, action, btn) {
+                console.log('performBatchAction called:', { batchId, action, btn });
+                const actionTitles = {
+                    start_pickup: "Start Pickup",
+                    complete_pickup: "Complete Pickup",
+                    start_delivery: "Start Delivery",
+                    complete_delivery: "Complete Delivery"
                 };
-                if (!confirm(actionMessages[action] || 'Confirm action?')) return;
+                const actionMessages = {
+                    start_pickup: "Are you sure you want to start pickup for this batch?",
+                    complete_pickup: "Are you sure you want to mark pickup as completed for this batch?",
+                    start_delivery: "Are you sure you want to start delivery for this batch?",
+                    complete_delivery: "Are you sure you want to mark delivery as completed for this batch?"
+                };
+                
+                const confirmed = await showConfirm(
+                    actionTitles[action] || 'Confirm Action',
+                    actionMessages[action] || 'Are you sure you want to proceed?'
+                );
+                
+                if (!confirmed) {
+                    console.log('Action cancelled by user');
+                    return;
+                }
+                console.log('Action confirmed, making API call...');
                 if (btn) btn.disabled = true;
                
                 fetch('/WRSOMS/api/admin/batch_action.php', {
@@ -495,10 +1106,31 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: action, batch_id: batchId })
                 })
-                .then(r => r.json())
+                .then(r => {
+                    console.log('Batch action HTTP status:', r.status);
+                    return r.text();
+                })
+                .then(text => {
+                    console.log('Batch action response text:', text);
+                    try {
+                        return JSON.parse(text);
+                    } catch(e) {
+                        throw new Error('Invalid JSON response: ' + text.substring(0, 200));
+                    }
+                })
                 .then(res => {
+                    console.log('Batch action parsed response:', res);
                     if (!res.success) throw new Error(res.message || 'Action failed');
                    
+                    // Show success message immediately
+                    const successMessages = {
+                        start_pickup: "Pickup started successfully",
+                        complete_pickup: "Pickup completed successfully",
+                        start_delivery: "Delivery started successfully",
+                        complete_delivery: "Delivery completed successfully"
+                    };
+                    showToast('success', 'Success', successMessages[action] || 'Action completed successfully');
+                    
                     const card = document.querySelector(`.metric-card[data-batch-id="${batchId}"]`);
                     if (card) {
                         const pickupStatusEl = card.querySelector('.pickup-status');
@@ -568,24 +1200,47 @@
                                 }
                             }
                         });
-                        // Show success message
-                        const successMessages = {
-                            start_pickup: "Pickup started successfully",
-                            complete_pickup: "Pickup completed successfully",
-                            start_delivery: "Delivery started successfully",
-                            complete_delivery: "Delivery completed successfully"
-                        };
-                        alert(successMessages[action] || 'Action completed successfully');
+                        
+                        // Reload data after complete_delivery to refresh payment status for COD orders
+                        if (action === 'complete_delivery') {
+                            setTimeout(() => {
+                                loadData();
+                            }, 500);
+                        }
+                    } else {
+                        console.warn('Batch card not found for batch_id:', batchId);
                     }
                 })
                 .catch(err => {
                     console.error('Batch action error', err);
-                    alert('Error: ' + (err.message || 'Failed to perform action'));
+                    showToast('error', 'Action Failed', err.message || 'Failed to perform action. Please try again.');
                 })
                 .finally(() => {
                     if (btn) btn.disabled = false;
                 });
             };
+            
+            // Test that the function is accessible
+            console.log('window.performBatchAction defined:', typeof window.performBatchAction);
+            
+            // FALLBACK: Add event delegation for action buttons in case inline onclick doesn't work
+            document.addEventListener('click', function(e) {
+                const actionBtn = e.target.closest('.action-btn');
+                if (actionBtn) {
+                    const action = actionBtn.getAttribute('data-action');
+                    const card = actionBtn.closest('.metric-card');
+                    const batchId = card ? card.getAttribute('data-batch-id') : null;
+                    
+                    if (action && batchId) {
+                        console.log('Event delegation triggered:', { action, batchId });
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.performBatchAction(batchId, action, actionBtn);
+                    }
+                }
+            }, true); // Use capture phase to catch event before inline handlers
+            
+            console.log('Event delegation for action buttons installed');
             // Modal builder & display
             function formatItemsHtml(items) {
                 if (!items || !items.length) return '<div style="text-align:center; padding:30px; color:#9ca3af; font-size:0.95rem;">No items in this order</div>';
@@ -771,6 +1426,105 @@
                     ua.style.display = anyVisible ? '' : 'none';
                 }
             });
+            
+            // Archive completed orders button
+            const archiveBtn = document.getElementById('archiveCompletedBtn');
+            if (archiveBtn) {
+                archiveBtn.addEventListener('click', async function() {
+                    const confirmed = await showConfirm(
+                        'Archive Completed Orders',
+                        'Are you sure you want to archive all completed orders for today? This will move them to the archive table and clear them from the active list. You can still view them in reports and order history.'
+                    );
+                    if (!confirmed) {
+                        return;
+                    }
+                    
+                    archiveBtn.disabled = true;
+                    archiveBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Archiving...';
+                    
+                    const formData = new FormData();
+                    formData.append('archive_type', 'manual');
+                    // Use local date (YYYY-MM-DD) to avoid UTC offset issues
+                    (function(){
+                        const d = new Date();
+                        const y = d.getFullYear();
+                        const m = String(d.getMonth() + 1).padStart(2, '0');
+                        const day = String(d.getDate()).padStart(2, '0');
+                        formData.append('date_filter', `${y}-${m}-${day}`);
+                    })();
+                    
+                    fetch('/WRSOMS/api/admin/archive_completed.php', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        body: formData
+                    })
+                    .then(r => {
+                        console.log('Archive response status:', r.status);
+                        return r.text();
+                    })
+                    .then(text => {
+                        console.log('Archive response text:', text);
+                        try {
+                            return JSON.parse(text);
+                        } catch(e) {
+                            throw new Error('Invalid JSON response: ' + text.substring(0, 200));
+                        }
+                    })
+                    .then(async res => {
+                        console.log('Archive response:', res);
+                        
+                        // If server returned diagnostics and zero archived, show diagnostics
+                        if (res.data && res.data.orders_archived === 0 && res.data.diagnostics) {
+                                console.log('Archive diagnostics:', res.data.diagnostics);
+                                const d = res.data.diagnostics;
+                                const diagMsg = `Orders on date: ${d.orders_on_date_count}\nSample: ${Array.isArray(d.orders_on_date_sample)?d.orders_on_date_sample.join(', '):d.orders_on_date_sample}\nBatches: ${JSON.stringify(d.batches)}\nDeliveries: ${JSON.stringify(d.deliveries)}`;
+
+                                // If no orders exist for the local date, try UTC date as a fallback
+                                if ((d.orders_on_date_count || 0) === 0) {
+                                    // Try UTC date fallback once
+                                    const utcDate = new Date().toISOString().split('T')[0];
+                                    console.log('No orders for local date, retrying with UTC date:', utcDate);
+                                    const fd2 = new FormData();
+                                    fd2.append('archive_type', 'manual');
+                                    fd2.append('date_filter', utcDate);
+
+                                    try {
+                                        const resp2 = await fetch('/WRSOMS/api/admin/archive_completed.php', { method: 'POST', credentials: 'same-origin', body: fd2 });
+                                        const res2 = await resp2.json();
+                                        if (!res2.success) throw new Error(res2.message || 'UTC fallback archive failed');
+                                        const ordersCount2 = res2.data.orders_archived;
+                                        showToast('success', 'Archive Complete', `${ordersCount2} ${ordersCount2 === 1 ? 'order' : 'orders'} archived successfully!`);
+                                        loadData();
+                                        return;
+                                    } catch (err2) {
+                                        console.error('Archive UTC fallback error:', err2);
+                                        showToast('error', 'Archive Failed', err2.message || 'Failed to archive orders. Please try again.');
+                                        return;
+                                    }
+                                }
+
+                                // Otherwise just show diagnostics to help debugging
+                                const ordersCount3 = res.data.orders_archived;
+                                showToast('success', 'Archive Complete', `${ordersCount3} ${ordersCount3 === 1 ? 'order' : 'orders'} archived successfully!`);
+                                loadData();
+                                return;
+                            }
+
+                            // Normal success path
+                            const ordersCount = res.data.orders_archived;
+                            showToast('success', 'Archive Complete', `${ordersCount} ${ordersCount === 1 ? 'order' : 'orders'} archived successfully!`);
+                            loadData();
+                        })
+                        .catch(err => {
+                            console.error('Archive error:', err);
+                            showToast('error', 'Archive Failed', err.message || 'Failed to archive orders. Please try again.');
+                        })
+                        .finally(() => {
+                            archiveBtn.disabled = false;
+                            archiveBtn.innerHTML = '<i class="fa fa-archive"></i> Archive Completed';
+                        });
+                });
+            }
         })();
     </script>
 </body>

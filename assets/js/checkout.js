@@ -1,3 +1,33 @@
+// Toast notification system
+function showToast(message, type = 'error', duration = 4000) {
+  // Remove any existing toast
+  let oldToast = document.getElementById('customToast');
+  if (oldToast) oldToast.remove();
+  // Create toast element
+  const toast = document.createElement('div');
+  toast.id = 'customToast';
+  toast.className = `toast-notification toast-${type}`;
+  toast.innerHTML = `<span>${message.replace(/\n/g, '<br>')}</span>`;
+  toast.style.position = 'fixed';
+  toast.style.bottom = '32px';
+  toast.style.left = '50%';
+  toast.style.transform = 'translateX(-50%)';
+  toast.style.background = type === 'error' ? '#d32f2f' : '#1976d2';
+  toast.style.color = '#fff';
+  toast.style.padding = '16px 32px';
+  toast.style.borderRadius = '8px';
+  toast.style.boxShadow = '0 2px 12px rgba(0,0,0,0.15)';
+  toast.style.fontSize = '1rem';
+  toast.style.zIndex = '9999';
+  toast.style.opacity = '0';
+  toast.style.transition = 'opacity 0.3s';
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '1'; }, 50);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => { toast.remove(); }, 350);
+  }, duration);
+}
 // NCR cities and barangays data
 const ncrCities = {
   'Taguig': [
@@ -482,7 +512,10 @@ function renderCart(cart) {
 
   cartItems.innerHTML = cart.map((item, index) => {
     const isPurchaseNew = item.order_type_name === 'Purchase New Container/s';
-    const unitPrice = isPurchaseNew ? 250 : Number(item.price || 0);
+    const unitPrice = isPurchaseNew ? (
+      (item.purchase_price && !isNaN(Number(item.purchase_price))) ? Number(item.purchase_price) :
+      ((item.order_type_price && !isNaN(Number(item.order_type_price))) ? Number(item.order_type_price) : 250)
+    ) : Number(item.price || 0);
     const itemTotal = unitPrice * item.quantity;
     total += itemTotal;
     return `
@@ -581,12 +614,14 @@ function updateBarangays(city) {
 
 function setupDeliveryDateMin() {
   const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
   
   const dateInput = document.getElementById('deliveryDate');
-  dateInput.min = tomorrow.toISOString().split('T')[0];
-  dateInput.value = tomorrow.toISOString().split('T')[0];
+  // Set to today for same-day delivery only
+  dateInput.min = today.toISOString().split('T')[0];
+  dateInput.max = today.toISOString().split('T')[0];
+  dateInput.value = today.toISOString().split('T')[0];
+  // Disable the input to prevent changes (hidden anyway)
+  dateInput.readOnly = true;
 }
 
 function getVehicleType(city) {
@@ -710,7 +745,10 @@ function showOrderConfirmation(details) {
   if (cart.length) {
     cart.forEach(item => {
       const isPurchaseNew = item.order_type_name === 'Purchase New Container/s';
-      const unitPrice = isPurchaseNew ? 250 : Number(item.price || 0);
+      const unitPrice = isPurchaseNew ? (
+        (item.purchase_price && !isNaN(Number(item.purchase_price))) ? Number(item.purchase_price) :
+        ((item.order_type_price && !isNaN(Number(item.order_type_price))) ? Number(item.order_type_price) : 250)
+      ) : Number(item.price || 0);
       const itemTotal = unitPrice * (Number(item.quantity) || 0);
       subtotal += itemTotal;
       itemsHtml += `<div class="conf-item"><div><div class="name">${item.name} Container</div><div class="qty">${item.water_type_name}, ${item.order_type_name} × ${item.quantity}</div></div><div class="price">₱${itemTotal.toFixed(2)}</div></div>`;
@@ -785,7 +823,7 @@ async function confirmOrder() {
     const cart = Array.isArray(window.cart) ? window.cart : [];
     const items = cart.map(item => {
       const isPurchaseNew = item.order_type_name === 'Purchase New Container/s';
-      const unitPrice = isPurchaseNew ? 250 : Number(item.price || 0);
+      const unitPrice = isPurchaseNew ? ((item.order_type_price && !isNaN(Number(item.order_type_price))) ? Number(item.order_type_price) : 250) : Number(item.price || 0);
       return {
         container_id: item.id,
         water_type_id: item.water_type_id != null ? Number(item.water_type_id) : null,
@@ -842,11 +880,11 @@ async function confirmOrder() {
         else if (result.errors && Array.isArray(result.errors)) errMsg = result.errors.join('\n');
         else if (result.__status === 404) errMsg = 'Order API not found (404). Check server path.';
       }
-      alert(errMsg);
+  showToast(errMsg, 'error');
     }
   } catch (error) {
     console.error('Error placing order:', error);
-    alert('Failed to place order. Please try again.');
+  showToast('Failed to place order. Please try again.', 'error');
   }
 }
 

@@ -24,14 +24,3 @@ VALUES (
     1, 
     1
 );
-
--- Note: The password is stored as plain text 'admin123'
--- The login.php will accept it and you can hash it later
--- Admin users don't need a customer_id (it's NULL)
--- After first login, please change the default password!
-
--- Rollback instructions:
--- To revert this migration:
--- DELETE FROM `accounts` WHERE `username` = 'admin' AND `is_admin` = 1;
--- ALTER TABLE `accounts` DROP COLUMN `is_admin`;
--- ALTER TABLE `accounts` MODIFY COLUMN `password` VARCHAR(50) NOT NULL;

@@ -96,44 +96,61 @@ try {
             $deliveries = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $order['deliveries'] = $deliveries;
 
-            // Compute a user-facing message based on pickup/delivery statuses
-            // Priority: delivery messages should override pickup messages so that
-            // when a delivery is completed the user sees "Your order has been delivered."
+            // Compute a user-facing message prioritizing delivery/pickup status over order status
             $userMessage = '';
-            // Check delivery rows first (highest priority)
+            
+            // PRIORITY 1: Check delivery status first (most specific)
+            // Only show delivery messages if delivery is actually in progress or completed (not just pending)
             foreach ($deliveries as $d) {
                 if (strtolower($d['delivery_type']) === 'delivery') {
-                    // status ids: 1=Pending,2=Dispatched,3=Delivered
+                    // status ids: 1=Pending, 2=In Progress, 3=Completed
                     if ((int)$d['delivery_status_id'] === 3) {
                         $userMessage = 'Your order has been delivered.';
                         break;
                     } elseif ((int)$d['delivery_status_id'] === 2) {
                         $userMessage = 'Your order is on the way.';
-                        // don't break yet; a delivered row (3) should still take precedence
-                        // but if no delivered row exists, this is the best available message
+                        break;
                     }
+                    // Don't show "ready for delivery" for pending status - let it fall through to pickup check
                 }
             }
 
-            // If no delivery-specific message, check pickup rows
+            // PRIORITY 2: If no delivery message, check pickup status
+            // Only show pickup messages if pickup is actually in progress or completed (not just scheduled)
             if ($userMessage === '') {
                 foreach ($deliveries as $d) {
                     if (strtolower($d['delivery_type']) === 'pickup') {
                         if ((int)$d['delivery_status_id'] === 3) {
-                            $userMessage = 'Your container has been picked up.';
+                            $userMessage = 'Your container has been picked up and is being prepared for delivery.';
                             break;
                         } elseif ((int)$d['delivery_status_id'] === 2) {
-                            $userMessage = 'Your container will be picked up soon.';
+                            $userMessage = 'Pickup is in progress.';
                             break;
                         }
+                        // Don't show "scheduled for pickup" for pending status - let it fall through to order status
                     }
                 }
             }
+            
+            // PRIORITY 3: Check order status only if no delivery/pickup status found
+            if ($userMessage === '') {
+                $orderStatusLower = strtolower($order['order_status'] ?? '');
+                if ($orderStatusLower === 'completed') {
+                    $userMessage = 'Your order has been completed.';
+                } elseif ($orderStatusLower === 'pending' || $orderStatusLower === 'confirmed') {
+                    $userMessage = 'Your order has been confirmed and is being prepared.';
+                }
+            }
 
-            // fallback to batch status or order status
+            // Final fallback to batch status or generic message
             if ($userMessage === '') {
                 if (!empty($order['batch']['batch_status'])) {
-                    $userMessage = 'Status: ' . $order['batch']['batch_status'];
+                    $batchStatusLower = strtolower($order['batch']['batch_status']);
+                    if ($batchStatusLower === 'completed') {
+                        $userMessage = 'Your order has been delivered.';
+                    } else {
+                        $userMessage = 'Status: ' . $order['batch']['batch_status'];
+                    }
                 } else {
                     $userMessage = 'Your order is being processed.';
                 }

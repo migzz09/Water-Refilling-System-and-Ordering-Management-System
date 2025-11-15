@@ -1,144 +1,393 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Transaction History</title>
-  <link rel="stylesheet" href="../assets/css/steel.css">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f6f9fc;
-      color: #333;
-      margin: 0;
-      padding: 20px;
+<meta charset="utf-8">
+<title>Transaction History — Water Refilling</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background: #F7FAFC;
+    color: #1A202C;
+    min-height: 100vh;
+    display: flex;
+    overflow-x: hidden;
+}
+
+.sidebar {
+    width: 64px;
+    background: #1A202C;
+    color: #E2E8F0;
+    position: fixed;
+    height: 100vh;
+    padding: 24px 0;
+    transition: width 0.3s ease;
+    z-index: 1000;
+}
+
+.sidebar:hover, .sidebar:focus-within {
+    width: 240px;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #3B82F6;
+    text-align: center;
+    margin-bottom: 32px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    background: transparent;
+    padding: 8px;
+}
+
+.logo-img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    background: transparent;
+}
+
+.logo-text {
+    font-size: 20px;
+    font-weight: 600;
+    color: #3B82F6;
+}
+
+.sidebar:hover .logo-container, .sidebar:focus-within .logo-container {
+    opacity: 1;
+}
+
+.sidebar ul {
+    list-style: none;
+}
+
+.sidebar ul li {
+    padding: 16px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.sidebar ul li:hover, .sidebar ul li:focus {
+    background: #2D3748;
+}
+
+.sidebar ul li.active {
+    background: #3B82F6;
+    color: #FFFFFF;
+    position: relative;
+}
+
+.sidebar ul li a, .sidebar ul li button {
+    color: inherit;
+    text-decoration: none;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    display: block;
+    text-align: center;
+    background: none;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+}
+
+.sidebar:hover ul li a, .sidebar:focus-within ul li a,
+.sidebar:hover ul li button, .sidebar:focus-within ul li button {
+    opacity: 1;
+    text-align: left;
+}
+
+.content {
+    margin-left: 64px;
+    padding: 24px;
+    width: calc(100% - 64px);
+    background: #FFFFFF;
+    min-height: 100vh;
+    transition: margin-left 0.3s ease, width 0.3s ease;
+}
+
+.sidebar:hover ~ .content, .sidebar:focus-within ~ .content {
+    margin-left: 240px;
+    width: calc(100% - 240px);
+}
+
+/* Report Sidebar */
+.sidebar-report {
+    position: fixed;
+    top: 0;
+    left: -250px;
+    width: 250px;
+    height: 100%;
+    background: #2c3e50;
+    color: #fff;
+    transition: 0.3s;
+    padding-top: 60px;
+    overflow-y: auto;
+    z-index: 1050;
+}
+.sidebar-report.active {
+    left: 0;
+}
+.sidebar-report ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.sidebar-report ul li {
+    padding: 10px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.sidebar-report ul li a {
+    color: #fff;
+    text-decoration: none;
+    display: block;
+}
+.sidebar-report ul li a:hover {
+    background: #34495e;
+}
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #fff;
+}
+
+.card{border:none;border-radius:.75rem;box-shadow:0 6px 18px rgba(38,78,118,.06)}
+.stat{font-size:1.6rem;font-weight:700}
+.small-muted{color:#6b7280;font-size:.95rem}
+.table thead th{border-bottom:2px solid #e6eef8}
+.stat-sub{font-size:.875rem;color:#6b7280}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        padding-bottom: 16px;
     }
-    .header-title { text-align: center; margin-bottom: 10px; }
-    .header-actions { position: absolute; top: 15px; left: 20px; }
-    .dashboard-image { width: 45px; height: 45px; cursor: pointer; }
-    h3 { text-align: center; font-weight: normal; color: #555; }
-    .table-container {
-      margin: 20px auto;
-      width: 98%;
-      max-width: 1300px;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      overflow: hidden;
+    .sidebar:hover, .sidebar:focus-within {
+        width: 100%;
     }
-    table { width: 100%; border-collapse: collapse; }
-    thead { background-color: #0099cc; color: white; }
-    th, td { padding: 12px 15px; text-align: center; border-bottom: 1px solid #ddd; }
-    tr:hover { background-color: #f1f1f1; }
-    @media (max-width: 900px) {
-      td, th { font-size: 12px; padding: 8px; }
+    .content {
+        margin-left: 0;
+        width: 100%;
+        padding: 16px;
     }
-  </style>
+    .sidebar:hover ~ .content, .sidebar:focus-within ~ .content {
+        margin-left: 0;
+        width: 100%;
+    }
+}
+</style>
 </head>
 <body>
-  <div class="header-actions">
-    <a href="admin_dashboard.php">
-      <img src="../images/admin-icon.png" alt="Admin Dashboard" class="dashboard-image">
-    </a>
-  </div>
+<!-- Main Sidebar (same as admin_dashboard.php) -->
+<nav class="sidebar" aria-label="Main navigation">
+    <div class="logo-container">
+        <img src="ww_logo.png" alt="Water World Logo" class="logo-img">
+        <span class="logo-text">WATER WORLD</span>
+    </div>
+    <ul>
+        <li><a href="admin-dashboard.html">Dashboard</a></li>
+        <li><a href="manage-orders.html">Manage Orders</a></li>
+        <li class="active"><a href="transaction-history.html">Transaction History</a></li>
+        <li><a href="daily-report.html">Daily Report</a></li>
+    </ul>
+</nav>
 
-  <h2 class="header-title">💧 Water World - Transaction History 💧</h2>
-  <h3>Complete record of all customer transactions with product details and pricing.</h3>
+<!-- Main Content -->
+<main class="content" id="mainContent">
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-0">Transaction History</h2>
+                <div class="small-muted">Complete order transaction history</div>
+            </div>
+            <div>
+                <button type="button" onclick="loadTransactionHistory()" class="btn btn-primary me-2">
+                    <i class="fa fa-refresh"></i> Refresh
+                </button>
+                <button type="button" onclick="exportToCSV()" class="btn btn-success">
+                    <i class="fa fa-download"></i> Export CSV
+                </button>
+            </div>
+        </div>
 
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th>Order Ref</th>
-          <th>Order Date</th>
-          <th>Customer</th>
-          <th>Order Type</th>
-          <th>Container (unit price)</th>
-          <th>Quantity</th>
-          <th>Subtotal</th>
-          <th>Order Status</th>
-          <th>Batch Status</th>
-          <th>Payment</th>
-          <th>Delivery</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php
-        try {
-          // note: select od.order_detail_id so each detail row is unique
-          $sql = "
-            SELECT
-              o.reference_id AS order_ref,
-              o.order_date,
-              CONCAT(c.first_name, ' ', COALESCE(c.middle_name, ''), ' ', c.last_name) AS customer_name,
-              ot.type_name AS order_type,
-              containers.container_type AS container_type,
-              od.quantity,
-              od.subtotal,
-              -- compute unit price from recorded subtotal / quantity to reflect actual paid price
-              (CASE WHEN od.quantity = 0 THEN 0 ELSE (od.subtotal / od.quantity) END) AS unit_price,
-              os.status_name AS order_status,
-              COALESCE(bs.status_name, 'N/A') AS batch_status,
-              ps.status_name AS payment_status,
-              ds.status_name AS delivery_status
-            FROM orders o
-            LEFT JOIN customers c ON o.customer_id = c.customer_id
-            LEFT JOIN order_types ot ON o.order_type_id = ot.order_type_id
-            LEFT JOIN order_details od ON o.reference_id = od.reference_id
-            LEFT JOIN containers ON od.container_id = containers.container_id
-            LEFT JOIN order_status os ON o.order_status_id = os.status_id
-            LEFT JOIN batches b ON o.batch_id = b.batch_id
-            LEFT JOIN batch_status bs ON b.batch_status_id = bs.batch_status_id
-            LEFT JOIN payments p ON o.reference_id = p.reference_id
-            LEFT JOIN payment_status ps ON p.payment_status_id = ps.payment_status_id
-            LEFT JOIN deliveries d ON b.batch_id = d.batch_id
-            LEFT JOIN delivery_status ds ON d.delivery_status_id = ds.delivery_status_id
-            ORDER BY o.order_date DESC, o.reference_id DESC, od.order_detail_id DESC
-            LIMIT 250
-          ";
+        <!-- Transaction History Table -->
+        <div class="card">
+            <div class="card-body">
+                <h6 class="mb-3">All Transactions (<span id="transactionCount">0</span>)</h6>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Contact</th>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Payment</th>
+                                <th>Batch</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionBody">
+                            <tr>
+                                <td colspan="8" class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                    Loading transactions...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
 
-          $stmt = $pdo->query($sql);
+<script>
+let cachedTransactions = [];
 
-          if ($stmt && $stmt->rowCount() > 0) {
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-              // safe extraction, fallback values
-              $order_ref = htmlspecialchars($row['order_ref']);
-              $order_date = htmlspecialchars($row['order_date']);
-              $customer = htmlspecialchars(trim($row['customer_name']));
-              $order_type = htmlspecialchars($row['order_type'] ?? 'N/A');
-              $container_type = htmlspecialchars($row['container_type'] ?? 'Unknown');
-              $quantity = (int)($row['quantity'] ?? 0);
-              $subtotal = number_format((float)($row['subtotal'] ?? 0), 2);
-              $unit_price = number_format((float)($row['unit_price'] ?? 0), 2);
-              $order_status = htmlspecialchars($row['order_status'] ?? 'N/A');
-              $batch_status = htmlspecialchars($row['batch_status'] ?? 'N/A');
-              $payment_status = htmlspecialchars($row['payment_status'] ?? 'N/A');
-              $delivery_status = htmlspecialchars($row['delivery_status'] ?? 'N/A');
-
-              // show container type together with the actual unit price recorded for this order detail
-              $container_display = $container_type . " (₱" . $unit_price . ")";
-
-              echo "<tr>
-                      <td>{$order_ref}</td>
-                      <td>{$order_date}</td>
-                      <td>{$customer}</td>
-                      <td>{$order_type}</td>
-                      <td>{$container_display}</td>
-                      <td>{$quantity}</td>
-                      <td>₱{$subtotal}</td>
-                      <td>{$order_status}</td>
-                      <td>{$batch_status}</td>
-                      <td>" . ($payment_status === 'N/A' ? 'N/A' : $payment_status) . "</td>
-                      <td>" . ($delivery_status === 'N/A' ? 'N/A' : $delivery_status) . "</td>
-                    </tr>";
+// Check admin authentication
+(function checkAdminAuth() {
+    fetch('/WRSOMS/api/auth/session.php', { credentials: 'same-origin' })
+        .then(r => r.json())
+        .then(res => {
+            if (!res.authenticated || !res.user || !res.user.is_admin) {
+                alert('Admin access required. Please login with admin credentials.');
+                window.location.href = '/WRSOMS/pages/login.html?redirect=admin';
             }
-          } else {
-            echo "<tr><td colspan='11'>No transactions found.</td></tr>";
-          }
-        } catch (PDOException $e) {
-          echo "<tr><td colspan='11'>Error fetching data: " . htmlspecialchars($e->getMessage()) . "</td></tr>";
+        })
+        .catch(err => {
+            console.error('Auth check failed:', err);
+            window.location.href = '/WRSOMS/pages/login.html?redirect=admin';
+        });
+})();
+
+// Load on page load
+document.addEventListener('DOMContentLoaded', loadTransactionHistory);
+
+function loadTransactionHistory() {
+    const tbody = document.getElementById('transactionBody');
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4"><div class="spinner-border spinner-border-sm"></div> Loading...</td></tr>';
+
+    fetch('/WRSOMS/api/admin/dashboard.php', { credentials: 'same-origin' })
+        .then(r => r.json())
+        .then(res => {
+            if (!res.success) throw new Error(res.message || 'Failed to load');
+            cachedTransactions = res.data?.order_history || [];
+            renderTransactions(cachedTransactions);
+        })
+        .catch(err => {
+            console.error('Load error:', err);
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">Error: ${err.message}</td></tr>`;
+        });
+}
+
+function renderTransactions(transactions) {
+    const tbody = document.getElementById('transactionBody');
+    const countEl = document.getElementById('transactionCount');
+    
+    countEl.textContent = transactions.length;
+    tbody.innerHTML = '';
+    
+    if (!transactions.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No transactions found</td></tr>';
+        return;
+    }
+    
+    transactions.forEach(t => {
+        const customerName = t.first_name && t.last_name ? `${t.first_name} ${t.last_name}` : 'N/A';
+        const batchInfo = t.vehicle_type && t.batch_number ? `${t.vehicle_type} #${t.batch_number}` : 'Unassigned';
+        const isArchived = t.source === 'archived';
+        let statusClass = 'badge bg-secondary';
+        let statusText = t.order_status || 'N/A';
+        
+        if (isArchived) {
+            statusClass = 'badge bg-light text-dark';
+            statusText = 'Archived';
+        } else if (statusText.toLowerCase().includes('delivered') || statusText.toLowerCase().includes('completed')) {
+            statusClass = 'badge bg-success';
+        } else if (statusText.toLowerCase().includes('pending')) {
+            statusClass = 'badge bg-warning text-dark';
+        } else if (statusText.toLowerCase().includes('out for delivery')) {
+            statusClass = 'badge bg-info';
         }
-        ?>
-      </tbody>
-    </table>
-  </div>
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${escapeHtml(t.reference_id)}</strong></td>
+            <td>${escapeHtml(customerName)}</td>
+            <td>${escapeHtml(t.customer_contact || 'N/A')}</td>
+            <td>${formatDateTime(t.order_date)}</td>
+            <td><strong>₱${formatMoney(t.total_amount)}</strong></td>
+            <td>${escapeHtml(t.payment_method || 'N/A')}</td>
+            <td>${escapeHtml(batchInfo)}</td>
+            <td><span class="${statusClass}">${escapeHtml(statusText)}</span></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function exportToCSV() {
+    if (!cachedTransactions?.length) {
+        alert('No data to export');
+        return;
+    }
+    
+    let csv = 'Order ID,First Name,Last Name,Contact,Order Date,Delivery Date,Amount,Payment Method,Payment Status,Batch,Status\n';
+    
+    cachedTransactions.forEach(t => {
+        const batch = t.vehicle_type && t.batch_number ? `${t.vehicle_type} #${t.batch_number}` : 'Unassigned';
+        const status = t.source === 'archived' ? 'Archived' : (t.order_status || 'N/A');
+        csv += `"${t.reference_id || 'N/A'}","${t.first_name || 'N/A'}","${t.last_name || 'N/A'}","${t.customer_contact || 'N/A'}","${t.order_date || 'N/A'}","${t.delivery_date || 'N/A'}",${t.total_amount || '0'},"${t.payment_method || 'N/A'}","${t.payment_status || 'N/A'}","${batch}","${status}"\n`;
+    });
+    
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `transaction_history_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatDateTime(dateStr) {
+    if (!dateStr) return 'N/A';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    return date.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function formatMoney(amount) {
+    if (!amount) return '0.00';
+    return parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

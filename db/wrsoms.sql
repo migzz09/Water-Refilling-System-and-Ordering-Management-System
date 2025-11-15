@@ -179,7 +179,8 @@ INSERT INTO `checkouts` (`checkout_id`, `customer_id`, `created_at`, `notes`) VA
 CREATE TABLE `containers` (
   `container_id` int(11) NOT NULL,
   `container_type` enum('Round','Slim') NOT NULL,
-  `price` decimal(10,2) NOT NULL
+  `price` decimal(10,2) NOT NULL,
+  `photo` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --

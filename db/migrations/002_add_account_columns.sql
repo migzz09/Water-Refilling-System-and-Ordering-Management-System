@@ -1,9 +1,4 @@
--- Migration: Add profile and deletion columns to accounts table
--- Date: November 3, 2025
--- Description: Adds profile_photo, deletion_token, and deletion_expires columns to support
---              user profile pictures and secure account deletion functionality.
 
--- Add useful columns to accounts table (without redundant phone_number)
 ALTER TABLE `accounts` 
 ADD COLUMN IF NOT EXISTS `profile_photo` varchar(255) DEFAULT NULL AFTER `is_verified`,
 ADD COLUMN IF NOT EXISTS `deletion_token` varchar(255) DEFAULT NULL AFTER `profile_photo`,
