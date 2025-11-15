@@ -406,7 +406,7 @@ try {
             <li class="active"><button type="button" data-page="dashboard">Dashboard</button></li>
             <li><button type="button" data-page="manage_orders.php">Manage Orders</button></li>
             <li><button type="button" data-page="status.php">Manage Status</button></li>
-            <li><button type="button" data-page="daily_report.php">Daily Report</button></li>
+            <li><button type="button" data-page="daily-report.html">Daily Report</button></li>
             <li><button type="button" data-page="admin_transaction_history.php">Transaction History</button></li>
             <li><button type="button" data-page="admin_feedback.php">Feedback</button></li>
         </ul>
@@ -510,8 +510,11 @@ try {
         </section>
     </main>
     <script>
-        // Store the original dashboard content
-        const originalContent = document.getElementById('mainContent').innerHTML;
+        // Store the original dashboard content on window to avoid redeclaration
+        if (typeof window.originalContent === 'undefined') {
+            const mc = document.getElementById('mainContent');
+            window.originalContent = mc ? mc.innerHTML : '';
+        }
 
         // Generalized function to load page content
         function loadPage(page, params = '') {
@@ -526,13 +529,13 @@ try {
             }
 
             // Reset report sidebar visibility unless loading daily report
-            if (page !== 'daily_report.php') {
+            if (page !== 'daily-report.html') {
                 reportSidebar.classList.remove('active');
             }
 
             // Handle dashboard (restore original content)
             if (page === 'dashboard') {
-                mainContent.innerHTML = originalContent;
+                    mainContent.innerHTML = window.originalContent;
                 return;
             }
 
@@ -558,8 +561,8 @@ try {
                     scriptElement.textContent = scripts;
                     mainContent.appendChild(scriptElement);
 
-                    // Fetch report dates for daily report
-                    if (page === 'daily_report.php') {
+                    // Fetch report dates for daily report (client-side)
+                    if (page === 'daily-report.html') {
                         fetchDates();
                     }
                 })
@@ -574,13 +577,16 @@ try {
         }
 
         function showDailyReport(date = '<?php echo date('Y-m-d'); ?>') {
-            loadPage('daily_report.php', `?date=${encodeURIComponent(date)}`);
+            // Prefer client-side report page
+            loadPage('daily-report.html', `?date=${encodeURIComponent(date)}`);
         }
 
         function fetchDates() {
-            fetch('daily_report.php?get_dates=true')
+            fetch('/WRSOMS/api/admin/daily_report.php?get_dates=true')
                 .then(response => response.json())
-                .then(dates => {
+                .then(res => {
+                    if (!res.success) return;
+                    const dates = res.data.available_dates || [];
                     const ul = document.getElementById('reportDates');
                     ul.innerHTML = '';
                     dates.forEach(d => {
@@ -593,7 +599,7 @@ try {
                         ul.appendChild(li);
                     });
                 })
-                .catch(error => console.error('Error fetching dates:', error));
+                .catch(error => console.error('Error fetching dates (API):', error));
         }
 
         // Event listeners for sidebar buttons

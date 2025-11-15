@@ -4,6 +4,8 @@
  * Method: POST
  * Body: Order data including items, delivery info, etc.
  */
+
+date_default_timezone_set('Asia/Manila');
 session_start();
 require_once '../../config/connect.php';
 
@@ -25,6 +27,17 @@ if (!isset($_SESSION['customer_id'])) {
 $input = json_decode(file_get_contents('php://input'), true);
 $customerId = $_SESSION['customer_id'];
 
+// Get the account_id for notifications
+$accountId = null;
+try {
+    $accStmt = $pdo->prepare("SELECT account_id FROM accounts WHERE customer_id = ? LIMIT 1");
+    $accStmt->execute([$customerId]);
+    $accRow = $accStmt->fetch(PDO::FETCH_ASSOC);
+    $accountId = $accRow['account_id'] ?? null;
+} catch (Exception $e) {
+    // Continue without account_id - notification won't be created
+}
+
 // Extract order data
 $orderType = (int)($input['order_type'] ?? 1);
 $deliveryOption = (int)($input['delivery_option'] ?? 1);
@@ -41,6 +54,47 @@ $errors = [];
 
 if (empty($items)) {
     $errors[] = "At least one item is required.";
+}
+
+// Check business hours and cutoff time
+$currentTime = date('H:i:s');
+$currentDay = date('l'); // Monday, Tuesday, etc.
+
+// Get today's business hours
+$stmt = $pdo->prepare("SELECT is_open, open_time, close_time FROM business_hours WHERE day_of_week = ? LIMIT 1");
+$stmt->execute([$currentDay]);
+$todayHours = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// Check if business is open today
+if (!$todayHours || !$todayHours['is_open']) {
+    $errors[] = "We're closed today. Orders cannot be placed.";
+}
+
+// Check if within business hours
+if ($todayHours && $todayHours['is_open']) {
+    $currentTimeObj = strtotime($currentTime);
+    $openTimeObj = strtotime($todayHours['open_time']);
+    $closeTimeObj = strtotime($todayHours['close_time']);
+    
+    if ($currentTimeObj < $openTimeObj) {
+        $errors[] = "We haven't opened yet. Please place your order after " . date('g:i A', $openTimeObj) . ".";
+    } elseif ($currentTimeObj > $closeTimeObj) {
+        $errors[] = "We're closed for today. We only accept same-day delivery orders during business hours.";
+    }
+}
+
+// Check cutoff time
+$stmt = $pdo->prepare("SELECT is_enabled, cutoff_time FROM cutoff_time_setting LIMIT 1");
+$stmt->execute();
+$cutoffSetting = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if ($cutoffSetting && $cutoffSetting['is_enabled']) {
+    $cutoffTimeObj = strtotime($cutoffSetting['cutoff_time']);
+    $currentTimeObj = strtotime($currentTime);
+    if ($currentTimeObj > $cutoffTimeObj) {
+        $cutoffTimeFormatted = date('g:i A', $cutoffTimeObj);
+        $errors[] = "Sorry, today's order cutoff time ($cutoffTimeFormatted) has passed. We only accept same-day delivery orders.";
+    }
 }
 
 if (!empty($errors)) {
@@ -87,7 +141,8 @@ try {
         }
 
         // Find existing batch with enough space (prioritize lowest batch_number)
-        $stmt = $pdo->prepare("\n            SELECT b.batch_id, b.batch_number, COALESCE(SUM(od.quantity), 0) AS total_quantity\n            FROM batches b\n            LEFT JOIN orders o ON b.batch_id = o.batch_id\n            LEFT JOIN order_details od ON o.reference_id = od.reference_id\n            WHERE DATE(b.batch_date) = ? AND b.vehicle_type = ?\n            GROUP BY b.batch_id, b.batch_number\n            HAVING total_quantity + ? <= ?\n            ORDER BY b.batch_number ASC, b.batch_id ASC\n            LIMIT 1\n        ");
+        // Only consider batches with status 1 (Pending) - exclude Dispatched, Failed, or Completed batches
+        $stmt = $pdo->prepare("\n            SELECT b.batch_id, b.batch_number, COALESCE(SUM(od.quantity), 0) AS total_quantity\n            FROM batches b\n            LEFT JOIN orders o ON b.batch_id = o.batch_id\n            LEFT JOIN order_details od ON o.reference_id = od.reference_id\n            WHERE DATE(b.batch_date) = ? AND b.vehicle_type = ? AND b.batch_status_id = 1\n            GROUP BY b.batch_id, b.batch_number\n            HAVING total_quantity + ? <= ?\n            ORDER BY b.batch_number ASC, b.batch_id ASC\n            LIMIT 1\n        ");
         $stmt->execute([$batch_date, $vehicle_type, $quantity, $capacity]);
         $batch = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -153,6 +208,11 @@ try {
         $containerId = isset($item['container_id']) ? (int)$item['container_id'] : null;
         $quantity = isset($item['quantity']) ? (int)$item['quantity'] : 0;
         $stmt->execute([$referenceId, $batch_number, $containerId, $waterTypeId, $itemOrderTypeId, $quantity, $subtotal]);
+        // Decrease inventory only for 'Purchase Container/s' order type (assume id 2)
+        if ($itemOrderTypeId === 2 && $containerId) {
+            $invStmt = $pdo->prepare("UPDATE inventory SET stock = stock - ? WHERE container_id = ?");
+            $invStmt->execute([$quantity, $containerId]);
+        }
     }
     // For refill orders, create pickup and delivery entries tied to the batch
     $pickup_delivery_id = null;
@@ -194,6 +254,13 @@ try {
     // Insert payment record
     $stmt = $pdo->prepare("INSERT INTO payments (reference_id, payment_method_id, payment_status_id, amount_paid) VALUES (?, ?, 1, ?)");
     $stmt->execute([$referenceId, $paymentMethod, $totalAmount]);
+
+    // Create notification for successful order placement (only if account_id is found)
+    if ($accountId) {
+        $notifMessage = "Your order #$referenceId has been placed successfully! Total: ₱" . number_format($totalAmount, 2);
+        $notifStmt = $pdo->prepare("INSERT INTO notifications (user_id, message, reference_id, notification_type, is_read, created_at) VALUES (?, ?, ?, 'order_placed', 0, NOW())");
+        $notifStmt->execute([$accountId, $notifMessage, $referenceId]);
+    }
 
     $pdo->commit();
 

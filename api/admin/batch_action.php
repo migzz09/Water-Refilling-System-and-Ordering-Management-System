@@ -82,6 +82,21 @@ try {
             $updateOrdersStatus(3);
             // set batch status to Completed (3)
             $pdo->prepare("UPDATE batches SET batch_status_id = 3 WHERE batch_id = ?")->execute([$batchId]);
+            
+            // Auto-mark COD payments as Paid when delivery is completed
+            // Get all orders in this batch with COD payment method (payment_method_id = 1)
+            // and update their payment status to Paid (payment_status_id = 2)
+            $codStmt = $pdo->prepare("
+                UPDATE payments p
+                INNER JOIN orders o ON p.reference_id = o.reference_id
+                SET p.payment_status_id = 2
+                WHERE o.batch_id = ? 
+                AND p.payment_method_id = 1 
+                AND p.payment_status_id = 1
+            ");
+            $codStmt->execute([$batchId]);
+            $updatedRows = $codStmt->rowCount();
+            error_log("Complete delivery: Updated $updatedRows COD payment(s) to Paid for batch_id: $batchId");
             break;
         default:
             throw new Exception('Unknown action');

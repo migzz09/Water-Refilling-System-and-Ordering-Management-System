@@ -147,6 +147,11 @@ try {
 
             $stmt = $pdo->prepare('INSERT INTO accounts (customer_id, username, password, otp, otp_expires, is_verified) VALUES (?, ?, ?, ?, ?, 0)');
             $stmt->execute([$customer_id, $username, $hashed_password, $otp, $otp_expires]);
+            $account_id = $pdo->lastInsertId();
+
+            // Update customer table with account_id to create bidirectional link
+            $stmt = $pdo->prepare('UPDATE customers SET account_id = ? WHERE customer_id = ?');
+            $stmt->execute([$account_id, $customer_id]);
         }
 
         $pdo->commit();

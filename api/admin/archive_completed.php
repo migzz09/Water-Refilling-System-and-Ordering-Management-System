@@ -100,6 +100,33 @@ try {
     
     // Get all completed orders with full details
     // Note: deliveries are linked to batches, not individual orders
+    // First, let's see ALL orders for the date regardless of completion status
+    $debugStmt = $pdo->prepare("
+        SELECT 
+            o.reference_id,
+            o.order_date,
+            o.delivery_date,
+            o.batch_id,
+            b.batch_date,
+            b.batch_status_id,
+            bs.status_name as batch_status,
+            d.delivery_status_id,
+            ds.status_name as delivery_status
+        FROM orders o
+        LEFT JOIN batches b ON o.batch_id = b.batch_id
+        LEFT JOIN batch_status bs ON b.batch_status_id = bs.batch_status_id
+        LEFT JOIN deliveries d ON b.batch_id = d.batch_id
+        LEFT JOIN delivery_status ds ON d.delivery_status_id = ds.delivery_status_id
+        WHERE DATE(o.order_date) = ?
+    ");
+    $debugStmt->execute([$dateFilter]);
+    $allOrdersOnDate = $debugStmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Log for debugging
+    error_log("Archive: Looking for date $dateFilter");
+    error_log("Archive: Found " . count($allOrdersOnDate) . " total orders on date");
+    error_log("Archive: Orders detail: " . json_encode($allOrdersOnDate));
+    
     $stmt = $pdo->prepare("
         SELECT 
             o.reference_id,
@@ -117,30 +144,65 @@ try {
             b.vehicle_type,
             d.actual_time as delivery_time,
             d.scheduled_time as pickup_time,
-            pm.method_name as payment_method
+            pm.method_name as payment_method,
+            d.delivery_status_id,
+            b.batch_status_id
         FROM orders o
         LEFT JOIN customers c ON o.customer_id = c.customer_id
         LEFT JOIN payments p ON o.reference_id = p.reference_id
         LEFT JOIN payment_methods pm ON p.payment_method_id = pm.payment_method_id
         LEFT JOIN order_status os ON o.order_status_id = os.status_id
         LEFT JOIN batches b ON o.batch_id = b.batch_id
+        LEFT JOIN batch_status bs ON b.batch_status_id = bs.batch_status_id
         LEFT JOIN deliveries d ON b.batch_id = d.batch_id
         LEFT JOIN delivery_status ds ON d.delivery_status_id = ds.delivery_status_id
-        WHERE d.delivery_status_id = 3
-        AND o.delivery_date = ?
+        WHERE (
+            d.delivery_status_id = 3
+            OR b.batch_status_id = 3
+            OR LOWER(ds.status_name) LIKE '%completed%'
+            OR LOWER(bs.status_name) LIKE '%completed%'
+        )
+        AND DATE(o.order_date) = ?
     ");
-    $stmt->execute([$dateFilter]);
+        $stmt->execute([$dateFilter]);
     $completedOrders = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // If no orders to archive, return success with count 0
+    error_log("Archive: Found " . count($completedOrders) . " completed orders");
+    error_log("Archive: Completed orders: " . json_encode($completedOrders));
+    
+    // If no orders to archive, return success with count 0 and diagnostics to help debugging
     if (empty($completedOrders)) {
+        // Gather diagnostics: orders scheduled for the date, their batch ids, batch statuses, and delivery statuses
+        $diag = [];
+        $diag['all_orders_on_date'] = $allOrdersOnDate;
+        $diag['orders_on_date_count'] = count($allOrdersOnDate);
+        $diag['orders_on_date_sample'] = array_slice(array_map(function($o){ return $o['reference_id']; }, $allOrdersOnDate), 0, 10);
+
+        // batch statuses
+        $batchIds = array_values(array_unique(array_filter(array_map(function($o){ return $o['batch_id'] ?? null; }, $allOrdersOnDate))));
+        $diag['batch_ids'] = $batchIds;
+        $diag['batches'] = [];
+        $diag['deliveries'] = [];
+        if (count($batchIds)) {
+            $place = implode(',', array_fill(0, count($batchIds), '?'));
+            $qb = $pdo->prepare("SELECT b.batch_id, b.batch_number, b.batch_status_id, bs.status_name AS batch_status FROM batches b LEFT JOIN batch_status bs ON b.batch_status_id = bs.batch_status_id WHERE b.batch_id IN ($place)");
+            $qb->execute($batchIds);
+            $diag['batches'] = $qb->fetchAll(PDO::FETCH_ASSOC);
+
+            // deliveries for those batches
+            $qd = $pdo->prepare("SELECT d.batch_id, d.delivery_id, d.delivery_status_id, ds.status_name AS delivery_status FROM deliveries d LEFT JOIN delivery_status ds ON d.delivery_status_id = ds.delivery_status_id WHERE d.batch_id IN ($place)");
+            $qd->execute($batchIds);
+            $diag['deliveries'] = $qd->fetchAll(PDO::FETCH_ASSOC);
+        }
+
         $pdo->commit();
         sendJson([
-            'success' => true,
+            'success' => false,
             'message' => 'No completed orders found for ' . $dateFilter,
             'data' => [
                 'orders_archived' => 0,
-                'date' => $dateFilter
+                'date' => $dateFilter,
+                'diagnostics' => $diag
             ]
         ]);
     }
@@ -189,7 +251,18 @@ try {
             'items' => $items
         ];
         
+        // Check if already archived (avoid duplicates)
+        $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM archived_orders WHERE reference_id = ?");
+        $checkStmt->execute([$order['reference_id']]);
+        if ($checkStmt->fetchColumn() > 0) {
+            // Already archived, skip
+            continue;
+        }
+        
         // Insert simplified archive with JSON data
+        // NOTE: We only INSERT into archived_orders, we DO NOT DELETE from orders table
+        // The orders table is the source of truth for user transaction history, dashboard stats, and reports
+        // Archive is for admin UI decluttering only
         $stmt = $pdo->prepare("
             INSERT INTO archived_orders 
             (reference_id, user_id, delivery_date, total_amount, order_data, archived_at, archived_by)
@@ -204,31 +277,13 @@ try {
             $userId
         ]);
         
-        // Delete from main tables (in correct order for foreign keys)
-        // Note: deliveries are linked to batches, we'll clean them up later
-        
-        $stmt = $pdo->prepare("DELETE FROM order_details WHERE reference_id = ?");
-        $stmt->execute([$order['reference_id']]);
-        
-        $stmt = $pdo->prepare("DELETE FROM orders WHERE reference_id = ?");
-        $stmt->execute([$order['reference_id']]);
-        
+        error_log("Archive: Successfully inserted order " . $order['reference_id'] . " into archived_orders");
         $archivedCount++;
     }
     
-    // Delete empty batches and their deliveries
-    $stmt = $pdo->prepare("
-        DELETE d FROM deliveries d
-        LEFT JOIN orders o ON d.batch_id = o.batch_id
-        WHERE o.batch_id IS NULL
-    ");
-    $stmt->execute();
-    
-    $stmt = $pdo->prepare("
-        DELETE FROM batches 
-        WHERE batch_id NOT IN (SELECT DISTINCT batch_id FROM orders WHERE batch_id IS NOT NULL)
-    ");
-    $stmt->execute();
+    // DO NOT delete orders, order_details, batches, or deliveries
+    // Archive is for admin record-keeping and UI filtering only
+    // All original data must remain intact for user transaction history, dashboard, and reports
     
     // Log the archive operation
     $stmt = $pdo->prepare("
@@ -244,7 +299,9 @@ try {
         "Archived $archivedCount completed orders for $dateFilter"
     ]);
     
+    error_log("Archive: About to commit transaction with $archivedCount orders archived");
     $pdo->commit();
+    error_log("Archive: Transaction committed successfully");
     
     sendJson([
         'success' => true,

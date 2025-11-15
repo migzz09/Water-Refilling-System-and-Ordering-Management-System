@@ -223,13 +223,12 @@ body {
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h2 class="mb-0">Daily Sales Report</h2>
-                <div class="small-muted">Overview for <?= date('F j, Y', strtotime($selected_date)) ?></div>
+                <div class="small-muted">Overview for <span id="reportDate">-</span></div>
             </div>
             <div>
                 <button type="button" onclick="toggleReportSidebar()" class="btn btn-outline-primary me-2" title="Date Selector">📅</button>
-                <a href="daily_report.php?date=<?= $prev_date ?>" class="btn btn-outline-primary">⬅ Previous Day</a>
-                
-                    <a href="daily_report.php?date=<?= $next_date ?>" class="btn btn-outline-primary">Next Day ➡</a>
+                <a id="prevDayBtn" href="#" class="btn btn-outline-primary">⬅ Previous Day</a>
+                <a id="nextDayBtn" href="#" class="btn btn-outline-primary">Next Day ➡</a>
                 
             </div>
         </div>
@@ -239,28 +238,28 @@ body {
             <div class="col-md-3">
                 <div class="card p-3">
                     <div class="small-muted">Total Revenue</div>
-                    <div class="stat">₱ <?= number_format($total_revenue, 2) ?></div>
-                    <div class="stat-sub mt-1"><?= $orders_today ?> orders</div>
+                    <div class="stat" id="totalRevenue">₱ 0.00</div>
+                    <div class="stat-sub mt-1" id="ordersToday">0 orders</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card p-3">
                     <div class="small-muted">Orders</div>
-                    <div class="stat"><?= $orders_today ?></div>
-                    <div class="stat-sub mt-1"><?= $new_customers_today ?> new customers</div>
+                    <div class="stat" id="ordersStat">0</div>
+                    <div class="stat-sub mt-1" id="newCustomers">0 new customers</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card p-3">
                     <div class="small-muted">New Customers</div>
-                    <div class="stat"><?= $new_customers_today ?></div>
+                    <div class="stat" id="newCustomersStat">0</div>
                     <div class="stat-sub mt-1">Registered</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card p-3">
                     <div class="small-muted">Completed Payments</div>
-                    <div class="stat">₱ <?= number_format($completed_payments_today, 2) ?></div>
+                    <div class="stat" id="completedPayments">₱ 0.00</div>
                     <div class="stat-sub mt-1">Paid status</div>
                 </div>
             </div>
@@ -301,19 +300,8 @@ body {
                                     <th class="text-end">Total</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                
-                                    
-                                        <tr>
-                                            <td><?= htmlspecialchars($ro['reference_id']) ?></td>
-                                            <td><?= htmlspecialchars($ro['customer_name'] ?? 'Guest') ?></td>
-                                            <td><?= htmlspecialchars($ro['order_date']) ?></td>
-                                            <td class="text-end">₱ <?= number_format($ro['total_amount'], 2) ?></td>
-                                        </tr>
-                                    
-                                
-                                    <tr><td colspan="4" class="text-center small-muted">No recent orders</td></tr>
-                                
+                            <tbody id="recentOrdersBody">
+                                <tr><td colspan="4" class="text-center small-muted">Loading...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -331,18 +319,8 @@ body {
                                     <th class="text-end">Revenue</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                
-                                    
-                                        <tr>
-                                            <td><?= htmlspecialchars($tp['container_type']) ?></td>
-                                            <td class="text-end"><?= (int)$tp['qty'] ?></td>
-                                            <td class="text-end">₱ <?= number_format($tp['revenue'], 2) ?></td>
-                                        </tr>
-                                    
-                                
-                                    <tr><td colspan="3" class="text-center small-muted">No sales in last 30 days</td></tr>
-                                
+                            <tbody id="topProductsBody">
+                                <tr><td colspan="3" class="text-center small-muted">Loading...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -358,9 +336,11 @@ function toggleReportSidebar() {
 }
 
 function fetchDates() {
-    fetch('daily_report.php?get_dates=true')
+    fetch('/WRSOMS/api/admin/daily_report.php')
         .then(response => response.json())
-        .then(dates => {
+        .then(res => {
+            if (!res.success) return;
+            const dates = res.data.available_dates || [];
             const ul = document.getElementById('reportDates');
             ul.innerHTML = '';
             dates.forEach(d => {
@@ -368,9 +348,7 @@ function fetchDates() {
                 const a = document.createElement('a');
                 a.href = '#';
                 a.textContent = d;
-                a.onclick = () => {
-                    window.location.href = 'daily_report.php?date=' + d;
-                };
+                a.onclick = (e) => { e.preventDefault(); loadReport(d); toggleReportSidebar(); };
                 li.appendChild(a);
                 ul.appendChild(li);
             });
@@ -378,33 +356,126 @@ function fetchDates() {
         .catch(error => console.error('Error fetching dates:', error));
 }
 
+let chartRevenue = null;
+let chartOrders = null;
+let chartPayments = null;
+
+function renderCharts(labels, revenueData, ordersData, paymentsByMethod) {
+    // Revenue line
+    const revCtx = document.getElementById('revenueLine').getContext('2d');
+    if (chartRevenue) chartRevenue.destroy();
+    chartRevenue = new Chart(revCtx, {
+        type: 'line',
+        data: { labels: labels, datasets: [{ label: 'Revenue (₱)', data: revenueData, tension:0.3, fill:true, borderColor:'#007bff', backgroundColor:'rgba(0,123,255,0.2)' }] },
+        options: { responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, ticks:{callback:v=>'₱'+v}}} }
+    });
+
+    // Orders bar
+    const ordCtx = document.getElementById('ordersBar').getContext('2d');
+    if (chartOrders) chartOrders.destroy();
+    chartOrders = new Chart(ordCtx, {
+        type: 'bar',
+        data: { labels: labels, datasets: [{ label:'Orders', data: ordersData, backgroundColor:'#28a745' }] },
+        options: { responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
+    });
+
+    // Payments pie
+    const payCtx = document.getElementById('paymentsPie').getContext('2d');
+    if (chartPayments) chartPayments.destroy();
+    const pieLabels = (paymentsByMethod || []).map(p=>p.method_name || 'Method');
+    const pieData = (paymentsByMethod || []).map(p=>parseFloat(p.total) || 0);
+    chartPayments = new Chart(payCtx, {
+        type:'pie',
+        data:{ labels:pieLabels, datasets:[{ data:pieData, backgroundColor:['#007bff','#ffc107','#28a745','#dc3545','#6f42c1'] }] },
+        options:{ responsive:true, plugins:{legend:{position:'bottom'}} }
+    });
+}
+
+function loadReport(date) {
+    const url = '/WRSOMS/api/admin/daily_report.php' + (date ? '?date=' + encodeURIComponent(date) : '');
+    fetch(url)
+        .then(r => r.json())
+        .then(res => {
+            if (!res.success) throw new Error(res.message || 'Failed to load');
+            const data = res.data || {};
+
+            // Update header date and prev/next
+            document.getElementById('reportDate').textContent = data.selected_date || '';
+            const prevBtn = document.getElementById('prevDayBtn');
+            const nextBtn = document.getElementById('nextDayBtn');
+            prevBtn.href = '#'; nextBtn.href = '#';
+            prevBtn.onclick = (e) => { e.preventDefault(); if (data.prev_date) loadReport(data.prev_date); };
+            nextBtn.onclick = (e) => { e.preventDefault(); if (data.next_date) loadReport(data.next_date); };
+
+            // Update stats
+            const stats = data.stats || {};
+            document.getElementById('totalRevenue').textContent = '₱ ' + (stats.total_revenue || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+            document.getElementById('ordersToday').textContent = (stats.orders_today || 0) + ' orders';
+            document.getElementById('ordersStat').textContent = (stats.orders_today || 0);
+            document.getElementById('newCustomers').textContent = (stats.new_customers_today || 0) + ' new customers';
+            document.getElementById('newCustomersStat').textContent = (stats.new_customers_today || 0);
+            document.getElementById('completedPayments').textContent = '₱ ' + (stats.completed_payments_today || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+
+            // Recent orders
+            const recentBody = document.getElementById('recentOrdersBody');
+            const recent = data.recent_orders || [];
+            recentBody.innerHTML = '';
+            if (recent.length === 0) {
+                recentBody.innerHTML = '<tr><td colspan="4" class="text-center small-muted">No recent orders</td></tr>';
+            } else {
+                recent.forEach(o => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td><strong>${o.reference_id}</strong></td><td>${o.customer_name || 'Guest'}</td><td>${o.order_date}</td><td class="text-end">₱ ${Number(o.total_amount).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>`;
+                    recentBody.appendChild(tr);
+                });
+            }
+
+            // Top products
+            const topBody = document.getElementById('topProductsBody');
+            const top = data.top_products || [];
+            topBody.innerHTML = '';
+            if (top.length === 0) {
+                topBody.innerHTML = '<tr><td colspan="3" class="text-center small-muted">No sales in last 30 days</td></tr>';
+            } else {
+                top.forEach(tp => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${tp.container_type}</td><td class="text-end">${parseInt(tp.qty||0)}</td><td class="text-end">₱ ${Number(tp.revenue||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>`;
+                    topBody.appendChild(tr);
+                });
+            }
+
+            // Charts
+            const charts = data.charts || {};
+            renderCharts(charts.labels || [], charts.revenue_data || [], charts.orders_data || [], charts.payments_by_method || []);
+
+            // Populate dates list (if present)
+            if (data.available_dates) {
+                const ul = document.getElementById('reportDates');
+                ul.innerHTML = '';
+                data.available_dates.forEach(d => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = '#'; a.textContent = d;
+                    a.onclick = (e) => { e.preventDefault(); loadReport(d); toggleReportSidebar(); };
+                    li.appendChild(a); ul.appendChild(li);
+                });
+            }
+
+            // Update URL without reload
+            try { history.replaceState(null, '', '?date=' + encodeURIComponent(data.selected_date)); } catch(e){}
+        })
+        .catch(err => {
+            console.error('Error loading report:', err);
+            document.getElementById('mainContent').innerHTML = '<p>Error loading daily report. Please try again.</p>';
+        });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    // If URL has ?date= use it
+    const params = new URLSearchParams(window.location.search);
+    const date = params.get('date');
+    loadReport(date);
     fetchDates();
-});
-
-const labels = <?= json_encode($labels) ?>;
-const revenueData = <?= json_encode($revenue_data) ?>;
-const ordersData = <?= json_encode($orders_data) ?>;
-const paymentsByMethod = <?= json_encode($payments_by_method) ?>;
-
-new Chart(document.getElementById('revenueLine'), {
-    type: 'line',
-    data: { labels: labels, datasets: [{ label: 'Revenue (₱)', data: revenueData, tension:0.3, fill:true, borderColor:'#007bff', backgroundColor:'rgba(0,123,255,0.2)' }] },
-    options: { responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, ticks:{callback:v=>'₱'+v}}} }
-});
-
-new Chart(document.getElementById('ordersBar'), {
-    type: 'bar',
-    data: { labels: labels, datasets: [{ label:'Orders', data: ordersData, backgroundColor:'#28a745' }] },
-    options: { responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
-});
-
-const pieLabels = paymentsByMethod.map(p=>p.method_name || 'Method');
-const pieData = paymentsByMethod.map(p=>parseFloat(p.total) || 0);
-new Chart(document.getElementById('paymentsPie'), {
-    type:'pie',
-    data:{ labels:pieLabels, datasets:[{ data:pieData, backgroundColor:['#007bff','#ffc107','#28a745','#dc3545','#6f42c1'] }] },
-    options:{ responsive:true, plugins:{legend:{position:'bottom'}} }
 });
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

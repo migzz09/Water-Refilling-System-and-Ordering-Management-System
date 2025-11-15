@@ -173,6 +173,8 @@ async function handleNotificationClick(e) {
     const el = e.currentTarget;
     const id = el.getAttribute('data-id');
     const ref = el.getAttribute('data-ref');
+    const type = el.getAttribute('data-type');
+    const message = el.querySelector('.notification-message')?.textContent || '';
     
     if (id) {
         el.classList.remove('unread');
@@ -180,8 +182,19 @@ async function handleNotificationClick(e) {
     }
     
     if (ref) {
-        // Redirect to order tracking page
-        window.location.href = `/WRSOMS/pages/order-tracking.html?ref=${encodeURIComponent(ref)}`;
+        // Check if order is fully delivered based on message
+        // Only redirect to transaction history if the order itself is delivered, not just pickup/delivery steps
+        const isFullyDelivered = message.toLowerCase().includes('has been delivered') || 
+                                 message.toLowerCase().includes('order delivered') ||
+                                 message.toLowerCase().includes('delivery completed');
+        
+        if (isFullyDelivered) {
+            // Redirect to transaction history and show modal
+            window.location.href = `/WRSOMS/pages/usertransaction-history.html?ref=${encodeURIComponent(ref)}&showModal=true`;
+        } else {
+            // For all other notifications (order_placed, pickup, in progress, etc), redirect to order tracking
+            window.location.href = `/WRSOMS/pages/order-tracking.html?ref=${encodeURIComponent(ref)}`;
+        }
     }
 }
 
@@ -199,6 +212,8 @@ function formatNotificationDate(dateStr) {
 function getNotificationIcon(type) {
     // Return appropriate icon class based on notification type
     switch(type) {
+        case 'order_placed':
+            return 'fas fa-check-circle';
         case 'order_created':
         case 'order_update':
             return 'fas fa-shopping-cart';

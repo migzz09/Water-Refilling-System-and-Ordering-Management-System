@@ -746,8 +746,9 @@
             // Check if we have a reference ID in the URL
             const urlParams = new URLSearchParams(window.location.search);
             const refFromUrl = urlParams.get('ref');
+            const showModal = urlParams.get('showModal');
             
-            if (refFromUrl) {
+            if (refFromUrl && showModal === 'true') {
                 console.log('Transaction History: Auto-opening transaction with ref:', refFromUrl);
                 
                 // Wait for transactions to load, then find and open the matching one
