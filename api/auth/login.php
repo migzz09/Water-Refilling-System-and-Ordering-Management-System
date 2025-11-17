@@ -108,13 +108,61 @@ try {
             ]
         ]);
     } else {
-        // Login failed
-        http_response_code(401);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Invalid username, password, or account not verified.',
-            'errors' => ['Invalid credentials']
-        ]);
+        // Try staff table as fallback (staff accounts separate from customer accounts)
+        try {
+            $sstmt = $pdo->prepare("SELECT staff_id, staff_user, staff_password, staff_role FROM staff WHERE staff_user = ? LIMIT 1");
+            $sstmt->execute([$username]);
+            $staff = $sstmt->fetch(PDO::FETCH_ASSOC);
+            $staffPasswordValid = false;
+            if ($staff) {
+                // Support hashed passwords and plaintext fallback
+                if (password_verify($password, $staff['staff_password'])) {
+                    $staffPasswordValid = true;
+                } elseif ($password === $staff['staff_password']) {
+                    $staffPasswordValid = true;
+                }
+            }
+
+            if ($staff && $staffPasswordValid) {
+                // Successful staff login - set staff-specific session variables
+                $_SESSION['staff_id'] = (int)$staff['staff_id'];
+                $_SESSION['username'] = $staff['staff_user'];
+                // Grant staff admin privileges so admin-only APIs function for staff users.
+                // NOTE: This gives staff the same API access as admin accounts. If you prefer
+                // a stricter approach, we should instead update each API to check staff_role.
+                $_SESSION['is_admin'] = 1;
+                $_SESSION['staff_role'] = $staff['staff_role'];
+
+                error_log("=== STAFF LOGIN SUCCESS === Username: {$staff['staff_user']} Role: {$staff['staff_role']}");
+
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Staff login successful',
+                    'data' => [
+                        'staff_id' => (int)$staff['staff_id'],
+                        'username' => $staff['staff_user'],
+                        'staff_role' => $staff['staff_role'],
+                        'session_id' => session_id()
+                    ]
+                ]);
+                exit;
+            }
+
+            // Still failed
+            http_response_code(401);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Invalid username or password.',
+                'errors' => ['Invalid credentials']
+            ]);
+        } catch (PDOException $se) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Login failed: ' . $se->getMessage(),
+                'errors' => [$se->getMessage()]
+            ]);
+        }
     }
 } catch (PDOException $e) {
     http_response_code(500);
