@@ -1,0 +1,570 @@
+/* Admin dashboard overrides built on top of design-system variables */
+
+/* Layout */
+.sidebar {
+    width: 260px;
+    background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+    color: var(--text-white);
+    position: fixed;
+    height: 100vh;
+    padding: 0;
+    z-index: 1000;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar .nav-logo {
+    height: 45px;
+    width: auto;
+    /* Logo remains original colors - no filter */
+}
+
+.logo-container.nav-brand {
+    gap: 8px;
+    padding: 20px 20px 16px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+}
+
+.sidebar .brand-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #60a5fa;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Admin Info Section */
+.admin-info {
+    padding: 16px 20px;
+    background: rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: rgba(255,255,255,0.9);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.admin-info .fa-user-circle {
+    font-size: 24px;
+    color: rgba(255,255,255,0.8);
+}
+
+.admin-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Navigation Menu */
+.nav-menu {
+    list-style: none;
+    margin: 0;
+    padding: 16px 12px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.nav-item {
+    margin-bottom: 4px;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    color: rgba(255,255,255,0.85);
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    font-size: 0.95rem;
+    gap: 12px;
+}
+
+.nav-link:hover {
+    background: rgba(255,255,255,0.1);
+    color: white;
+    transform: translateX(4px);
+}
+
+.nav-item.active .nav-link {
+    background: rgba(255,255,255,0.15);
+    color: white;
+    font-weight: 600;
+    box-shadow: inset 3px 0 0 white;
+}
+
+.nav-icon {
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+}
+
+.nav-text {
+    flex: 1;
+}
+
+.content {
+    margin-left: 260px;
+    padding: 24px;
+    width: calc(100% - 260px);
+    min-height: 100vh;
+    background: #f3f4f6;
+}
+
+/* Header and metrics */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(226,232,240,0.8);
+}
+.header .title {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.header .date-time {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.quick-actions { margin-bottom: 24px; }
+.quick-actions button {
+    background: var(--primary-blue);
+    color: var(--text-white);
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.quick-actions button:hover { background: var(--primary-blue-dark); }
+
+.metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.metric-card {
+    background: var(--bg-white);
+    padding: 18px;
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    text-align: left;
+}
+.metric-card h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+.metric-card p {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.metric-card-inner {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+.metric-icon {
+    display: inline-flex;
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.06);
+    color: var(--text-white);
+    font-size: 20px;
+}
+.metric-text h3 { margin: 0 0 6px 0; }
+.metric-text p { margin: 0; }
+
+/* dashboard container to center content and limit width */
+.dashboard-inner {
+    max-width: 1400px; /* wider admin canvas so batch columns can fit */
+    margin: 0 auto;
+}
+
+/* Manage Orders specific improvements */
+.orders-list { margin-top: 8px; }
+.orders-card { padding: 12px; }
+
+/* Make batch cards flow into responsive columns to avoid long vertical scroll */
+.batches-grid {
+    display: grid;
+    /* more flexible minimum card width so cards can wrap earlier and avoid horizontal overflow */
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 16px;
+}
+
+/* Constrain table height and enable internal scrolling so each card stays compact */
+.metric-card .table-responsive {
+    /* Allow tables to size naturally on wide screens; enable internal scrolling only on small viewports */
+    max-height: none;
+    overflow: visible;
+}
+
+/* Allow long text to wrap instead of stretching the table */
+.recent-orders-table td, .recent-orders-table th {
+    white-space: normal;
+    word-break: break-word;
+}
+
+/* Reduce padding and font-size in the orders table to fit more columns */
+.recent-orders-table th, .recent-orders-table td {
+    padding: 8px 10px;
+    font-size: 0.88rem;
+}
+
+/* Tighten action button styles inside tables */
+.recent-orders-table .btn {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    border-radius: 6px;
+}
+
+/* Make unassigned orders card full-width below the batch grid */
+.unassigned-container {
+    margin-top: 12px;
+}
+
+/* Media tweaks for narrow screens */
+@media (max-width: 900px) {
+    .dashboard-inner { padding: 0 12px; }
+    .metric-card .table-responsive { max-height: 320px; overflow: auto; }
+    .recent-orders-table th, .recent-orders-table td { font-size: 0.80rem; padding: 6px 8px; }
+}
+
+/* subtle hover on cards */
+.metric-card { transition: transform 0.18s ease, box-shadow 0.18s ease; }
+.metric-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
+
+/* Prevent header action buttons from overflowing the card: allow wrapping for the inner flex group */
+.metric-card > .d-flex > .d-flex {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+/* Slightly tighter styling for small action buttons inside metric cards */
+.metric-card .btn.btn-sm {
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    white-space: normal; /* allow text to wrap if narrow */
+}
+
+/* Ensure regular buttons inside cards can wrap and don't force horizontal scroll */
+.metric-card .btn { white-space: normal; }
+
+/* Sidebar Footer */
+.sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    background: rgba(0,0,0,0.1);
+}
+
+.logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: rgba(220, 38, 38, 0.2);
+    color: #fca5a5;
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.logout-btn:hover {
+    background: rgba(220, 38, 38, 0.3);
+    color: #fee2e2;
+    border-color: rgba(220, 38, 38, 0.5);
+}
+
+.logout-btn .fa {
+    font-size: 16px;
+}
+
+.header .title {
+    color: var(--text-primary);
+}
+
+.metric-card h3 {
+    color: var(--text-secondary);
+}
+
+.metric-card p {
+    color: var(--text-primary);
+    font-size: 1.25rem;
+}
+
+/* Tables */
+.batch-table, .recent-orders-table, .order-history-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-card);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.batch-table th, .batch-table td, 
+.recent-orders-table th, .recent-orders-table td,
+.order-history-table th, .order-history-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+
+.batch-table th, .recent-orders-table th, .order-history-table th {
+    background: var(--primary-blue);
+    color: var(--text-white);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.82rem;
+}
+
+/* Status badges */
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: white;
+}
+
+.badge.bg-success {
+    background-color: #10b981;
+}
+
+.badge.bg-warning {
+    background-color: #f59e0b;
+}
+
+.badge.bg-danger {
+    background-color: #ef4444;
+}
+
+.badge.bg-info {
+    background-color: #3b82f6;
+}
+
+.badge.bg-secondary {
+    background-color: #6b7280;
+}
+
+/* Order history specific styling */
+.order-history-table {
+    margin-top: 8px;
+}
+
+.order-history-table tbody tr:hover {
+    background-color: rgba(59, 130, 246, 0.05);
+}
+
+.order-history-table td {
+    font-size: 0.88rem;
+}
+
+/* Batch table styling */
+.batch-table tbody tr:hover {
+    background-color: rgba(59, 130, 246, 0.05);
+}
+
+.batch-table td em {
+    color: #6b7280;
+    font-style: italic;
+}
+
+/* Search input styling */
+#searchInput {
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.2s ease;
+}
+
+#searchInput:focus {
+    outline: none;
+    border-color: var(--primary-blue) !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Button styles */
+.btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background-color: var(--primary-blue);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-blue-dark);
+}
+
+.btn-secondary {
+    background-color: #6b7280;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #4b5563;
+}
+
+.btn-success {
+    background-color: #10b981;
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #059669;
+}
+
+.btn-info {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.btn-info:hover {
+    background-color: #2563eb;
+}
+
+.btn-sm {
+    padding: 4px 10px;
+    font-size: 0.85rem;
+}
+
+/* Scrollbar styling for sidebar */
+.nav-menu::-webkit-scrollbar {
+    width: 6px;
+}
+
+.nav-menu::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.05);
+}
+
+.nav-menu::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 3px;
+}
+
+.nav-menu::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+/* Responsive tweaks */
+@media (max-width: 968px) {
+    .sidebar {
+        width: 80px;
+    }
+    
+    .brand-name,
+    .admin-name,
+    .nav-text {
+        display: none;
+    }
+    
+    .logo-container.nav-brand {
+        justify-content: center;
+        padding: 20px 10px;
+    }
+    
+    .admin-info {
+        justify-content: center;
+        padding: 16px 10px;
+    }
+    
+    .nav-link {
+        justify-content: center;
+        padding: 12px;
+    }
+    
+    .nav-icon {
+        margin: 0;
+    }
+    
+    .sidebar-footer {
+        padding: 16px 10px;
+    }
+    
+    .logout-btn span {
+        display: none;
+    }
+    
+    .logout-btn {
+        justify-content: center;
+    }
+    
+    .content {
+        margin-left: 80px;
+        width: calc(100% - 80px);
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        width: 260px;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 2000;
+    }
+    
+    .sidebar.mobile-open {
+        transform: translateX(0);
+    }
+    
+    .brand-name,
+    .admin-name,
+    .nav-text {
+        display: block;
+    }
+    
+    .content { 
+        margin-left: 0; 
+        width: 100%; 
+        padding: 16px; 
+    }
+    
+    /* Mobile menu toggle button */
+    .mobile-menu-toggle {
+        display: block;
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 1999;
+        background: var(--primary-blue);
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 8px;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+}
