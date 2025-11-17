@@ -104,6 +104,12 @@ function showAdminToast(message, type = 'info', duration = 3500) {
                 </button>
             </li>
             <li class="nav-item">
+                <button type="button" onclick="showStaffManagement()" class="nav-link">
+                    <i class="fa fa-id-badge nav-icon"></i>
+                    <span class="nav-text">Staff Management</span>
+                </button>
+            </li>
+            <li class="nav-item">
                 <button type="button" onclick="showCashPayments()" class="nav-link">
                     <i class="fa fa-money nav-icon"></i>
                     <span class="nav-text">Cash Payments</span>
@@ -206,22 +212,60 @@ function showAdminToast(message, type = 'info', duration = 3500) {
         </div>
     </main>
     <script>
-        // Check admin authentication on page load
+        // Check admin or staff authentication on page load
         (function checkAdminAuth() {
+            // First check the general session (accounts)
             fetch('/WRSOMS/api/auth/session.php', { credentials: 'same-origin' })
                 .then(r => r.json())
                 .then(res => {
-                    if (!res.authenticated || !res.user || !res.user.is_admin) {
-                        // Not logged in as admin, redirect to login
-                        alert('Admin access required. Please login with admin credentials.');
-                        window.location.href = '/WRSOMS/pages/login.html?redirect=admin';
-                    } else {
-                        // Update admin name in sidebar
-                        const adminNameEl = document.querySelector('.admin-name');
-                        if (adminNameEl && res.user.username) {
-                            adminNameEl.textContent = res.user.username;
-                        }
+                    const adminNameEl = document.querySelector('.admin-name');
+                    if (res && res.authenticated && res.user && res.user.is_admin) {
+                        // Admin-like session found. However staff logins currently set is_admin=1
+                        // so probe staff-session to detect real staff and apply role pruning.
+                        return fetch('/WRSOMS/api/admin/staff-session.php', { credentials: 'same-origin' })
+                            .then(sr => sr.json())
+                            .then(sres => {
+                                if (sres && sres.success && sres.role) {
+                                    // It's a staff user (even though is_admin is true) — treat as staff
+                                    const displayName = sres.staff_user || (res && res.user && res.user.username) || ('Staff (' + sres.role + ')');
+                                    if (adminNameEl) adminNameEl.textContent = displayName;
+                                    try { applyRolePermissions(sres.role); } catch (e) { console.error('Failed to apply role permissions:', e); }
+                                    return;
+                                }
+
+                                // Real admin (not staff) — allow full admin access
+                                if (adminNameEl && res.user.username) adminNameEl.textContent = res.user.username;
+                                return;
+                            })
+                            .catch(err => {
+                                // If staff-session probe fails, fallback to allowing admin
+                                if (adminNameEl && res.user.username) adminNameEl.textContent = res.user.username;
+                                console.warn('Staff session probe failed, treating as admin:', err);
+                                return;
+                            });
                     }
+
+                    // Not an admin account - check staff session as an exemption
+                    return fetch('/WRSOMS/api/admin/staff-session.php', { credentials: 'same-origin' })
+                        .then(sr => sr.json())
+                        .then(sres => {
+                            if (sres && sres.success && sres.role) {
+                                // Staff session found - allow access
+                                const displayName = sres.staff_user || (res && res.user && res.user.username) || ('Staff (' + sres.role + ')');
+                                if (adminNameEl) adminNameEl.textContent = displayName;
+                                try { applyRolePermissions(sres.role); } catch (e) { console.error('Failed to apply role permissions:', e); }
+                                return;
+                            }
+
+                            // Neither admin nor staff - redirect to login
+                            alert('Admin access required. Please login with admin credentials.');
+                            window.location.href = '/WRSOMS/pages/login.html?redirect=admin';
+                        })
+                        .catch(err => {
+                            console.error('Staff session check failed:', err);
+                            alert('Authentication error. Redirecting to login.');
+                            window.location.href = '/WRSOMS/pages/login.html?redirect=admin';
+                        });
                 })
                 .catch(err => {
                     console.error('Auth check failed:', err);
@@ -229,6 +273,64 @@ function showAdminToast(message, type = 'info', duration = 3500) {
                     window.location.href = '/WRSOMS/pages/login.html?redirect=admin';
                 });
         })();
+
+        // Apply role-based UI permissions for staff accounts
+        function applyRolePermissions(role) {
+            if (!role) return;
+            const normalized = String(role).toLowerCase().trim();
+            let allowed = [];
+
+            if (normalized.includes('driver') || normalized === 'rider') {
+                // Driver: only Manage Orders
+                allowed = ['Manage Orders'];
+            } else if (normalized.includes('sales')) {
+                // Sales Manager: Daily Report, Cash Payments, Order History, Dashboard
+                allowed = ['Daily Report', 'Cash Payments', 'Order History', 'Dashboard'];
+            } else if (normalized.includes('customer') || normalized.includes('customer manager') || normalized.includes('customer_manager')) {
+                // Customer Manager: User Management, Customer Feedback, Dashboard
+                allowed = ['User Management', 'Customer Feedback', 'Dashboard'];
+            } else {
+                // Unknown role: keep only Dashboard as a safe default
+                allowed = ['Dashboard'];
+            }
+
+            try {
+                // Save allowed features globally for other pages to reference
+                window.ROLE_ALLOWED_FEATURES = allowed;
+
+                document.querySelectorAll('.nav-menu .nav-item').forEach(li => {
+                    const textEl = li.querySelector('.nav-text');
+                    const text = textEl ? textEl.textContent.trim() : '';
+                    if (!allowed.includes(text)) {
+                        li.remove();
+                    }
+                });
+
+                // If driver, immediately load Manage Orders for convenience
+                setTimeout(() => {
+                    if (allowed.length === 1 && allowed[0] === 'Manage Orders') {
+                        if (typeof loadManageOrders === 'function') {
+                            loadManageOrders();
+                            updateActiveNav('loadManageOrders(event)');
+                        }
+                    } else {
+                        // Ensure Dashboard is shown when available
+                        if (typeof showDashboard === 'function') showDashboard();
+                        updateActiveNav('showDashboard()');
+                    }
+                }, 80);
+            } catch (e) {
+                console.error('applyRolePermissions error:', e);
+            }
+        }
+
+        // Helper: check if the current role allows a named feature
+        function checkFeatureAllowed(featureName) {
+            if (!featureName) return false;
+            // If ROLE_ALLOWED_FEATURES is not set, assume full access (admin/default)
+            if (!window.ROLE_ALLOWED_FEATURES || !Array.isArray(window.ROLE_ALLOWED_FEATURES)) return true;
+            return window.ROLE_ALLOWED_FEATURES.includes(featureName);
+        }
 
         // Store the original dashboard content on window to avoid redeclaration errors
         if (typeof window.originalContent === 'undefined') {
@@ -281,6 +383,17 @@ function showAdminToast(message, type = 'info', duration = 3500) {
         }
 
         function showOrderHistory() {
+            if (typeof checkFeatureAllowed === 'function' && !checkFeatureAllowed('Order History')) {
+                const mainContent = document.getElementById('mainContent');
+                mainContent.innerHTML = `
+                    <div class="dashboard-inner">
+                        <header class="header"><h1 class="title">Access Denied</h1></header>
+                        <div style="padding: 24px; color: #ef4444;">You do not have permission to view Order History.</div>
+                    </div>
+                `;
+                updateActiveNav('showDashboard()');
+                return;
+            }
             const mainContent = document.getElementById('mainContent');
             mainContent.innerHTML = `
                 <div class="dashboard-inner">
@@ -616,6 +729,17 @@ function showAdminToast(message, type = 'info', duration = 3500) {
         }
 
         function showDailyReport(date = '') {
+            if (typeof checkFeatureAllowed === 'function' && !checkFeatureAllowed('Daily Report')) {
+                const mainContent = document.getElementById('mainContent');
+                mainContent.innerHTML = `
+                    <div class="dashboard-inner">
+                        <header class="header"><h1 class="title">Access Denied</h1></header>
+                        <div style="padding: 24px; color: #ef4444;">You do not have permission to view Daily Report.</div>
+                    </div>
+                `;
+                updateActiveNav('showDashboard()');
+                return;
+            }
             const mainContent = document.getElementById('mainContent');
             
             // Show loading state
@@ -882,6 +1006,17 @@ function showAdminToast(message, type = 'info', duration = 3500) {
 
         function loadManageOrders(e) {
             if (e) e.preventDefault();
+            if (typeof checkFeatureAllowed === 'function' && !checkFeatureAllowed('Manage Orders')) {
+                const mainContent = document.getElementById('mainContent');
+                mainContent.innerHTML = `
+                    <div class="dashboard-inner">
+                        <header class="header"><h1 class="title">Access Denied</h1></header>
+                        <div style="padding: 24px; color: #ef4444;">You do not have permission to view Manage Orders.</div>
+                    </div>
+                `;
+                updateActiveNav('showDashboard()');
+                return;
+            }
             fetch('manage-orders.html?v=' + Date.now())
                 .then(response => response.text())
                 .then(data => {
@@ -921,6 +1056,17 @@ function showAdminToast(message, type = 'info', duration = 3500) {
         }
 
         function showInventoryManagement() {
+            if (typeof checkFeatureAllowed === 'function' && !checkFeatureAllowed('Inventory')) {
+                const mainContent = document.getElementById('mainContent');
+                mainContent.innerHTML = `
+                    <div class="dashboard-inner">
+                        <header class="header"><h1 class="title">Access Denied</h1></header>
+                        <div style="padding: 24px; color: #ef4444;">You do not have permission to view Inventory Management.</div>
+                    </div>
+                `;
+                updateActiveNav('showDashboard()');
+                return;
+            }
             const mainContent = document.getElementById('mainContent');
             mainContent.innerHTML = `
                 <div class="dashboard-inner">
@@ -1500,6 +1646,17 @@ function showAdminToast(message, type = 'info', duration = 3500) {
         }
         // ===== FEEDBACK MANAGEMENT =====
         function showFeedback() {
+            if (typeof checkFeatureAllowed === 'function' && !checkFeatureAllowed('Customer Feedback')) {
+                const mainContent = document.getElementById('mainContent');
+                mainContent.innerHTML = `
+                    <div class="dashboard-inner">
+                        <header class="header"><h1 class="title">Access Denied</h1></header>
+                        <div style="padding: 24px; color: #ef4444;">You do not have permission to view Customer Feedback.</div>
+                    </div>
+                `;
+                updateActiveNav('showDashboard()');
+                return;
+            }
             const mainContent = document.getElementById('mainContent');
             mainContent.innerHTML = `
                 <div class="dashboard-inner">
@@ -2191,6 +2348,17 @@ function showAdminToast(message, type = 'info', duration = 3500) {
 
         // ===== USER MANAGEMENT =====
         function showUserManagement() {
+            if (typeof checkFeatureAllowed === 'function' && !checkFeatureAllowed('User Management')) {
+                const mainContent = document.getElementById('mainContent');
+                mainContent.innerHTML = `
+                    <div class="dashboard-inner">
+                        <header class="header"><h1 class="title">Access Denied</h1></header>
+                        <div style="padding: 24px; color: #ef4444;">You do not have permission to view User Management.</div>
+                    </div>
+                `;
+                updateActiveNav('showDashboard()');
+                return;
+            }
             const mainContent = document.getElementById('mainContent');
             mainContent.innerHTML = `
                 <div class="dashboard-inner">
@@ -2231,6 +2399,168 @@ function showAdminToast(message, type = 'info', duration = 3500) {
             
             updateActiveNav('showUserManagement()');
             loadUsers();
+        }
+
+        // ===== STAFF MANAGEMENT =====
+        function showStaffManagement() {
+            if (typeof checkFeatureAllowed === 'function' && !checkFeatureAllowed('Staff Management')) {
+                const mainContent = document.getElementById('mainContent');
+                mainContent.innerHTML = `
+                    <div class="dashboard-inner">
+                        <header class="header"><h1 class="title">Access Denied</h1></header>
+                        <div style="padding: 24px; color: #ef4444;">You do not have permission to view Staff Management.</div>
+                    </div>
+                `;
+                updateActiveNav('showDashboard()');
+                return;
+            }
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="dashboard-inner">
+                    <header class="header">
+                        <h1 class="title">Staff Management</h1>
+                        <div class="date-time" aria-live="polite">Date: ${new Date().toLocaleDateString()} | Time: ${new Date().toLocaleTimeString()}</div>
+                    </header>
+
+                    <section class="quick-actions" aria-label="Quick actions">
+                        <button type="button" onclick="loadStaff()" aria-label="Refresh staff data">
+                            <i class="fa fa-refresh"></i> Refresh Data
+                        </button>
+                        <button type="button" onclick="openCreateStaffModal()" style="background:#10b981;color:#fff;border:none;padding:8px 12px;border-radius:8px;margin-left:12px;">Add Staff</button>
+                    </section>
+
+                    <section class="metric-card" role="region" aria-label="Staff List">
+                        <h3>Staff Accounts</h3>
+                        <div style="overflow-x: auto;">
+                            <table class="batch-table" aria-describedby="staff-table-desc">
+                                <caption id="staff-table-desc" class="sr-only">List of staff accounts</caption>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">ID</th>
+                                        <th scope="col">Username</th>
+                                        <th scope="col">Role</th>
+                                        <th scope="col">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="staffTableBody">
+                                    <tr><td colspan="4" style="text-align: center;">Loading staff...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            `;
+
+            updateActiveNav('showStaffManagement()');
+            loadStaff();
+        }
+
+        function loadStaff() {
+            const tbody = document.getElementById('staffTableBody');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;"><i class="fa fa-spinner fa-spin"></i> Loading...</td></tr>';
+
+            fetch('/WRSOMS/api/admin/staff.php', { credentials: 'same-origin' })
+                .then(r => r.json())
+                .then(res => {
+                    if (!res.success) throw new Error(res.message || 'Failed to load staff');
+                    renderStaff(res.staff || []);
+                })
+                .catch(err => {
+                    console.error('Error loading staff:', err);
+                    if (tbody) tbody.innerHTML = `<tr><td colspan="4" style="padding:40px;text-align:center;color:#ef4444;">Error loading staff: ${err.message}</td></tr>`;
+                });
+        }
+
+        function renderStaff(list) {
+            const tbody = document.getElementById('staffTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            if (!list || list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="padding:0;"><div class="empty-state"><div class="empty-state-icon"><i class="fa fa-id-badge"></i></div><h2 class="empty-state-title">No Staff Found</h2></div></td></tr>`;
+                return;
+            }
+
+            list.forEach(s => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${s.staff_id}</td>
+                    <td>${escapeHtml(s.staff_user)}</td>
+                    <td>${escapeHtml(s.staff_role)}</td>
+                    <td class="action-buttons">
+                        <button class="btn btn-sm btn-danger" onclick="deleteStaff(${s.staff_id})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openCreateStaffModal() {
+            // Simple prompt-based modal for now
+            const modalHtml = `
+                <div id="createStaffModal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;">
+                    <div style="background:#fff;padding:20px;border-radius:8px;max-width:420px;width:100%;">
+                        <h3 style="margin-top:0;">Create Staff Account</h3>
+                        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+                            <input id="newStaffUsername" placeholder="Username" style="padding:8px;border:1px solid #ddd;border-radius:6px;">
+                            <input id="newStaffPassword" type="password" placeholder="Password" style="padding:8px;border:1px solid #ddd;border-radius:6px;">
+                            <select id="newStaffRole" style="padding:8px;border:1px solid #ddd;border-radius:6px;">
+                                <option value="Driver">Driver</option>
+                                <option value="Sales Manager">Sales Manager</option>
+                                <option value="Customer Manager">Customer Manager</option>
+                            </select>
+                            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+                                <button onclick="document.getElementById('createStaffModal').remove()" class="btn btn-secondary">Cancel</button>
+                                <button onclick="createStaff()" class="btn btn-primary">Create</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = modalHtml;
+            document.body.appendChild(wrapper);
+        }
+
+        function createStaff() {
+            const username = document.getElementById('newStaffUsername').value.trim();
+            const password = document.getElementById('newStaffPassword').value;
+            const role = document.getElementById('newStaffRole').value;
+            if (!username || !password) { alert('Username and password are required'); return; }
+
+            fetch('/WRSOMS/api/admin/staff.php', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'create', staff_user: username, staff_password: password, staff_role: role })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (!res.success) throw new Error(res.message || 'Failed');
+                const modal = document.getElementById('createStaffModal');
+                if (modal) modal.remove();
+                loadStaff();
+                showAdminToast('Staff account created', 'success');
+            })
+            .catch(err => {
+                alert('Error: ' + err.message);
+            });
+        }
+
+        function deleteStaff(id) {
+            if (!confirm('Delete this staff account?')) return;
+            fetch('/WRSOMS/api/admin/staff.php', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'delete', staff_id: id })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (!res.success) throw new Error(res.message || 'Failed');
+                loadStaff();
+                showAdminToast('Staff deleted', 'success');
+            })
+            .catch(err => alert('Error: ' + err.message));
         }
 
         function loadUsers() {
@@ -2327,6 +2657,17 @@ function showAdminToast(message, type = 'info', duration = 3500) {
 
         // ===== CASH PAYMENTS =====
         function showCashPayments() {
+            if (typeof checkFeatureAllowed === 'function' && !checkFeatureAllowed('Cash Payments')) {
+                const mainContent = document.getElementById('mainContent');
+                mainContent.innerHTML = `
+                    <div class="dashboard-inner">
+                        <header class="header"><h1 class="title">Access Denied</h1></header>
+                        <div style="padding: 24px; color: #ef4444;">You do not have permission to view Cash Payments.</div>
+                    </div>
+                `;
+                updateActiveNav('showDashboard()');
+                return;
+            }
             const mainContent = document.getElementById('mainContent');
             mainContent.innerHTML = `
                 <div class="dashboard-inner">
