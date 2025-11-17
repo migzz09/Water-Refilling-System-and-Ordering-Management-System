@@ -121,19 +121,21 @@ try {
     }
     
     // GET request - Fetch COD payments with customer details
-    $sql = "SELECT 
+        $sql = "SELECT 
                 p.payment_id,
                 p.reference_id,
                 p.amount_paid as amount,
                 p.payment_date,
+                p.transaction_reference,
                 ps.status_name as payment_status,
+                pm.method_name as payment_method,
                 CONCAT(COALESCE(c.first_name, ''), ' ', COALESCE(c.last_name, '')) as customer_name
             FROM payments p
             INNER JOIN payment_methods pm ON p.payment_method_id = pm.payment_method_id
             INNER JOIN payment_status ps ON p.payment_status_id = ps.payment_status_id
             LEFT JOIN orders o ON p.reference_id = o.reference_id
             LEFT JOIN customers c ON o.customer_id = c.customer_id
-            WHERE pm.method_name = 'COD'
+            WHERE pm.method_name IN ('COD', 'GCash')
             ORDER BY p.payment_date DESC";
     
     $stmt = $conn->prepare($sql);

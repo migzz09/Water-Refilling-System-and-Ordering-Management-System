@@ -4,9 +4,10 @@ ob_start();
 
 session_start();
 error_reporting(E_ALL);
-ini_set('display_errors', 1); // Enable to see actual error
+ini_set('display_errors', 1); // Enable display temporarily for debugging
 ini_set('log_errors', 1);
 
+// Clean any previous output
 ob_clean();
 
 header('Content-Type: application/json');
@@ -30,8 +31,6 @@ try {
                     a.username,
                     a.is_admin,
                     a.is_verified,
-                    a.password_changed_at,
-                    a.profile_photo,
                     c.customer_id,
                     c.first_name,
                     c.middle_name,
@@ -49,7 +48,9 @@ try {
                 LEFT JOIN customers c ON a.customer_id = c.customer_id
                 LEFT JOIN orders o ON c.customer_id = o.customer_id
                 WHERE a.account_id = :user_id
-                GROUP BY a.account_id";
+                GROUP BY a.account_id, a.username, a.is_admin, a.is_verified,
+                         c.customer_id, c.first_name, c.middle_name, c.last_name, c.email,
+                         c.customer_contact, c.street, c.barangay, c.city, c.province, c.date_created";
         
         $stmt = $conn->prepare($sql);
         $stmt->execute([':user_id' => $userId]);
@@ -89,7 +90,7 @@ try {
     
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $input = json_decode(file_get_contents('php://input'), true);
-        $action = $input['action'] ?? '';
+        $action = isset($input['action']) ? $input['action'] : '';
         
         if ($action === 'create') {
             // Create new user
@@ -99,8 +100,8 @@ try {
             $stmt->execute([
                 ':username' => $input['username'],
                 ':password' => password_hash($input['password'], PASSWORD_DEFAULT),
-                ':is_admin' => $input['is_admin'] ?? 0,
-                ':customer_id' => $input['customer_id'] ?? NULL
+                ':is_admin' => isset($input['is_admin']) ? $input['is_admin'] : 0,
+                ':customer_id' => isset($input['customer_id']) ? $input['customer_id'] : null
             ]);
             
             echo json_encode(['success' => true, 'message' => 'User created successfully']);
@@ -125,20 +126,34 @@ try {
             $stmt->execute([':account_id' => $input['user_id']]);
             
             echo json_encode(['success' => true, 'message' => 'User deleted successfully']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Invalid action']);
         }
         
     } else {
-        // GET request - Fetch accounts with customer info
+        // GET request - Fetch customer accounts only with activity info
         $sql = "SELECT 
                     a.account_id as user_id,
                     a.username,
-                    a.is_admin,
+                    CAST(a.is_admin AS UNSIGNED) as is_admin,
                     a.is_verified,
-                    CONCAT(COALESCE(c.first_name, ''), ' ', COALESCE(c.last_name, '')) as full_name,
+                    c.customer_id,
+                    c.first_name,
+                    c.middle_name,
+                    c.last_name,
                     c.email,
-                    c.customer_contact
+                    c.customer_contact,
+                    c.street,
+                    c.barangay,
+                    c.city,
+                    c.province,
+                    c.date_created as created_at,
+                    (SELECT MAX(o.order_date) 
+                     FROM orders o 
+                     WHERE o.customer_id = c.customer_id) as last_activity
                 FROM accounts a
                 LEFT JOIN customers c ON a.customer_id = c.customer_id
+                WHERE a.is_admin = 0
                 ORDER BY a.account_id DESC";
         
         $stmt = $conn->prepare($sql);
@@ -147,22 +162,26 @@ try {
         
         echo json_encode([
             'success' => true,
-            'users' => $users ?: []
-        ]);
+            'users' => $users
+        ], JSON_PRETTY_PRINT);
     }
     
 } catch (PDOException $e) {
+    ob_clean();
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'Database error',
-        'error' => $e->getMessage()
+        'message' => 'Database error: ' . $e->getMessage(),
+        'error' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine()
     ]);
 } catch (Exception $e) {
+    ob_clean();
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'Error',
+        'message' => 'Server error: ' . $e->getMessage(),
         'error' => $e->getMessage()
     ]);
 }
