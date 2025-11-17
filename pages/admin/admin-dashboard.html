@@ -97,6 +97,18 @@ function showAdminToast(message, type = 'info', duration = 3500) {
                     <span class="nav-text">Business Hours</span>
                 </button>
             </li>
+            <li class="nav-item">
+                <button type="button" onclick="showUserManagement()" class="nav-link">
+                    <i class="fa fa-users nav-icon"></i>
+                    <span class="nav-text">User Management</span>
+                </button>
+            </li>
+            <li class="nav-item">
+                <button type="button" onclick="showCashPayments()" class="nav-link">
+                    <i class="fa fa-money nav-icon"></i>
+                    <span class="nav-text">Cash Payments</span>
+                </button>
+            </li>
         </ul>
         <div class="sidebar-footer">
             <button type="button" onclick="logout()" class="logout-btn">
@@ -1486,8 +1498,6 @@ function showAdminToast(message, type = 'info', duration = 3500) {
                 });
             };
         }
-        // ...existing code...
-
         // ===== FEEDBACK MANAGEMENT =====
         function showFeedback() {
             const mainContent = document.getElementById('mainContent');
@@ -1664,7 +1674,7 @@ function showAdminToast(message, type = 'info', duration = 3500) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">
-                            <i class="fa fa-comments"></i>
+                            <i class="fa fa-users"></i>
                         </div>
                         <h2 class="empty-state-title">${feedbackList.length > 0 ? 'No Results Found' : 'No Feedback Yet'}</h2>
                         ${feedbackList.length > 0 ? '<p class="empty-state-description">Try adjusting your filters</p>' : ''}
@@ -1832,12 +1842,18 @@ function showAdminToast(message, type = 'info', duration = 3500) {
                 tabs[0].classList.add('active');
                 tabs[0].style.color = '#3b82f6';
                 tabs[0].style.borderBottom = '3px solid #3b82f6';
+                vehicleBtn.classList.remove('active');
+                vehicleBtn.style.color = '#64748b';
+                vehicleBtn.style.borderBottom = '3px solid transparent';
             } else {
                 scheduleTab.style.display = 'none';
                 cutoffTab.style.display = 'block';
                 tabs[1].classList.add('active');
                 tabs[1].style.color = '#ef4444';
                 tabs[1].style.borderBottom = '3px solid #ef4444';
+                productBtn.classList.remove('active');
+                productBtn.style.color = '#64748b';
+                productBtn.style.borderBottom = '3px solid transparent';
             }
         }
 
@@ -1863,9 +1879,9 @@ function showAdminToast(message, type = 'info', duration = 3500) {
                 const scheduleTab = document.getElementById('scheduleTab');
                 if (scheduleTab) {
                     scheduleTab.innerHTML = `
-                        <div style="text-align: center; padding: 60px 20px;">
+                        <div style="text-align: center; padding: 60px 20px; color: #ef4444;">
                             <i class="fa fa-exclamation-triangle" style="font-size: 48px; color: #ef4444;"></i>
-                            <p style="margin-top: 16px; font-size: 1.125rem; font-weight: 600; color: #0f172a;">Error loading business hours</p>
+                            <p style="margin-top: 16px; font-size: 1.125rem; font-weight: 600;">Error loading business hours</p>
                             <p style="margin-top: 8px; color: #64748b;">${error.message}</p>
                             <button onclick="loadBusinessHours()" class="btn btn-primary" style="margin-top: 20px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600;">
                                 <i class="fa fa-refresh" style="margin-right: 8px;"></i>
@@ -1913,7 +1929,6 @@ function showAdminToast(message, type = 'info', duration = 3500) {
                                     <p style="font-size: 0.875rem; color: #64748b; margin: 4px 0 0 0;" class="day-status-text">${dayData.is_open ? 'Open for business' : 'Closed'}</p>
                                 </div>
                             </div>
-                            
                             <label class="toggle-switch" style="position: relative; display: inline-block; width: 60px; height: 32px; cursor: pointer;">
                                 <input type="checkbox" class="day-status" ${dayData.is_open ? 'checked' : ''} style="opacity: 0; width: 0; height: 0;">
                                 <span class="toggle-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; border-radius: 32px; transition: 0.4s;"></span>
@@ -1921,7 +1936,7 @@ function showAdminToast(message, type = 'info', duration = 3500) {
                         </div>
                         
                         <!-- Time Inputs -->
-                        <div class="time-inputs" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px; background: #f8fafc; border-radius: 12px; border: 2px solid #e2e8f0; ${!dayData.is_open ? 'opacity: 0.5;' : ''}">
+                        <div class="time-inputs" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px; background: #f8fafc; border-radius: 12px; border: 2px solid #fee2e2; ${!dayData.is_open ? 'opacity: 0.5;' : ''}">
                             <div style="display: flex; flex-direction: column; gap: 8px;">
                                 <label style="font-size: 0.8125rem; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
                                     <i class="fa fa-sun-o" style="color: #f59e0b;"></i>
@@ -2077,8 +2092,8 @@ function showAdminToast(message, type = 'info', duration = 3500) {
                                 <i class="fa fa-bell" style="font-size: 2rem; color: white;"></i>
                             </div>
                             <div style="flex: 1;">
-                                <h3 style="font-size: 1.375rem; font-weight: 700; color: #0f172a; margin: 0 0 6px 0;">Order Cutoff Time</h3>
-                                <p style="font-size: 0.9375rem; color: #64748b; margin: 0;">Orders placed after this time cannot be accepted (same-day delivery only)</p>
+                                <h3 style="font-size: 1.375rem; font-weight: 700; color: #0f172a; margin: 0;">Order Cutoff Time</h3>
+                                <p style="font-size: 0.9375rem; color: #64748b; margin: 0;">Set the deadline for accepting orders each day</p>
                             </div>
                         </div>
                         
@@ -2171,6 +2186,354 @@ function showAdminToast(message, type = 'info', duration = 3500) {
                 alert('Error: ' + error.message);
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = '<i class="fa fa-save"></i> Save Cutoff Time';
+            });
+        }
+
+        // ===== USER MANAGEMENT =====
+        function showUserManagement() {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="dashboard-inner">
+                    <header class="header">
+                        <h1 class="title">User Management</h1>
+                        <div class="date-time" aria-live="polite">Date: ${new Date().toLocaleDateString()} | Time: ${new Date().toLocaleTimeString()}</div>
+                    </header>
+                    
+                    <section class="quick-actions" aria-label="Quick actions">
+                        <button type="button" onclick="loadUsers()" aria-label="Refresh user data">
+                            <i class="fa fa-refresh"></i> Refresh Data
+                        </button>
+                    </section>
+                    
+                    <section class="metric-card" role="region" aria-label="User List">
+                        <h3>Registered Users</h3>
+                        <div style="overflow-x: auto;">
+                            <table class="batch-table" aria-describedby="user-table-desc">
+                                <caption id="user-table-desc" class="sr-only">List of registered users</caption>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">User ID</th>
+                                        <th scope="col">Username</th>
+                                        <th scope="col">Email</th>
+                                        <th scope="col">Role</th>
+                                        <th scope="col">Registration Date</th>
+                                        <th scope="col">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="userTableBody">
+                                    <tr><td colspan="6" style="text-align: center;">Loading users...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            `;
+            
+            updateActiveNav('showUserManagement()');
+            loadUsers();
+        }
+
+        function loadUsers() {
+            const tbody = document.getElementById('userTableBody');
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> Loading...</td></tr>';
+            }
+            
+            fetch('/WRSOMS/api/admin/users.php', { credentials: 'same-origin' })
+                .then(r => {
+                    if (!r.ok) {
+                        throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+                    }
+                    return r.text();
+                })
+                .then(text => {
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        console.error('Invalid JSON response:', text);
+                        throw new Error('Server returned invalid JSON. The API endpoint may not exist or has an error.');
+                    }
+                })
+                .then(response => {
+                    if (!response.success) {
+                        throw new Error(response.message || 'Failed to load users');
+                    }
+                    renderUsers(response.users || []);
+                })
+                .catch(error => {
+                    console.error('Error loading users:', error);
+                    const tbody = document.getElementById('userTableBody');
+                    if (tbody) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="6" style="padding: 40px; text-align: center;">
+                                    <div style="color: #ef4444;">
+                                        <i class="fa fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px;"></i>
+                                        <p style="font-weight: 600; margin-bottom: 8px;">Error loading users</p>
+                                        <p style="font-size: 0.875rem; color: #64748b;">${error.message}</p>
+                                        <button onclick="loadUsers()" class="btn btn-sm btn-primary" style="margin-top: 16px;">
+                                            <i class="fa fa-refresh"></i> Try Again
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                });
+        }
+
+        function renderUsers(users) {
+            const tbody = document.getElementById('userTableBody');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            
+            if (users.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="padding: 0;">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fa fa-users"></i>
+                                </div>
+                                <h2 class="empty-state-title">No Users Found</h2>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            users.forEach(user => {
+                const tr = document.createElement('tr');
+                const roleBadge = user.is_admin ? 
+                    '<span class="badge bg-danger">Admin</span>' : 
+                    '<span class="badge bg-primary">Customer</span>';
+                const statusBadge = user.is_active ? 
+                    '<span class="badge bg-success">Active</span>' : 
+                    '<span class="badge bg-secondary">Inactive</span>';
+                
+                tr.innerHTML = `
+                    <td>${escapeHtml(user.user_id)}</td>
+                    <td><strong>${escapeHtml(user.username)}</strong></td>
+                    <td>${escapeHtml(user.email || 'N/A')}</td>
+                    <td>${roleBadge}</td>
+                    <td>${formatDateTime(user.created_at)}</td>
+                    <td>${statusBadge}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ===== CASH PAYMENTS =====
+        function showCashPayments() {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="dashboard-inner">
+                    <header class="header">
+                        <h1 class="title">Cash Payments</h1>
+                        <div class="date-time" aria-live="polite">Date: ${new Date().toLocaleDateString()} | Time: ${new Date().toLocaleTimeString()}</div>
+                    </header>
+                    
+                    <section class="quick-actions" aria-label="Quick actions">
+                        <button type="button" onclick="loadCashPayments()" aria-label="Refresh payment data">
+                            <i class="fa fa-refresh"></i> Refresh Data
+                        </button>
+                    </section>
+                    
+                    <!-- Payment Stats -->
+                    <section class="metrics" aria-label="Payment Statistics">
+                        <div class="metric-card" data-color="green">
+                            <div class="metric-card-inner">
+                                <span class="metric-icon"><i class="fa fa-check-circle"></i></span>
+                                <div class="metric-text">
+                                    <h3>Verified</h3>
+                                    <p id="verifiedCount">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="metric-card" data-color="blue">
+                            <div class="metric-card-inner">
+                                <span class="metric-icon"><i class="fa fa-clock-o"></i></span>
+                                <div class="metric-text">
+                                    <h3>Pending</h3>
+                                    <p id="pendingCount">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="metric-card" data-color="teal">
+                            <div class="metric-card-inner">
+                                <span class="metric-icon"><i class="fa fa-money"></i></span>
+                                <div class="metric-text">
+                                    <h3>Total Amount</h3>
+                                    <p id="totalAmount">₱0.00</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <section class="metric-card" role="region" aria-label="Cash Payment Records">
+                        <h3>Cash Payment Records</h3>
+                        <div style="overflow-x: auto;">
+                            <table class="batch-table" aria-describedby="payment-table-desc">
+                                <caption id="payment-table-desc" class="sr-only">List of cash payment records</caption>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Payment ID</th>
+                                        <th scope="col">Order ID</th>
+                                        <th scope="col">Customer</th>
+                                        <th scope="col">Amount</th>
+                                        <th scope="col">Payment Date</th>
+                                        <th scope="col">Status</th>
+                                        <th scope="col">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="paymentTableBody">
+                                    <tr><td colspan="7" style="text-align: center;">Loading payments...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            `;
+            
+            updateActiveNav('showCashPayments()');
+            loadCashPayments();
+        }
+
+        function loadCashPayments() {
+            const tbody = document.getElementById('paymentTableBody');
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> Loading...</td></tr>';
+            }
+            
+            fetch('/WRSOMS/api/admin/cash_payments.php', { credentials: 'same-origin' })
+                .then(r => {
+                    if (!r.ok) {
+                        throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+                    }
+                    return r.text();
+                })
+                .then(text => {
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        console.error('Invalid JSON response:', text);
+                        throw new Error('Server returned invalid JSON. The API endpoint may not exist or has an error.');
+                    }
+                })
+                .then(response => {
+                    if (!response.success) {
+                        throw new Error(response.message || 'Failed to load cash payments');
+                    }
+                    renderCashPayments(response.payments || []);
+                })
+                .catch(error => {
+                    console.error('Error loading cash payments:', error);
+                    const tbody = document.getElementById('paymentTableBody');
+                    if (tbody) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="7" style="padding: 40px; text-align: center;">
+                                    <div style="color: #ef4444;">
+                                        <i class="fa fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px;"></i>
+                                        <p style="font-weight: 600; margin-bottom: 8px;">Error loading payments</p>
+                                        <p style="font-size: 0.875rem; color: #64748b;">${error.message}</p>
+                                        <button onclick="loadCashPayments()" class="btn btn-sm btn-primary" style="margin-top: 16px;">
+                                            <i class="fa fa-refresh"></i> Try Again
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                });
+        }
+
+        function renderCashPayments(payments) {
+            const tbody = document.getElementById('paymentTableBody');
+            if (!tbody) return;
+            
+            // Calculate stats - use correct status names from database
+            const verified = payments.filter(p => p.payment_status === 'Paid').length;
+            const pending = payments.filter(p => p.payment_status === 'Pending').length;
+            const total = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+            
+            // Update stats
+            const verifiedEl = document.getElementById('verifiedCount');
+            const pendingEl = document.getElementById('pendingCount');
+            const totalEl = document.getElementById('totalAmount');
+            
+            if (verifiedEl) verifiedEl.textContent = verified;
+            if (pendingEl) pendingEl.textContent = pending;
+            if (totalEl) totalEl.textContent = money(total);
+            
+            tbody.innerHTML = '';
+            
+            if (payments.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="padding: 0;">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fa fa-money"></i>
+                                </div>
+                                <h2 class="empty-state-title">No Cash Payments</h2>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            payments.forEach(payment => {
+                const tr = document.createElement('tr');
+                const statusBadge = payment.payment_status === 'Paid' ? 
+                    '<span class="badge bg-success">Verified</span>' : 
+                    '<span class="badge bg-warning">Pending</span>';
+                
+                const actionBtn = payment.payment_status === 'Pending' ? 
+                    `<button class="btn btn-sm btn-success" onclick="verifyPayment(${payment.payment_id})">
+                        <i class="fa fa-check"></i> Verify
+                    </button>` : 
+                    '<span style="color: #10b981;"><i class="fa fa-check-circle"></i> Verified</span>';
+                
+                tr.innerHTML = `
+                    <td>${escapeHtml(payment.payment_id)}</td>
+                    <td><strong>${escapeHtml(payment.reference_id || 'N/A')}</strong></td>
+                    <td>${escapeHtml(payment.customer_name || 'N/A')}</td>
+                    <td>${money(payment.amount)}</td>
+                    <td>${formatDateTime(payment.payment_date)}</td>
+                    <td>${statusBadge}</td>
+                    <td>${actionBtn}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function verifyPayment(paymentId) {
+            if (!confirm('Mark this cash payment as verified?')) return;
+            
+            fetch('/WRSOMS/api/admin/cash_payments.php', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    action: 'verify',
+                    payment_id: paymentId 
+                })
+            })
+            .then(r => r.json())
+            .then(response => {
+                if (response.success) {
+                    showAdminToast('Payment verified successfully', 'success');
+                    loadCashPayments();
+                } else {
+                    throw new Error(response.message || 'Failed to verify payment');
+                }
+            })
+            .catch(error => {
+                showAdminToast('Error: ' + error.message, 'error');
             });
         }
 
