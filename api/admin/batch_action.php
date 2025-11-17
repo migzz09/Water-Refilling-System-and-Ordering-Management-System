@@ -16,10 +16,37 @@ $input = json_decode(file_get_contents('php://input'), true);
 $action = $input['action'] ?? '';
 $batchId = isset($input['batch_id']) ? (int)$input['batch_id'] : 0;
 
-// Admin authentication check
-if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] != 1) {
+// Authentication/authorization check
+// Admins can perform all actions. Staff users (e.g. Drivers) may be allowed a subset.
+$isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1;
+$isAuthorized = false;
+if ($isAdmin) {
+    $isAuthorized = true;
+} else {
+    // Try to detect staff role by session username
+    $username = $_SESSION['username'] ?? null;
+    if ($username) {
+        $sstmt = $pdo->prepare("SELECT staff_role FROM staff WHERE staff_user = ? LIMIT 1");
+        $sstmt->execute([$username]);
+        $srow = $sstmt->fetch(PDO::FETCH_ASSOC);
+        if ($srow && !empty($srow['staff_role'])) {
+            $staffRole = strtolower(trim($srow['staff_role']));
+            // Normalize role names: treat 'rider' as 'driver'
+            if (strpos($staffRole, 'rider') !== false) $staffRole = 'driver';
+            // Drivers are allowed to perform delivery actions only
+            if ($staffRole === 'driver') {
+                if (in_array($action, ['start_delivery', 'complete_delivery'])) {
+                    $isAuthorized = true;
+                }
+            }
+            // Future roles with limited permissions can be added here
+        }
+    }
+}
+
+if (!$isAuthorized) {
     http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized - Admin access required']);
+    echo json_encode(['success' => false, 'message' => 'Unauthorized - insufficient privileges']);
     exit;
 }
 
