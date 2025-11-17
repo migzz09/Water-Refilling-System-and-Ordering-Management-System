@@ -711,6 +711,20 @@
             
             // Globals and DOM references expected by the script
             var ordersMap = {};
+            // Role of current session (Admin, Driver, Sales Manager, Customer Manager, etc.)
+            window.CURRENT_STAFF_ROLE = null;
+            async function fetchStaffRole() {
+                try {
+                    const resp = await fetch('/WRSOMS/api/admin/staff-session.php', { credentials: 'same-origin' });
+                    const j = await resp.json();
+                    if (j && j.success) {
+                        window.CURRENT_STAFF_ROLE = j.role || null;
+                        console.log('Detected staff role:', window.CURRENT_STAFF_ROLE);
+                    }
+                } catch (e) {
+                    console.warn('Failed to fetch staff role:', e);
+                }
+            }
             // If these elements are present in the parsed fragment they will be found; otherwise we fall back to querying later
             var batchesContainer = document.getElementById('batchesContainer');
             var unassignedContainer = document.getElementById('unassignedContainer');
@@ -801,6 +815,29 @@
                         <button class="btn btn-sm btn-primary action-btn" data-action="start_pickup"
                             onclick="performBatchAction('${escapeHtml(batch.batch_id)}', 'start_pickup', this)">Start Pickup</button>
                     `;
+                }
+
+                // Role-based visibility: Drivers can only perform delivery-related actions
+                try {
+                    const rawRole = (window.CURRENT_STAFF_ROLE || '').toLowerCase();
+                    // Normalize role strings: treat 'rider' as driver to match DB seeds
+                    const role = (rawRole.indexOf('driver') !== -1 || rawRole.indexOf('rider') !== -1) ? 'driver' : rawRole;
+                    if (role === 'driver') {
+                        // Only keep delivery actions (start_delivery, complete_delivery) or final Completed marker
+                        if (deliveryStatus === 'completed') {
+                            // already the completed marker
+                        } else if (deliveryStatus === 'in progress') {
+                            // keep Complete Delivery button (already set above)
+                        } else if (pickupStatus === 'completed') {
+                            // keep Start Delivery button (already set above)
+                        } else {
+                            // For pickup in-progress or initial pickup states, drivers should not see pickup actions
+                            // Show an empty placeholder to avoid confusing buttons
+                            buttonsHtml = '<div class="text-muted small">No delivery actions available</div>';
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Role-based filtering failed', e);
                 }
                 // Modified batch card header with sequential buttons
                 return `
@@ -1066,8 +1103,10 @@
                     });
                 });
             }
-            // initial call
-            loadData();
+            // initial call: fetch staff role first so UI can apply role-based filtering
+            fetchStaffRole().then(() => {
+                loadData();
+            });
             // Perform batch action: start/complete pickup/delivery
             // CRITICAL: Must be on window for inline onclick handlers to work
             if (typeof window.performBatchAction !== 'undefined') {
