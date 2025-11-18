@@ -16,10 +16,37 @@ $input = json_decode(file_get_contents('php://input'), true);
 $action = $input['action'] ?? '';
 $batchId = isset($input['batch_id']) ? (int)$input['batch_id'] : 0;
 
-// Admin authentication check
-if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] != 1) {
+// Authentication/authorization check
+// Admins can perform all actions. Staff users (e.g. Drivers) may be allowed a subset.
+$isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1;
+$isAuthorized = false;
+if ($isAdmin) {
+    $isAuthorized = true;
+} else {
+    // Try to detect staff role by session username
+    $username = $_SESSION['username'] ?? null;
+    if ($username) {
+        $sstmt = $pdo->prepare("SELECT staff_role FROM staff WHERE staff_user = ? LIMIT 1");
+        $sstmt->execute([$username]);
+        $srow = $sstmt->fetch(PDO::FETCH_ASSOC);
+        if ($srow && !empty($srow['staff_role'])) {
+            $staffRole = strtolower(trim($srow['staff_role']));
+            // Normalize role names: treat 'rider' as 'driver'
+            if (strpos($staffRole, 'rider') !== false) $staffRole = 'driver';
+            // Drivers are allowed to perform delivery actions only
+            if ($staffRole === 'driver') {
+                if (in_array($action, ['start_delivery', 'complete_delivery'])) {
+                    $isAuthorized = true;
+                }
+            }
+            // Future roles with limited permissions can be added here
+        }
+    }
+}
+
+if (!$isAuthorized) {
     http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized - Admin access required']);
+    echo json_encode(['success' => false, 'message' => 'Unauthorized - insufficient privileges']);
     exit;
 }
 
@@ -58,30 +85,45 @@ try {
 
     switch ($action) {
         case 'start_pickup':
-            // mark pickup rows as Dispatched (2)
+            // mark pickup rows as In Progress (2)
             $updateDelivery('pickup', 2, false);
-            // set batch status to Dispatched (2)
+            // set batch status to In Progress (2)
             $pdo->prepare("UPDATE batches SET batch_status_id = 2 WHERE batch_id = ?")->execute([$batchId]);
             break;
         case 'complete_pickup':
-            // mark pickup as Delivered (3) and set actual_time
+            // mark pickup as Completed (3) and set actual_time
             $updateDelivery('pickup', 3, true);
             break;
         case 'start_delivery':
-            // mark delivery rows as Dispatched (2)
+            // mark delivery rows as In Progress (2)
             $updateDelivery('delivery', 2, false);
-            // update orders to Dispatched
+            // update orders to In Progress
             $updateOrdersStatus(2);
-            // set batch status to Dispatched
+            // set batch status to In Progress
             $pdo->prepare("UPDATE batches SET batch_status_id = 2 WHERE batch_id = ?")->execute([$batchId]);
             break;
         case 'complete_delivery':
-            // mark delivery as Delivered (3) and set actual_time
+            // mark delivery as Completed (3) and set actual_time
             $updateDelivery('delivery', 3, true);
-            // update orders to Delivered
+            // update orders to Completed
             $updateOrdersStatus(3);
             // set batch status to Completed (3)
             $pdo->prepare("UPDATE batches SET batch_status_id = 3 WHERE batch_id = ?")->execute([$batchId]);
+            
+            // Auto-mark COD payments as Paid when delivery is completed
+            // Get all orders in this batch with COD payment method (payment_method_id = 1)
+            // and update their payment status to Paid (payment_status_id = 2)
+            $codStmt = $pdo->prepare("
+                UPDATE payments p
+                INNER JOIN orders o ON p.reference_id = o.reference_id
+                SET p.payment_status_id = 2
+                WHERE o.batch_id = ? 
+                AND p.payment_method_id = 1 
+                AND p.payment_status_id = 1
+            ");
+            $codStmt->execute([$batchId]);
+            $updatedRows = $codStmt->rowCount();
+            error_log("Complete delivery: Updated $updatedRows COD payment(s) to Paid for batch_id: $batchId");
             break;
         default:
             throw new Exception('Unknown action');

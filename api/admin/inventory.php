@@ -18,23 +18,57 @@ $method = $_SERVER['REQUEST_METHOD'];
 try {
     if ($method === 'GET') {
         // Get all inventory with container details
-        $stmt = $pdo->query("
-            SELECT 
-                i.container_id,
-                i.container_type,
-                i.stock as stock_quantity,
-                i.last_updated,
-                c.price
-            FROM inventory i
-            LEFT JOIN containers c ON i.container_id = c.container_id
-            ORDER BY i.container_id
-        ");
+        // Some DBs may not have the optional `purchase_price` column (permissions/migration),
+        // so attempt to include it and fall back to a safe query if the column is missing.
+        try {
+                $stmt = $pdo->query("
+                    SELECT 
+                        i.container_id,
+                        i.container_type,
+                        i.stock as stock_quantity,
+                        i.last_updated,
+                        c.price,
+                        c.purchase_price,
+                        c.photo,
+                        c.is_visible
+                    FROM inventory i
+                    LEFT JOIN containers c ON i.container_id = c.container_id
+                    ORDER BY i.container_id
+                ");
+                $inventory = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            } catch (PDOException $inner) {
+                // If purchase_price column doesn't exist, fall back to a query without it
+                error_log('Inventory API fallback: ' . $inner->getMessage());
+                $stmt = $pdo->query("
+                    SELECT 
+                        i.container_id,
+                        i.container_type,
+                        i.stock as stock_quantity,
+                        i.last_updated,
+                        c.price,
+                        c.photo,
+                        c.is_visible
+                    FROM inventory i
+                    LEFT JOIN containers c ON i.container_id = c.container_id
+                    ORDER BY i.container_id
+                ");
+                $inventory = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                // ensure purchase_price key is present (null) for each item
+                foreach ($inventory as &$it) {
+                    $it['purchase_price'] = null;
+                }
+                unset($it);
+            }
         
-        $inventory = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Add size information based on container type
+        // Add size, image and visibility information based on container data
         $inventory = array_map(function($item) {
             $item['size'] = $item['container_type'] === 'Round' ? '5 Gallons' : '3 Gallons';
+            $item['image'] = !empty($item['photo']) ? '/WRSOMS/assets/images/' . $item['photo'] : '/WRSOMS/assets/images/placeholder.svg';
+            $item['is_visible'] = isset($item['is_visible']) ? (int)$item['is_visible'] : 0;
+            $item['price'] = isset($item['price']) ? (float)$item['price'] : 0.0;
+            // include purchase_price if present
+            $item['purchase_price'] = isset($item['purchase_price']) ? (float)$item['purchase_price'] : null;
+            $item['stock_quantity'] = isset($item['stock_quantity']) ? (int)$item['stock_quantity'] : 0;
             return $item;
         }, $inventory);
         

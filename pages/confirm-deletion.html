@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Account Deletion - WaterWorld</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/design-system.css">
+    <link rel="stylesheet" href="../assets/css/index.css">
+    <link rel="stylesheet" href="../assets/css/header.css">
+    <style>
+        body {
+            background: #F7FAFC;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', sans-serif;
+            padding-top: 88px;
+        }
+
+        .confirmation-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            margin: 2rem;
+            padding: 3rem;
+            text-align: center;
+        }
+
+        .confirmation-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            color: #EF4444;
+        }
+
+        .confirmation-icon.success {
+            color: #10B981;
+        }
+
+        .confirmation-icon.loading {
+            animation: spin 1s linear infinite;
+            color: #3B82F6;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1A202C;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            color: #6B7280;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .warning-text {
+            background: #FEF2F2;
+            border-left: 4px solid #EF4444;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            text-align: left;
+            border-radius: 8px;
+            color: #991B1B;
+        }
+
+        .warning-text strong {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group {
+            margin: 1.5rem 0;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #E5E7EB;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+            flex: 1;
+        }
+
+        .btn-danger {
+            background: #EF4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #DC2626;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #6B7280;
+            border: 2px solid #E5E7EB;
+        }
+
+        .btn-secondary:hover {
+            background: #F9FAFB;
+            border-color: #D1D5DB;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .success-message {
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .error-message {
+            background: #FEE2E2;
+            color: #991B1B;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        @media (max-width: 640px) {
+            .confirmation-container {
+                margin: 1rem;
+                padding: 2rem;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar glass">
+        <div class="container">
+            <div class="nav-content">
+                <div class="nav-brand">
+                    <img src="../assets/images/ww_logo.png" alt="WaterWorld Logo" class="nav-logo">
+                    <span class="brand-name">Water World</span>
+                </div>
+
+                <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                    <span class="icon-menu"></span>
+                </button>
+
+                <div class="nav-menu" id="navMenu">
+                    <a href="../index.html" class="nav-link">
+                        <i class="fa fa-home"></i>
+                        Home
+                    </a>
+                    <a href="product.html" class="nav-link">
+                        <i class="fa fa-shopping-cart"></i>
+                        Products
+                    </a>
+                    <a href="order-tracking.html" class="nav-link">
+                        <i class="fa fa-search"></i>
+                        Track Order
+                    </a>
+                </div>
+
+                <div class="nav-actions" id="navActions">
+                    <a href="login.html" class="btn btn-outline btn-sm" id="loginBtn">
+                        <i class="fa fa-sign-in"></i>
+                        Login
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Confirmation Container -->
+    <div class="confirmation-container">
+        <!-- Loading State -->
+        <div id="loadingState">
+            <i class="fa fa-spinner fa-spin confirmation-icon loading"></i>
+            <h2>Verifying Deletion Request...</h2>
+            <p>Please wait while we verify your deletion token.</p>
+        </div>
+
+        <!-- Confirmation State -->
+        <div id="confirmationState" style="display: none;">
+            <i class="fa fa-exclamation-triangle confirmation-icon"></i>
+            <h2>Confirm Permanent Deletion</h2>
+            <p>You are about to <strong>permanently delete</strong> your WaterWorld account.</p>
+            
+            <div class="warning-text">
+                <strong>This action cannot be undone!</strong>
+                <ul style="margin: 0.5rem 0; padding-left: 1.5rem; text-align: left;">
+                    <li>All your personal information will be deleted</li>
+                    <li>Order history will be permanently removed</li>
+                    <li>Saved addresses will be lost</li>
+                    <li>You will not be able to recover your account</li>
+                </ul>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmText" style="display: block; text-align: left; color: #374151; font-weight: 500; margin-bottom: 0.5rem;">
+                    Type "DELETE" to confirm:
+                </label>
+                <input 
+                    type="text" 
+                    id="confirmText" 
+                    placeholder="Type DELETE here"
+                    maxlength="6"
+                >
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-danger" id="confirmDeleteBtn" disabled onclick="confirmDeletion()">
+                    <i class="fa fa-trash"></i> Delete My Account
+                </button>
+                <button class="btn btn-secondary" onclick="goBack()">
+                    <i class="fa fa-arrow-left"></i> Cancel
+                </button>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" style="display: none;">
+            <i class="fa fa-times-circle confirmation-icon" style="color: #EF4444;"></i>
+            <h2>Invalid or Expired Link</h2>
+            <p id="errorMessage">The deletion link is invalid or has expired. Please request a new deletion link from your settings.</p>
+            
+            <div class="actions" style="margin-top: 2rem;">
+                <a href="settings.html" class="btn btn-secondary" style="text-decoration: none;">
+                    <i class="fa fa-cog"></i> Go to Settings
+                </a>
+                <a href="../index.html" class="btn btn-secondary" style="text-decoration: none;">
+                    <i class="fa fa-home"></i> Go Home
+                </a>
+            </div>
+        </div>
+
+        <!-- Success State -->
+        <div id="successState" style="display: none;">
+            <i class="fa fa-check-circle confirmation-icon success"></i>
+            <h2>Account Deleted Successfully</h2>
+            <p>Your WaterWorld account has been permanently deleted.</p>
+            <p style="color: #9CA3AF; font-size: 0.9rem;">You will be redirected to the home page shortly...</p>
+            
+            <div class="actions" style="margin-top: 2rem;">
+                <a href="../index.html" class="btn btn-secondary" style="text-decoration: none;">
+                    <i class="fa fa-home"></i> Go Home
+                </a>
+            </div>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api-helper.js"></script>
+    <script>
+        const token = new URLSearchParams(window.location.search).get('token');
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (!token) {
+                showError('No deletion token provided. Please request deletion again from your settings.');
+                return;
+            }
+
+            // Token is valid if we got here, show confirmation
+            setTimeout(() => {
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('confirmationState').style.display = 'block';
+                
+                // Listen for confirmation text input
+                document.getElementById('confirmText').addEventListener('input', function() {
+                    document.getElementById('confirmDeleteBtn').disabled = this.value !== 'DELETE';
+                });
+            }, 1000);
+        });
+
+        function showError(message) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('errorState').style.display = 'block';
+            document.getElementById('errorMessage').textContent = message;
+        }
+
+        function goBack() {
+            window.history.back();
+        }
+
+        async function confirmDeletion() {
+            const btn = document.getElementById('confirmDeleteBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Deleting...';
+
+            try {
+                const result = await API.post('/account/confirm-deletion.php', { token: token });
+                
+                if (result.success) {
+                    document.getElementById('confirmationState').style.display = 'none';
+                    document.getElementById('successState').style.display = 'block';
+                    
+                    // Redirect after 3 seconds
+                    setTimeout(() => {
+                        window.location.href = result.redirect || '../index.html';
+                    }, 3000);
+                } else {
+                    showError(result.message || 'Failed to delete account. Please try again.');
+                }
+            } catch (error) {
+                console.error('Deletion error:', error);
+                showError('An error occurred while deleting your account. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa fa-trash"></i> Delete My Account';
+            }
+        }
+    </script>
+</body>
+</html>
+

@@ -23,6 +23,7 @@ VALUES (
     CURRENT_TIMESTAMP, 
     1, 
     1
+<<<<<<< HEAD
 );
 
 -- Note: The password is stored as plain text 'admin123'
@@ -35,3 +36,6 @@ VALUES (
 -- DELETE FROM `accounts` WHERE `username` = 'admin' AND `is_admin` = 1;
 -- ALTER TABLE `accounts` DROP COLUMN `is_admin`;
 -- ALTER TABLE `accounts` MODIFY COLUMN `password` VARCHAR(50) NOT NULL;
+=======
+);
+>>>>>>> 47603ff9b60986a5fdcfb44ba2f200d0ba062749

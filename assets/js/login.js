@@ -60,14 +60,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('is_admin type:', typeof result.data?.is_admin);
                 console.log('isAdmin check result:', isAdmin);
                 
-                // Determine redirect destination based ONLY on actual admin status
+                // Determine redirect destination based on actual admin OR staff role
                 let redirectUrl;
+                // If admin flag is present and truthy → admin dashboard
                 if (isAdmin) {
                     redirectUrl = '/WRSOMS/pages/admin/admin-dashboard.html';
                     console.log('User IS admin - redirecting to admin dashboard');
-                } else {
+                }
+                // If staff role is present in response (staff login), redirect to admin dashboard as well
+                else if (result.data && result.data.staff_role) {
+                    redirectUrl = '/WRSOMS/pages/admin/admin-dashboard.html';
+                    console.log('User is staff (role=' + result.data.staff_role + ') - redirecting to admin dashboard');
+                }
+                else {
                     redirectUrl = '/WRSOMS/index.html';
-                    console.log('User is NOT admin - redirecting to main page');
+                    console.log('User is NOT admin/staff - redirecting to main page');
                 }
                 
                 // Redirect after short delay

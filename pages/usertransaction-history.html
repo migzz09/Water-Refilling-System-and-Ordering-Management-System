@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-cache-control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Transaction History - WaterWorld</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -10,6 +13,7 @@
     <link rel="stylesheet" href="../assets/css/index.css">
     <link rel="stylesheet" href="../assets/css/product.css">
     <link rel="stylesheet" href="../assets/css/header.css">
+    <link rel="stylesheet" href="../assets/css/notifications.css">
     <style>
         /* Prevent text wrapping in navbar */
         .brand-name {
@@ -238,6 +242,8 @@
             border-radius: 16px;
             width: 92%;
             max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             position: relative;
             animation: modalSlideIn 0.3s ease-out;
@@ -437,6 +443,25 @@
                             <i class="fa fa-user-plus"></i>
                             Register
                         </a>
+                        
+                        <!-- Notifications (hidden by default; JS will reveal only when logged in) -->
+                        <div class="notifications-menu" id="notificationsMenu" style="display: none;">
+                            <button class="btn btn-outline btn-sm notifications-btn" onclick="toggleNotifications()" aria-label="Notifications" title="Notifications">
+                                <i class="fa fa-bell"></i>
+                                <span class="notifications-badge" id="notificationsBadge" style="display: none;">0</span>
+                            </button>
+
+                            <div class="notifications-dropdown" id="notificationsDropdown" style="display: none;">
+                                <div class="notifications-header">
+                                    <h3>Notifications</h3>
+                                    <button class="mark-all-read" id="markAllReadBtn" onclick="markAllAsRead()">Mark all read</button>
+                                </div>
+                                <div class="notifications-list" id="notificationsList">
+                                    <div class="empty-notifications">No notifications</div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="user-menu" id="userMenu" style="display: none;">
                             <button class="btn btn-outline btn-sm profile-btn" onclick="toggleUserDropdown()" aria-label="Profile" title="Profile">
                                 <i class="fa fa-user-circle"></i>
@@ -481,13 +506,14 @@
                     Transaction Details
                 </div>
                 <div class="receipt-details">
+                    <p><strong>Reference ID:</strong> <span id="receipt-reference-id"></span></p>
                     <p><strong>Type:</strong> <span id="receipt-type"></span></p>
                     <p><strong>Amount:</strong> <span id="receipt-amount"></span></p>
                     <p><strong>Delivery Date:</strong> <span id="receipt-delivery-date"></span></p>
-                    <p><strong>Container Type:</strong> <span id="receipt-container-type"></span></p>
-                    <p><strong>Quantity:</strong> <span id="receipt-quantity"></span></p>
-                    <p><strong>Price per Container:</strong> <span id="receipt-container-price"></span></p>
-                    <p><strong>Subtotal:</strong> <span id="receipt-subtotal"></span></p>
+                    
+                    <!-- Order Items Section -->
+                    <div id="receipt-items-container"></div>
+                    
                     <p class="total"><strong>Total Amount:</strong> <span id="receipt-total"></span></p>
                     <p><strong>Status:</strong> <span id="receipt-status"></span></p>
                 </div>
@@ -500,13 +526,11 @@
         const searchInput = document.getElementById('searchInput');
         const transactionList = document.querySelector('.transaction-list');
         const receiptModal = document.getElementById('receipt-modal');
+        const receiptReferenceId = document.getElementById('receipt-reference-id');
         const receiptType = document.getElementById('receipt-type');
         const receiptAmount = document.getElementById('receipt-amount');
         const receiptDeliveryDate = document.getElementById('receipt-delivery-date');
-        const receiptContainerType = document.getElementById('receipt-container-type');
-        const receiptQuantity = document.getElementById('receipt-quantity');
-        const receiptContainerPrice = document.getElementById('receipt-container-price');
-        const receiptSubtotal = document.getElementById('receipt-subtotal');
+        const receiptItemsContainer = document.getElementById('receipt-items-container');
         const receiptTotal = document.getElementById('receipt-total');
         const receiptStatus = document.getElementById('receipt-status');
 
@@ -525,30 +549,40 @@
                             const dateHeader = new Date(transaction.order_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
                             const time = new Date(transaction.order_date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
                             
+                            // Determine transaction type based on items
+                            let hasRefill = false;
+                            let hasPurchase = false;
                             let transactionType = '';
                             let iconClass = '';
                             let iconType = '';
                             
-                            switch (transaction.order_type_id) {
-                                case 1:
+                            if (transaction.items && transaction.items.length > 0) {
+                                transaction.items.forEach(item => {
+                                    if (item.order_type_id == 1) hasRefill = true;
+                                    if (item.order_type_id == 2) hasPurchase = true;
+                                });
+                                
+                                if (hasRefill && hasPurchase) {
+                                    transactionType = 'Refill and Purchase Container/s';
+                                    iconClass = 'combo';
+                                    iconType = 'fa-cubes';
+                                } else if (hasPurchase) {
+                                    transactionType = 'Purchase Container/s';
+                                    iconClass = 'buy';
+                                    iconType = 'fa-shopping-bag';
+                                } else if (hasRefill) {
                                     transactionType = 'Refill';
                                     iconClass = 'refill';
                                     iconType = 'fa-tint';
-                                    break;
-                                case 2:
-                                    transactionType = 'Buy Container';
-                                    iconClass = 'buy';
-                                    iconType = 'fa-shopping-bag';
-                                    break;
-                                case 3:
-                                    transactionType = 'Refill and Buy Container';
-                                    iconClass = 'combo';
-                                    iconType = 'fa-cubes';
-                                    break;
-                                default:
-                                    transactionType = 'Unknown';
+                                } else {
+                                    transactionType = 'Order';
                                     iconClass = 'refill';
                                     iconType = 'fa-question';
+                                }
+                            } else {
+                                transactionType = 'Order';
+                                iconClass = 'refill';
+                                iconType = 'fa-question';
                             }
                             
                             if (currentDate !== transactionDate) {
@@ -594,41 +628,87 @@
 
         function showReceipt(transactionData) {
             const transaction = JSON.parse(transactionData);
-            let receiptTypeText = '';
-            switch (transaction.order_type_id) {
-                case 1:
-                    receiptTypeText = 'Refill';
-                    break;
-                case 2:
-                    receiptTypeText = 'Buy Container';
-                    break;
-                case 3:
-                    receiptTypeText = 'Refill and Buy Container';
-                    break;
-                default:
-                    receiptTypeText = 'Unknown';
+            
+            // Determine receipt type based on items
+            let hasRefill = false;
+            let hasPurchase = false;
+            
+            if (transaction.items && transaction.items.length > 0) {
+                transaction.items.forEach(item => {
+                    if (item.order_type_id == 1) hasRefill = true;
+                    if (item.order_type_id == 2) hasPurchase = true;
+                });
             }
+            
+            let receiptTypeText = '';
+            if (hasRefill && hasPurchase) {
+                receiptTypeText = 'Refill and Purchase Container/s';
+            } else if (hasPurchase) {
+                receiptTypeText = 'Purchase Container/s';
+            } else if (hasRefill) {
+                receiptTypeText = 'Refill';
+            } else {
+                receiptTypeText = 'Order';
+            }
+            
+            receiptReferenceId.textContent = transaction.reference_id || 'N/A';
             receiptType.textContent = receiptTypeText;
             receiptAmount.textContent = `₱${parseFloat(transaction.total_amount).toFixed(2)}`;
             receiptDeliveryDate.textContent = new Date(transaction.delivery_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            receiptContainerType.textContent = transaction.container_type;
-            receiptQuantity.textContent = transaction.quantity;
-            receiptContainerPrice.textContent = `₱${parseFloat(transaction.container_price).toFixed(2)}`;
-            receiptSubtotal.textContent = `₱${parseFloat(transaction.subtotal).toFixed(2)}`;
+            
+            // Display all items
+            receiptItemsContainer.innerHTML = '';
+            if (transaction.items && transaction.items.length > 0) {
+                const itemsTitle = document.createElement('h4');
+                itemsTitle.style.cssText = 'margin: 1rem 0 0.5rem 0; color: #008CBA; font-size: 1rem; font-weight: 600;';
+                itemsTitle.innerHTML = '<i class="fa fa-cube"></i> Order Items';
+                receiptItemsContainer.appendChild(itemsTitle);
+                
+                transaction.items.forEach(item => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.style.cssText = 'display: flex; justify-content: space-between; padding: 0.75rem; margin-bottom: 0.5rem; background: #f9fbfc; border-radius: 5px; border-left: 3px solid #008CBA;';
+                    
+                    const itemType = item.order_type_id == 1 ? 'Refill' : 'Purchase';
+                    const itemBadge = item.order_type_id == 1 
+                        ? '<span style="background: #10B981; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-left: 0.5rem;">Refill</span>'
+                        : '<span style="background: #F59E0B; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-left: 0.5rem;">Purchase</span>';
+                    
+                    itemDiv.innerHTML = `
+                        <div>
+                            <strong>${item.container_type || 'N/A'}</strong> ${itemBadge}
+                            <div style="font-size: 0.85rem; color: #6B7280; margin-top: 0.25rem;">
+                                Qty: ${item.quantity || 0} × ₱${parseFloat(item.container_price || 0).toFixed(2)}
+                            </div>
+                        </div>
+                        <div style="font-weight: 700; color: #008CBA;">
+                            ₱${parseFloat(item.subtotal || 0).toFixed(2)}
+                        </div>
+                    `;
+                    receiptItemsContainer.appendChild(itemDiv);
+                });
+            } else {
+                receiptItemsContainer.innerHTML = '<p style="color: #6B7280;">No item details available</p>';
+            }
+            
             receiptTotal.textContent = `₱${parseFloat(transaction.total_amount).toFixed(2)}`;
-            receiptStatus.textContent = transaction.delivery_status;
+            
+            // Clean up status text - remove "Archived - " prefix
+            let statusText = transaction.delivery_status || 'N/A';
+            statusText = statusText.replace(/^Archived\s*-\s*/i, '');
+            receiptStatus.textContent = statusText;
+            
             transactionList.style.display = 'none';
             receiptModal.style.display = 'flex';
         }
 
         function goBack() {
             receiptModal.style.display = 'none';
-            transactionList.style.display = 'flex';
+            transactionList.style.display = 'block';
         }
 
         function closeReceipt() {
             receiptModal.style.display = 'none';
-            transactionList.style.display = 'flex';
+            transactionList.style.display = 'block';
         }
 
         // Close receipt when clicking outside
@@ -658,13 +738,70 @@
         };
         window.addEventListener("scroll", revealOnScroll);
         revealOnScroll();
+
+        // Auto-open transaction from notification click
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Transaction History: Page loaded');
+            
+            // Check if we have a reference ID in the URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const refFromUrl = urlParams.get('ref');
+            const showModal = urlParams.get('showModal');
+            
+            if (refFromUrl && showModal === 'true') {
+                console.log('Transaction History: Auto-opening transaction with ref:', refFromUrl);
+                
+                // Wait for transactions to load, then find and open the matching one
+                const checkAndOpenTransaction = setInterval(() => {
+                    // Get all transaction items that have been rendered
+                    const transactionItems = document.querySelectorAll('.transaction-item');
+                    
+                    if (transactionItems.length > 0) {
+                        console.log(`Transaction History: Found ${transactionItems.length} transactions, searching for ref ${refFromUrl}`);
+                        
+                        // Find the transaction data by fetching again and matching reference_id
+                        fetch(`/WRSOMS/api/orders/transaction_history.php?search=`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.transactions && data.transactions.length > 0) {
+                                    // Find transaction(s) with matching reference_id
+                                    const matchingTransactions = data.transactions.filter(t => t.reference_id === refFromUrl);
+                                    
+                                    if (matchingTransactions.length > 0) {
+                                        console.log('Transaction History: Found matching transaction, opening receipt');
+                                        // Open the first matching transaction
+                                        showReceipt(JSON.stringify(matchingTransactions[0]));
+                                        clearInterval(checkAndOpenTransaction);
+                                        
+                                        // Clean URL without reloading
+                                        window.history.replaceState({}, document.title, window.location.pathname);
+                                    } else {
+                                        console.log('Transaction History: No matching transaction found for ref:', refFromUrl);
+                                        clearInterval(checkAndOpenTransaction);
+                                    }
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Transaction History: Error fetching transaction data:', error);
+                                clearInterval(checkAndOpenTransaction);
+                            });
+                    }
+                }, 500); // Check every 500ms
+                
+                // Stop checking after 5 seconds to avoid infinite loop
+                setTimeout(() => {
+                    clearInterval(checkAndOpenTransaction);
+                    console.log('Transaction History: Timeout waiting for transactions to load');
+                }, 5000);
+            }
+        });
     </script>
 
     <!-- Page scripts (same as index.html, adjusted paths) -->
-    <script src="../assets/js/api-helper.js"></script>
-    <script src="../assets/js/auth.js"></script>
-    <script src="../assets/js/product.js"></script>
-    <script src="../assets/js/index.js"></script>
+    <script src="../assets/js/api-helper.js?v=1762860135"></script>
+    <script src="../assets/js/auth.js?v=1762860135"></script>
+    <script src="../assets/js/notifications.js?v=1762860135"></script>
+    <script src="../assets/js/product.js?v=1762860135"></script>
 
 </body>
 </html>

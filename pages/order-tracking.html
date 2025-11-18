@@ -473,10 +473,33 @@
 
     <script src="../assets/js/api-helper.js"></script>
     <script>
-        document.getElementById('tracking-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
+        // Check if reference ID is in URL parameter (from notification click)
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, checking URL parameters...');
+            const urlParams = new URLSearchParams(window.location.search);
+            const refFromUrl = urlParams.get('ref');
             
-            const referenceId = document.getElementById('reference_id').value.trim();
+            console.log('Reference from URL:', refFromUrl);
+            
+            if (refFromUrl) {
+                // Fill the input field
+                const inputField = document.getElementById('reference_id');
+                if (inputField) {
+                    inputField.value = refFromUrl;
+                    console.log('Filled input field with:', refFromUrl);
+                }
+                
+                // Automatically trigger tracking
+                setTimeout(() => {
+                    console.log('Triggering automatic tracking...');
+                    trackOrderByReference(refFromUrl);
+                }, 500);
+            } else {
+                console.log('No reference ID in URL');
+            }
+        });
+        
+        async function trackOrderByReference(referenceId) {
             const trackBtn = document.getElementById('track-btn');
             const errorAlert = document.getElementById('error-alert');
             const results = document.getElementById('tracking-results');
@@ -505,6 +528,13 @@
                 trackBtn.disabled = false;
                 trackBtn.innerHTML = '<i class="fa fa-search"></i> <span>Track Order</span>';
             }
+        }
+        
+        document.getElementById('tracking-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const referenceId = document.getElementById('reference_id').value.trim();
+            await trackOrderByReference(referenceId);
         });
         
         function displayOrderDetails(data) {

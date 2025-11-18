@@ -6,41 +6,13 @@
    - Marks unread as read when opening panel
 */
 
-/*
-  Improved behavior:
-   - Show bell immediately if a client-side login indicator exists (PHP session cookie OR localStorage account id).
-   - Then verify server auth; hide if server returns 401.
-*/
 let notificationCheckInterval = null;
-
-function hasSessionCookie() {
-    // common PHP session cookie names: PHPSESSID, but can vary; check for PHPSESSID
-    return /\bPHPSESSID=[^;]+/.test(document.cookie) || !!localStorage.getItem('account_id') || !!localStorage.getItem('user_token');
-}
 
 function initNotifications() {
     const menu = document.getElementById('notificationsMenu');
     if (!menu) return;
-
-    // Show bell immediately if we detect a client-side login indicator (prevents bell disappearing)
-    if (hasSessionCookie()) {
-        menu.style.display = 'block';
-    } else {
-        menu.style.display = 'none';
-    }
-
-    // Now verify with server and fetch notifications
     checkNotifications();
     startNotificationPolling();
-
-    document.addEventListener('click', (e) => {
-        const dropdown = document.getElementById('notificationsDropdown');
-        const menu = document.getElementById('notificationsMenu');
-        if (!dropdown || !menu) return;
-        if (dropdown.style.display === 'block' && !menu.contains(e.target)) {
-            dropdown.style.display = 'none';
-        }
-    });
 }
 
 function startNotificationPolling() {
@@ -64,23 +36,20 @@ async function checkNotifications() {
         });
 
         if (res.status === 401) {
-            // not logged in server-side -> hide bell and stop polling
             const menu = document.getElementById('notificationsMenu');
             if (menu) menu.style.display = 'none';
             stopNotificationPolling();
             return;
         }
 
-        // If server returns non-JSON or error, keep the bell visible only if client knows user is logged in
         const data = await res.json().catch(() => null);
+        console.log('🔔 Notifications API response:', data);
+        
         if (!data || !data.success) {
-            // keep client-side visible if we still detect session cookie; otherwise hide
-            const menu = document.getElementById('notificationsMenu');
-            if (!hasSessionCookie() && menu) menu.style.display = 'none';
+            console.warn('⚠️ API response invalid or unsuccessful');
             return;
         }
 
-        // authenticated: ensure bell visible and update UI
         const menu = document.getElementById('notificationsMenu');
         if (menu) menu.style.display = 'block';
 
@@ -88,9 +57,6 @@ async function checkNotifications() {
         updateNotificationsList(data.notifications || []);
     } catch (err) {
         console.error('Notifications: fetch error', err);
-        // network issue: do not hide bell if client-side indicates user is logged in
-        const menu = document.getElementById('notificationsMenu');
-        if (!hasSessionCookie() && menu) menu.style.display = 'none';
     }
 }
 
@@ -107,23 +73,57 @@ function updateNotificationsBadge(count) {
 
 function updateNotificationsList(items) {
     const list = document.getElementById('notificationsList');
-    if (!list) return;
+    console.log('📋 Updating notifications list:', { 
+        listExists: !!list, 
+        itemCount: items.length,
+        items: items 
+    });
+    
+    if (!list) {
+        console.error('❌ notificationsList element not found in DOM');
+        return;
+    }
+    
     if (!items.length) {
+        console.log('ℹ️ No notifications to display');
         list.innerHTML = '<div class="empty-notifications">No notifications</div>';
         return;
     }
 
+    console.log('✅ Creating HTML for', items.length, 'notifications');
     list.innerHTML = items.map(n => {
+        const notifId = n.notification_id || n.id;
         const unread = Number(n.is_read) === 0 ? 'unread' : '';
         const message = escapeHtml(n.message || `Update for ${n.reference_id || ''}`);
         const time = formatNotificationDate(n.created_at || new Date().toISOString());
+        const iconClass = getNotificationIcon(n.notification_type || n.type);
+        
         return `
-            <div class="notification-item ${unread}" data-id="${n.notification_id}" data-ref="${n.reference_id || ''}" onclick="handleNotificationClick(event)">
-                <div class="notification-message">${message}</div>
-                <div class="notification-time">${time}</div>
+            <div class="notification-item ${unread}" 
+                 data-id="${notifId}" 
+                 data-ref="${n.reference_id || ''}"
+                 data-type="${n.notification_type || n.type || ''}">
+                <div class="notification-icon">
+                    <i class="${iconClass}"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-message">${message}</div>
+                    <div class="notification-time">${time}</div>
+                </div>
             </div>
         `;
     }).join('');
+
+    console.log('✅ HTML created, length:', list.innerHTML.length);
+    console.log('📝 First 200 chars of HTML:', list.innerHTML.substring(0, 200));
+
+    // Attach click handlers
+    const notificationItems = list.querySelectorAll('.notification-item');
+    console.log('🎯 Found', notificationItems.length, 'notification items to attach handlers');
+    
+    notificationItems.forEach(el => {
+        el.addEventListener('click', handleNotificationClick);
+    });
 }
 
 function toggleNotifications() {
@@ -169,17 +169,32 @@ async function markSingleAsRead(notificationId) {
     }
 }
 
-function handleNotificationClick(e) {
-    const el = e.currentTarget || e.target.closest('.notification-item');
-    if (!el) return;
+async function handleNotificationClick(e) {
+    const el = e.currentTarget;
     const id = el.getAttribute('data-id');
     const ref = el.getAttribute('data-ref');
+    const type = el.getAttribute('data-type');
+    const message = el.querySelector('.notification-message')?.textContent || '';
+    
     if (id) {
         el.classList.remove('unread');
         markSingleAsRead(Number(id)).then(() => checkNotifications());
     }
+    
     if (ref) {
-        window.location.href = `/wrsoms/pages/order-tracking.html?ref=${encodeURIComponent(ref)}`;
+        // Check if order is fully delivered based on message
+        // Only redirect to transaction history if the order itself is delivered, not just pickup/delivery steps
+        const isFullyDelivered = message.toLowerCase().includes('has been delivered') || 
+                                 message.toLowerCase().includes('order delivered') ||
+                                 message.toLowerCase().includes('delivery completed');
+        
+        if (isFullyDelivered) {
+            // Redirect to transaction history and show modal
+            window.location.href = `/WRSOMS/pages/usertransaction-history.html?ref=${encodeURIComponent(ref)}&showModal=true`;
+        } else {
+            // For all other notifications (order_placed, pickup, in progress, etc), redirect to order tracking
+            window.location.href = `/WRSOMS/pages/order-tracking.html?ref=${encodeURIComponent(ref)}`;
+        }
     }
 }
 
@@ -194,12 +209,34 @@ function formatNotificationDate(dateStr) {
     return d.toLocaleString();
 }
 
+function getNotificationIcon(type) {
+    // Return appropriate icon class based on notification type
+    switch(type) {
+        case 'order_placed':
+            return 'fas fa-check-circle';
+        case 'order_created':
+        case 'order_update':
+            return 'fas fa-shopping-cart';
+        case 'order_completed':
+            return 'fas fa-check-circle';
+        case 'order_cancelled':
+            return 'fas fa-times-circle';
+        case 'payment':
+            return 'fas fa-credit-card';
+        case 'delivery':
+            return 'fas fa-truck';
+        default:
+            return 'fas fa-bell';
+    }
+}
+
 function escapeHtml(s) {
     if (!s) return '';
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 }
 
-function createNotificationElement(notification) {
+function createNotificationElement_OLD_UNUSED(notification) {
+    console.error('❌ OLD CODE CALLED - createNotificationElement should not be used!');
     const div = document.createElement('div');
     div.className = 'notification-item' + (notification.is_read ? ' read' : '');
     div.innerHTML = `
@@ -340,3 +377,11 @@ document.addEventListener('logout', () => {
     if (menu) menu.style.display = 'none';
     stopNotificationPolling();
 });
+
+// Check if DOM is already loaded (in case script loads after DOMContentLoaded)
+if (document.readyState === 'loading') {
+    // DOM not loaded yet, wait
+} else {
+    // DOM already loaded, initialize
+    initNotifications();
+}

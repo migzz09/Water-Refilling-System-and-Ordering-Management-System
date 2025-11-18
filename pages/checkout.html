@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="../assets/css/index.css">
   <link rel="stylesheet" href="../assets/css/header.css">
   <link rel="stylesheet" href="../assets/css/checkout.css">
+  <link rel="stylesheet" href="../assets/css/business-status.css">
 </head>
 <body>
   <!-- Navigation (unified with index header) -->
@@ -96,9 +97,13 @@
           <!-- Address list will be rendered here -->
         </div>
         <div id="vehicleInfo" style="margin-top:1rem;"></div>
-        <div class="form-group" style="margin-top:1rem;">
+        <div class="form-group" style="margin-top:1rem; display:none;">
           <label class="form-label" for="deliveryDate">Preferred Delivery Date</label>
           <input type="date" id="deliveryDate" name="deliveryDate" class="form-control" required />
+        </div>
+        <div class="info-box" style="margin-top:1rem; padding:12px; background:#e8f5e9; border-left:4px solid #4caf50; border-radius:4px;">
+          <i class="fa fa-info-circle" style="color:#4caf50; margin-right:8px;"></i>
+          <strong>Same-Day Delivery:</strong> Your order will be delivered today.
         </div>
       </section>
 
@@ -276,5 +281,6 @@
   <!-- index.js provides header/auth UI initialization and small helpers used by the nav -->
   <script src="../assets/js/index.js"></script>
   <script src="../assets/js/checkout.js"></script>
+  <script src="../assets/js/business-status.js"></script>
 </body>
 </html>

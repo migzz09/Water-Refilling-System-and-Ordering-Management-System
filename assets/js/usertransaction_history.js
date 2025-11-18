@@ -29,24 +29,36 @@ const searchInput = document.getElementById('searchInput');
                             const transactionDate = new Date(transaction.order_date).toISOString().split('T')[0];
                             const dateHeader = new Date(transaction.order_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
                             const time = new Date(transaction.order_date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
+                            
+                            // Determine transaction type based on items
+                            let hasRefill = false;
+                            let hasPurchase = false;
                             let transactionType = '';
-                            switch (transaction.order_type_id) {
-                                case 1:
+                            
+                            if (transaction.items && transaction.items.length > 0) {
+                                transaction.items.forEach(item => {
+                                    if (item.order_type_id == 1) hasRefill = true;
+                                    if (item.order_type_id == 2) hasPurchase = true;
+                                });
+                                
+                                if (hasRefill && hasPurchase) {
+                                    transactionType = 'Refill and Purchase Container/s';
+                                } else if (hasPurchase) {
+                                    transactionType = 'Purchase Container/s';
+                                } else if (hasRefill) {
                                     transactionType = 'Refill';
-                                    break;
-                                case 2:
-                                    transactionType = 'Buy Container';
-                                    break;
-                                case 3:
-                                    transactionType = 'Refill and Buy Container';
-                                    break;
-                                default:
-                                    transactionType = 'Unknown';
+                                } else {
+                                    transactionType = 'Order';
+                                }
+                            } else {
+                                transactionType = 'Order';
                             }
+                            
                             if (currentDate !== transactionDate) {
                                 transactionList.innerHTML += `<div class="date-header">${dateHeader}</div>`;
                                 currentDate = transactionDate;
                             }
+                            
                             const item = document.createElement('div');
                             item.className = 'transaction-item';
                             item.onclick = () => showReceipt(JSON.stringify(transaction));
@@ -66,27 +78,76 @@ const searchInput = document.getElementById('searchInput');
 
         function showReceipt(transactionData) {
             const transaction = JSON.parse(transactionData);
-            let receiptTypeText = '';
-            switch (transaction.order_type_id) {
-                case 1:
-                    receiptTypeText = 'Refill';
-                    break;
-                case 2:
-                    receiptTypeText = 'Buy Container';
-                    break;
-                case 3:
-                    receiptTypeText = 'Refill and Buy Container';
-                    break;
-                default:
-                    receiptTypeText = 'Unknown';
+            
+            // Determine receipt type based on items
+            let hasRefill = false;
+            let hasPurchase = false;
+            
+            if (transaction.items && transaction.items.length > 0) {
+                transaction.items.forEach(item => {
+                    if (item.order_type_id == 1) hasRefill = true;
+                    if (item.order_type_id == 2) hasPurchase = true;
+                });
             }
+            
+            let receiptTypeText = '';
+            if (hasRefill && hasPurchase) {
+                receiptTypeText = 'Refill and Purchase Container/s';
+            } else if (hasPurchase) {
+                receiptTypeText = 'Purchase Container/s';
+            } else if (hasRefill) {
+                receiptTypeText = 'Refill';
+            } else {
+                receiptTypeText = 'Order';
+            }
+            
             receiptType.textContent = receiptTypeText;
             receiptAmount.textContent = `₱${parseFloat(transaction.total_amount).toFixed(2)}`;
             receiptDeliveryDate.textContent = new Date(transaction.delivery_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            receiptContainerType.textContent = transaction.container_type;
-            receiptQuantity.textContent = transaction.quantity;
-            receiptContainerPrice.textContent = `₱${parseFloat(transaction.container_price).toFixed(2)}`;
-            receiptSubtotal.textContent = `₱${parseFloat(transaction.subtotal).toFixed(2)}`;
+            
+            // Display all items
+            if (transaction.items && transaction.items.length > 0) {
+                // Show first item in summary fields
+                const firstItem = transaction.items[0];
+                receiptContainerType.textContent = firstItem.container_type || 'N/A';
+                receiptQuantity.textContent = firstItem.quantity || '0';
+                receiptContainerPrice.textContent = `₱${parseFloat(firstItem.container_price || 0).toFixed(2)}`;
+                receiptSubtotal.textContent = `₱${parseFloat(firstItem.subtotal || 0).toFixed(2)}`;
+                
+                // If multiple items, show them all (you can enhance this further)
+                if (transaction.items.length > 1) {
+                    // Create an items list section
+                    const itemsSection = document.createElement('div');
+                    itemsSection.className = 'receipt-items-details';
+                    itemsSection.innerHTML = '<h4>Order Items:</h4>';
+                    
+                    transaction.items.forEach(item => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'receipt-item';
+                        const itemType = item.order_type_id == 1 ? 'Refill' : 'Purchase';
+                        itemDiv.innerHTML = `
+                            <div><strong>${itemType}:</strong> ${item.container_type} x ${item.quantity}</div>
+                            <div>₱${parseFloat(item.subtotal).toFixed(2)}</div>
+                        `;
+                        itemsSection.appendChild(itemDiv);
+                    });
+                    
+                    // Insert after the standard receipt fields
+                    const receiptContent = receiptModal.querySelector('.modal-content');
+                    const existingItemsSection = receiptContent.querySelector('.receipt-items-details');
+                    if (existingItemsSection) {
+                        existingItemsSection.remove();
+                    }
+                    receiptContent.insertBefore(itemsSection, receiptContent.querySelector('.btn'));
+                }
+            } else {
+                // Fallback for old format
+                receiptContainerType.textContent = transaction.container_type || 'N/A';
+                receiptQuantity.textContent = transaction.quantity || '0';
+                receiptContainerPrice.textContent = `₱${parseFloat(transaction.container_price || 0).toFixed(2)}`;
+                receiptSubtotal.textContent = `₱${parseFloat(transaction.subtotal || 0).toFixed(2)}`;
+            }
+            
             receiptTotal.textContent = `₱${parseFloat(transaction.total_amount).toFixed(2)}`;
             receiptStatus.textContent = transaction.delivery_status;
             transactionList.style.display = 'none';

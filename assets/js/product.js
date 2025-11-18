@@ -70,6 +70,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
       if (!orderTypesResponse.ok) throw new Error(`Order types HTTP error! status: ${orderTypesResponse.status}`);
       const orderTypes = await safeParseJSON(orderTypesResponse);
+      state.orderTypes = Array.isArray(orderTypes) ? orderTypes : [];
       renderOrderTypes(orderTypes);
     } catch (error) {
       console.error('Error initializing product page:', error);
@@ -115,24 +116,29 @@ function renderProducts(products) {
   }
   
   try {
-    grid.innerHTML = products.map(product => `
-      <div class="product-card">
-                <img src="${getImageSrc(product.image || 'placeholder.svg')}" 
-             alt="${product.water_type} - ${product.container_type}" 
-             class="product-image"
-             onerror="this.src='${getImageSrc('placeholder.svg')}'">
-        <h3 class="product-title">${product.container_type} Container</h3>
-        <p class="product-price">₱${Number(product.price).toFixed(2)}</p>
-        <p class="product-description">${getProductDescription(product.container_type)}</p>
-        <button class="btn btn-primary btn-block add-to-cart-btn" 
-                data-id="${product.container_id}" 
-                data-name="${product.container_type}"
-                data-price="${product.price}"
-                data-image="${product.image || 'placeholder.svg'}">
-          <i class="fa fa-shopping-cart"></i> Add to Cart
-        </button>
-      </div>
-    `).join('');
+    grid.innerHTML = products.map(product => {
+      const imageSrc = `/WRSOMS/assets/images/${product.image || 'placeholder.svg'}`;
+      return `
+        <div class="product-card">
+          <img src="${imageSrc}" 
+               alt="${product.water_type ? product.water_type + ' - ' : ''}${product.container_type}" 
+               class="product-image"
+               onerror="this.src='/WRSOMS/assets/images/placeholder.svg'">
+          <h3 class="product-title">${product.container_type} Container</h3>
+          <p class="product-price">₱${Number(product.price).toFixed(2)}</p>
+          ${product.purchase_price ? `<p class="product-purchase-price" style="color:#0066cc; font-weight:600;">Purchase price: ₱${Number(product.purchase_price).toFixed(2)}</p>` : ''}
+          <p class="product-description">${getProductDescription(product.container_type)}</p>
+            <button class="btn btn-primary btn-block add-to-cart-btn" 
+              data-id="${product.container_id}" 
+              data-name="${product.container_type}"
+              data-price="${product.price}"
+              data-purchase-price="${product.purchase_price !== null && product.purchase_price !== undefined ? product.purchase_price : ''}"
+              data-image="${product.image || 'placeholder.svg'}">
+            <i class="fa fa-shopping-cart"></i> Add to Cart
+          </button>
+        </div>
+      `;
+    }).join('');
   } catch (error) {
     console.error('Error rendering products:', error, products);
     grid.innerHTML = '<div class="error">Error loading products. Please try again.</div>';
@@ -161,8 +167,14 @@ function renderWaterTypes(types) {
 function renderOrderTypes(types) {
   const container = document.getElementById('orderTypeOptions');
   container.innerHTML = `<h4>Order Type</h4>` + types.map(type => {
-    const isPurchaseNew = type.type_name === 'Purchase New Container/s';
-    console.log('Order type:', type.type_name, 'isPurchaseNew:', isPurchaseNew); // Debug log
+    const isPurchaseNew = String(type.type_name).trim() === 'Purchase New Container/s';
+    // Use container's purchase_price if available, otherwise fall back to order_type price
+    const displayPrice = isPurchaseNew ? (
+      (state.selectedProduct && state.selectedProduct.purchase_price && !isNaN(Number(state.selectedProduct.purchase_price))) 
+        ? Number(state.selectedProduct.purchase_price) 
+        : (type.price !== null && !isNaN(Number(type.price)) ? Number(type.price) : 250.00)
+    ) : null;
+    const priceHtml = isPurchaseNew ? `<div class="order-type-desc" style="color: #0066cc; font-weight: 500;">(Price: ₱${displayPrice.toFixed(2)} per container)</div>` : '';
     return `
       <div class="order-type-option" data-id="${type.order_type_id}" data-name="${type.type_name}">
         <input type="radio" 
@@ -173,7 +185,7 @@ function renderOrderTypes(types) {
                title="${type.type_name}">
         <label for="order_${type.order_type_id}">
           <div class="order-type-name">${type.type_name}</div>
-          ${isPurchaseNew ? '<div class="order-type-desc" style="color: #0066cc; font-weight: 500;">(Price: ₱250.00 per container)</div>' : ''}
+          ${priceHtml}
         </label>
       </div>
     `;
@@ -198,7 +210,8 @@ document.addEventListener('click', function (e) {
     const name = addBtn.dataset.name;
     const price = parseFloat(addBtn.dataset.price);
     const image = addBtn.dataset.image;
-    addToCart(id, name, price, image);
+    const purchasePrice = addBtn.dataset.purchasePrice ? parseFloat(addBtn.dataset.purchasePrice) : null;
+    addToCart(id, name, price, image, purchasePrice);
     return;
   }
 
@@ -225,12 +238,12 @@ document.addEventListener('click', function (e) {
 });
 
 // Cart Management Functions
-function addToCart(id, name, price, image) {
-  openModal(id, name, price, image);
+function addToCart(id, name, price, image, purchasePrice) {
+  openModal(id, name, price, image, false, null, purchasePrice);
 }
 
-function openModal(productId, productName, productPrice, productImage, isEdit = false, item = null) {
-  state.selectedProduct = { id: productId, name: productName, price: productPrice, image: productImage };
+function openModal(productId, productName, productPrice, productImage, isEdit = false, item = null, purchasePrice = null) {
+  state.selectedProduct = { id: productId, name: productName, price: productPrice, image: productImage, purchase_price: purchasePrice };
   state.selectedWaterType = null;
   state.selectedOrderType = null;
   state.editingItem = isEdit ? item : null;
@@ -251,6 +264,11 @@ function openModal(productId, productName, productPrice, productImage, isEdit = 
   document.getElementById('modalTitle').textContent = isEdit ? 'Edit Cart Item' : 'Select Water and Order Type';
   document.getElementById('selectionModal').classList.add('active');
   document.getElementById('confirmSelection').disabled = true;
+
+  // Re-render order types to show correct purchase price for this product
+  if (state.orderTypes && state.orderTypes.length > 0) {
+    renderOrderTypes(state.orderTypes);
+  }
 
   // Reset selections
   // Reset selections for both water and order option elements
@@ -438,7 +456,16 @@ function confirmSelection() {
     water_type_id: parseInt(waterTypeInput.value, 10),
     water_type_name: waterTypeName,
     order_type_id: parseInt(orderTypeInput.value, 10),
-    order_type_name: orderTypeName
+    order_type_name: orderTypeName,
+    order_type_price: (function(){
+      try {
+        const ot = (state.orderTypes || []).find(t => parseInt(t.order_type_id,10) === parseInt(orderTypeInput.value,10));
+        if (ot && ot.price !== null && !isNaN(Number(ot.price))) return Number(ot.price);
+      } catch(e) {}
+      return null;
+    })()
+    ,
+    purchase_price: state.selectedProduct.purchase_price || null
   };
 
   const existingItem = state.cart.find(item => 
@@ -491,8 +518,11 @@ function updateCart() {
   // Calculate total price including container purchase price if applicable
   const totalPrice = state.cart.reduce((sum, item) => {
     const isPurchaseNew = item.order_type_name === 'Purchase New Container/s';
-    // If purchasing a new container, total per unit is fixed at ₱250 (includes refill)
-    const unitPrice = isPurchaseNew ? 250 : Number(item.price || 0);
+    // If purchasing a new container, prefer per-item purchase_price, then order_type_price, then fallback to 250
+    const unitPrice = isPurchaseNew ? (
+      (item.purchase_price && !isNaN(Number(item.purchase_price))) ? Number(item.purchase_price) : 
+      ((item.order_type_price && !isNaN(Number(item.order_type_price))) ? Number(item.order_type_price) : 250)
+    ) : Number(item.price || 0);
     return sum + (unitPrice * item.quantity);
   }, 0);
 
@@ -519,8 +549,11 @@ function updateCart() {
     } else {
   cartItemsContainer.innerHTML = state.cart.map(item => {
         const isPurchaseNew = item.order_type_name === 'Purchase New Container/s';
-        // unit price: ₱250 for new container (includes refill), otherwise the water price
-        const unitPrice = isPurchaseNew ? 250 : Number(item.price || 0);
+        // unit price: use purchase_price for Purchase New, otherwise the water refill price
+        const unitPrice = isPurchaseNew ? (
+          (item.purchase_price && !isNaN(Number(item.purchase_price))) ? Number(item.purchase_price) : 
+          ((item.order_type_price && !isNaN(Number(item.order_type_price))) ? Number(item.order_type_price) : 250)
+        ) : Number(item.price || 0);
         
         return `
           <div class="cart-item" data-item-id="${item.id}">
@@ -535,7 +568,7 @@ function updateCart() {
               </div>
               <div class="cart-item-price">
                 <div style="font-weight: 500;">₱${unitPrice.toFixed(2)} each</div>
-                ${isPurchaseNew ? '<div style="font-size: 0.85em; color: #666; margin-top: 2px;">₱250.00 total per container (already filled)</div>' : '<div style="font-size: 0.85em; color: #666; margin-top: 2px;">Water: ₱' + Number(item.price || 0).toFixed(2) + '</div>'}
+                ${isPurchaseNew ? `<div style="font-size: 0.85em; color: #666; margin-top: 2px;">₱${unitPrice.toFixed(2)} total per container (already filled)</div>` : '<div style="font-size: 0.85em; color: #666; margin-top: 2px;">₱' + Number(item.price || 0).toFixed(2) + ' refill price</div>'}
               </div>
               <div class="quantity-controls">
                 <button class="btn btn-sm" onclick="updateQuantity(${item.id}, ${item.water_type_id}, ${item.order_type_id}, -1)">
@@ -622,6 +655,7 @@ async function editItem(id, water_type_id, order_type_id) {
     id: item.id,
     name: item.name,
     price: item.price,
+    purchase_price: item.purchase_price || null,
     image: item.image
   };
   state.selectedQuantity = item.quantity;

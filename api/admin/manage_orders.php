@@ -175,7 +175,7 @@ try {
         $capacity = (isset($b['vehicle_type']) && $b['vehicle_type'] === 'Tricycle') ? 5 : 10;
         $is_full = ($total_quantity >= $capacity);
 
-        // Determine whether this batch is completed: batch_status_id == 3 or delivery_status_id == 3 (Delivered)
+        // Determine whether this batch is completed: batch_status_id == 3 or delivery_status_id == 3 (Completed)
         $is_completed = false;
         if (!empty($b['batch_status_id']) && (int)$b['batch_status_id'] === 3) {
             $is_completed = true;

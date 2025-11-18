@@ -16,8 +16,30 @@ $input = json_decode(file_get_contents('php://input'), true);
 $action = $input['action'] ?? '';
 $referenceId = $input['reference_id'] ?? '';
 
-// Admin authentication check
-if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] != 1) {
+// Admin authentication check -- allow staff drivers to perform delivery-only actions
+$isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1;
+$isAuthorized = false;
+if ($isAdmin) {
+    $isAuthorized = true;
+} else {
+    // try detect staff role by username
+    $username = $_SESSION['username'] ?? null;
+    if ($username) {
+        $sstmt = $pdo->prepare('SELECT staff_role FROM staff WHERE staff_user = ? LIMIT 1');
+        $sstmt->execute([$username]);
+        $srow = $sstmt->fetch(PDO::FETCH_ASSOC);
+        if ($srow && !empty($srow['staff_role'])) {
+            $staffRole = strtolower(trim($srow['staff_role']));
+            if (strpos($staffRole, 'rider') !== false) $staffRole = 'driver';
+            // allow drivers only for delivery actions
+            if ($staffRole === 'driver' && in_array($action, ['start_delivery', 'complete_delivery'])) {
+                $isAuthorized = true;
+            }
+        }
+    }
+}
+
+if (!$isAuthorized) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Unauthorized - Admin access required']);
     exit;
@@ -65,10 +87,10 @@ try {
             // Update all orders in the same checkout
             // Map action to order_status_id
             switch ($action) {
-                case 'start_pickup': $newStatus = 2; break; // Dispatched
+                case 'start_pickup': $newStatus = 2; break; // In Progress
                 case 'complete_pickup': $newStatus = 2; break;
                 case 'start_delivery': $newStatus = 2; break;
-                case 'complete_delivery': $newStatus = 3; break; // Delivered
+                case 'complete_delivery': $newStatus = 3; break; // Completed
                 default: throw new Exception('Unknown action');
             }
             $u = $pdo->prepare("UPDATE orders SET order_status_id = ? WHERE checkout_id = ?");
