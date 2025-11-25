@@ -512,9 +512,12 @@ function renderCart(cart) {
 
   cartItems.innerHTML = cart.map((item, index) => {
     const isPurchaseNew = item.order_type_name === 'Purchase New Container/s';
+    // FIXED: Use container-specific purchase_price, no generic fallback
     const unitPrice = isPurchaseNew ? (
       (item.purchase_price && !isNaN(Number(item.purchase_price))) ? Number(item.purchase_price) :
-      ((item.order_type_price && !isNaN(Number(item.order_type_price))) ? Number(item.order_type_price) : 250)
+      ((item.order_type_price && !isNaN(Number(item.order_type_price))) ? Number(item.order_type_price) : 
+      // Use container-specific price based on container_id
+      (item.id === 1 || item.id === 2 ? 250 : 100))
     ) : Number(item.price || 0);
     const itemTotal = unitPrice * item.quantity;
     total += itemTotal;
@@ -745,9 +748,12 @@ function showOrderConfirmation(details) {
   if (cart.length) {
     cart.forEach(item => {
       const isPurchaseNew = item.order_type_name === 'Purchase New Container/s';
+      // FIXED: Use container-specific purchase_price
       const unitPrice = isPurchaseNew ? (
         (item.purchase_price && !isNaN(Number(item.purchase_price))) ? Number(item.purchase_price) :
-        ((item.order_type_price && !isNaN(Number(item.order_type_price))) ? Number(item.order_type_price) : 250)
+        ((item.order_type_price && !isNaN(Number(item.order_type_price))) ? Number(item.order_type_price) : 
+        // Use container-specific price based on container_id
+        (item.id === 1 || item.id === 2 ? 250 : 100))
       ) : Number(item.price || 0);
       const itemTotal = unitPrice * (Number(item.quantity) || 0);
       subtotal += itemTotal;
@@ -823,11 +829,16 @@ async function confirmOrder() {
     const cart = Array.isArray(window.cart) ? window.cart : [];
     const items = cart.map(item => {
       const isPurchaseNew = item.order_type_name === 'Purchase New Container/s';
-      const unitPrice = isPurchaseNew ? ((item.order_type_price && !isNaN(Number(item.order_type_price))) ? Number(item.order_type_price) : 250) : Number(item.price || 0);
+      // FIXED: Use container-specific purchase_price
+      const unitPrice = isPurchaseNew ? (
+        (item.purchase_price && !isNaN(Number(item.purchase_price))) ? Number(item.purchase_price) :
+        ((item.order_type_price && !isNaN(Number(item.order_type_price))) ? Number(item.order_type_price) : 
+        // Use container-specific price based on container_id  
+        (item.id === 1 || item.id === 2 ? 250 : 100))
+      ) : Number(item.price || 0);
       return {
         container_id: item.id,
         water_type_id: item.water_type_id != null ? Number(item.water_type_id) : null,
-        // prefer explicit per-item order_type_id if present, otherwise infer from name
         order_type_id: (item.order_type_id != null) ? Number(item.order_type_id) : (isPurchaseNew ? 2 : 1),
         quantity: Number(item.quantity || 0),
         price: unitPrice

@@ -83,16 +83,56 @@ try {
         $stmt->execute([$statusId, $batchId]);
     };
 
+    // FIX: Helper to manually create notifications with duplicate prevention
+    $createBatchNotifications = function($batchId, $notificationType, $messageTemplate) use ($pdo) {
+        // Get all orders in this batch with their account IDs by joining accounts table
+        $orderStmt = $pdo->prepare("
+            SELECT o.reference_id, a.account_id
+            FROM orders o
+            INNER JOIN accounts a ON a.customer_id = o.customer_id
+            WHERE o.batch_id = ? AND a.account_id IS NOT NULL
+        ");
+        $orderStmt->execute([$batchId]);
+        $orders = $orderStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        foreach ($orders as $order) {
+            $referenceId = $order['reference_id'];
+            $accountId = $order['account_id'];
+            $message = str_replace('{reference_id}', $referenceId, $messageTemplate);
+            
+            // Check if notification already exists
+            $checkStmt = $pdo->prepare("
+                SELECT notification_id FROM notifications 
+                WHERE user_id = ? AND reference_id = ? AND notification_type = ? AND message = ?
+                LIMIT 1
+            ");
+            $checkStmt->execute([$accountId, $referenceId, $notificationType, $message]);
+            
+            if (!$checkStmt->fetch()) {
+                // Insert notification
+                $insertStmt = $pdo->prepare("
+                    INSERT INTO notifications (user_id, message, reference_id, notification_type)
+                    VALUES (?, ?, ?, ?)
+                ");
+                $insertStmt->execute([$accountId, $message, $referenceId, $notificationType]);
+            }
+        }
+    };
+
     switch ($action) {
         case 'start_pickup':
             // mark pickup rows as In Progress (2)
             $updateDelivery('pickup', 2, false);
             // set batch status to In Progress (2)
             $pdo->prepare("UPDATE batches SET batch_status_id = 2 WHERE batch_id = ?")->execute([$batchId]);
+            // FIX: Create notifications manually after updates
+            $createBatchNotifications($batchId, 'pickup_started', 'Your order #REF_ID pickup has started.');
             break;
         case 'complete_pickup':
             // mark pickup as Completed (3) and set actual_time
             $updateDelivery('pickup', 3, true);
+            // FIX: Create notifications manually
+            $createBatchNotifications($batchId, 'pickup_completed', 'Your order #REF_ID has been picked up and is on the way.');
             break;
         case 'start_delivery':
             // mark delivery rows as In Progress (2)
@@ -101,6 +141,8 @@ try {
             $updateOrdersStatus(2);
             // set batch status to In Progress
             $pdo->prepare("UPDATE batches SET batch_status_id = 2 WHERE batch_id = ?")->execute([$batchId]);
+            // FIX: Create notifications manually
+            $createBatchNotifications($batchId, 'out_for_delivery', 'Your order #REF_ID is out for delivery.');
             break;
         case 'complete_delivery':
             // mark delivery as Completed (3) and set actual_time
@@ -124,6 +166,7 @@ try {
             $codStmt->execute([$batchId]);
             $updatedRows = $codStmt->rowCount();
             error_log("Complete delivery: Updated $updatedRows COD payment(s) to Paid for batch_id: $batchId");
+            // NOTE: No notification sent here - individual Complete/Failed buttons handle delivery completion notifications
             break;
         default:
             throw new Exception('Unknown action');
@@ -156,10 +199,13 @@ try {
     ob_end_clean();
     echo json_encode(['success' => true, 'message' => 'Action performed: ' . $action, 'data' => ['batch_id' => $batchId, 'batch_status' => $batchStatusName, 'pickup_status' => $pickupStatus, 'delivery_status' => $deliveryStatus]]);
 } catch (Exception $e) {
-    $pdo->rollBack();
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
     ob_end_clean();
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
 }
 
 exit;
+?>

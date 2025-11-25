@@ -16,7 +16,7 @@ try {
         exit;
     }
 
-    // Handle POST actions (create/delete)
+    // Handle POST actions (create/delete/update)
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $input = json_decode(file_get_contents('php://input'), true) ?: $_POST;
         $action = $input['action'] ?? '';
@@ -25,20 +25,40 @@ try {
             $user = trim($input['staff_user'] ?? '');
             $pass = $input['staff_password'] ?? '';
             $role = $input['staff_role'] ?? '';
+            $firstName = trim($input['first_name'] ?? '');
+            $lastName = trim($input['last_name'] ?? '');
 
             if ($user === '' || $pass === '' || $role === '') {
                 http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Missing fields']);
+                echo json_encode(['success' => false, 'message' => 'Username, password, and role are required']);
                 exit;
             }
 
             // Hash password for better safety
             $hashed = password_hash($pass, PASSWORD_DEFAULT);
 
-            $stmt = $pdo->prepare('INSERT INTO staff (staff_user, staff_password, staff_role) VALUES (?, ?, ?)');
-            $stmt->execute([$user, $hashed, $role]);
+            $stmt = $pdo->prepare('INSERT INTO staff (staff_user, staff_password, staff_role, first_name, last_name) VALUES (?, ?, ?, ?, ?)');
+            $stmt->execute([$user, $hashed, $role, $firstName, $lastName]);
 
             echo json_encode(['success' => true, 'message' => 'Staff created']);
+            exit;
+        }
+
+        if ($action === 'update') {
+            $id = intval($input['staff_id'] ?? 0);
+            $firstName = trim($input['first_name'] ?? '');
+            $lastName = trim($input['last_name'] ?? '');
+            $role = $input['staff_role'] ?? '';
+            
+            if ($id <= 0) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Invalid id']);
+                exit;
+            }
+            
+            $stmt = $pdo->prepare('UPDATE staff SET first_name = ?, last_name = ?, staff_role = ? WHERE staff_id = ?');
+            $stmt->execute([$firstName, $lastName, $role, $id]);
+            echo json_encode(['success' => true, 'message' => 'Staff updated']);
             exit;
         }
 
@@ -60,8 +80,8 @@ try {
         exit;
     }
 
-    // GET - list staff
-    $stmt = $pdo->query('SELECT staff_id, staff_user, staff_role FROM staff ORDER BY staff_id DESC');
+    // GET - list staff with names
+    $stmt = $pdo->query('SELECT staff_id, staff_user, staff_role, first_name, last_name FROM staff ORDER BY staff_id DESC');
     $staff = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     echo json_encode(['success' => true, 'staff' => $staff ?: []]);

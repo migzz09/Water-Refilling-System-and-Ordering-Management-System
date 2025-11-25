@@ -74,9 +74,31 @@ try {
     foreach ($batches as $b) {
         $batchId = $b['batch_id'];
 
-        // Fetch orders for this batch using the admin_management_view for rich fields
-        $stmt2 = $pdo->prepare("SELECT amv.reference_id, amv.order_date, amv.delivery_date, amv.total_amount, amv.order_status, amv.payment_status, amv.delivery_status, amv.customer_name, amv.customer_contact, amv.street, amv.barangay, amv.city, amv.province, amv.quantity, amv.container_type, amv.subtotal, amv.assigned_employees
+        // Fetch orders with delivery personnel info
+        $stmt2 = $pdo->prepare("SELECT 
+            amv.reference_id, 
+            amv.order_date, 
+            amv.delivery_date, 
+            amv.total_amount, 
+            amv.order_status, 
+            amv.payment_status, 
+            amv.delivery_status, 
+            amv.customer_name, 
+            amv.customer_contact, 
+            amv.street, 
+            amv.barangay, 
+            amv.city, 
+            amv.province, 
+            amv.quantity, 
+            amv.container_type, 
+            amv.subtotal, 
+            amv.assigned_employees,
+            o.delivery_personnel_name,
+            o.delivery_completed_at,
+            o.delivery_failed_at,
+            o.failed_reason
             FROM admin_management_view amv
+            LEFT JOIN orders o ON amv.reference_id = o.reference_id
             WHERE amv.batch_id = ?
             ORDER BY amv.order_date DESC");
         $stmt2->execute([$batchId]);
@@ -204,7 +226,16 @@ try {
     }
 
     // Also include unassigned orders (no batch yet) for the admin to review within the time window
-    $stmt4 = $pdo->prepare("SELECT * FROM admin_management_view WHERE batch_id IS NULL AND (DATE(order_date) BETWEEN ? AND ?) ORDER BY order_date DESC");
+    $stmt4 = $pdo->prepare("SELECT 
+        amv.*, 
+        o.delivery_personnel_name,
+        o.delivery_completed_at,
+        o.delivery_failed_at,
+        o.failed_reason
+        FROM admin_management_view amv
+        LEFT JOIN orders o ON amv.reference_id = o.reference_id
+        WHERE amv.batch_id IS NULL AND (DATE(amv.order_date) BETWEEN ? AND ?) 
+        ORDER BY amv.order_date DESC");
     $stmt4->execute([$today, $endDate]);
     $unassignedRaw = $stmt4->fetchAll(PDO::FETCH_ASSOC);
     $unassigned = [];
@@ -276,3 +307,4 @@ try {
 }
 
 exit;
+?>
