@@ -168,11 +168,13 @@ function renderOrderTypes(types) {
   const container = document.getElementById('orderTypeOptions');
   container.innerHTML = `<h4>Order Type</h4>` + types.map(type => {
     const isPurchaseNew = String(type.type_name).trim() === 'Purchase New Container/s';
-    // Use container's purchase_price if available, otherwise fall back to order_type price
+    // FIXED: Use container-specific purchase_price with proper fallback
     const displayPrice = isPurchaseNew ? (
       (state.selectedProduct && state.selectedProduct.purchase_price && !isNaN(Number(state.selectedProduct.purchase_price))) 
         ? Number(state.selectedProduct.purchase_price) 
-        : (type.price !== null && !isNaN(Number(type.price)) ? Number(type.price) : 250.00)
+        : (type.price !== null && !isNaN(Number(type.price)) ? Number(type.price) : 
+          // Fallback based on container type/id if available
+          (state.selectedProduct && (state.selectedProduct.id === 1 || state.selectedProduct.id === 2) ? 250 : 100))
     ) : null;
     const priceHtml = isPurchaseNew ? `<div class="order-type-desc" style="color: #0066cc; font-weight: 500;">(Price: ₱${displayPrice.toFixed(2)} per container)</div>` : '';
     return `
@@ -518,10 +520,12 @@ function updateCart() {
   // Calculate total price including container purchase price if applicable
   const totalPrice = state.cart.reduce((sum, item) => {
     const isPurchaseNew = item.order_type_name === 'Purchase New Container/s';
-    // If purchasing a new container, prefer per-item purchase_price, then order_type_price, then fallback to 250
+    // FIXED: Use container-specific purchase_price
     const unitPrice = isPurchaseNew ? (
       (item.purchase_price && !isNaN(Number(item.purchase_price))) ? Number(item.purchase_price) : 
-      ((item.order_type_price && !isNaN(Number(item.order_type_price))) ? Number(item.order_type_price) : 250)
+      ((item.order_type_price && !isNaN(Number(item.order_type_price))) ? Number(item.order_type_price) : 
+      // Use container-specific price based on container_id
+      (item.id === 1 || item.id === 2 ? 250 : 100))
     ) : Number(item.price || 0);
     return sum + (unitPrice * item.quantity);
   }, 0);
@@ -549,10 +553,12 @@ function updateCart() {
     } else {
   cartItemsContainer.innerHTML = state.cart.map(item => {
         const isPurchaseNew = item.order_type_name === 'Purchase New Container/s';
-        // unit price: use purchase_price for Purchase New, otherwise the water refill price
+        // FIXED: Use container-specific purchase_price
         const unitPrice = isPurchaseNew ? (
           (item.purchase_price && !isNaN(Number(item.purchase_price))) ? Number(item.purchase_price) : 
-          ((item.order_type_price && !isNaN(Number(item.order_type_price))) ? Number(item.order_type_price) : 250)
+          ((item.order_type_price && !isNaN(Number(item.order_type_price))) ? Number(item.order_type_price) : 
+          // Use container-specific price based on container_id
+          (item.id === 1 || item.id === 2 ? 250 : 100))
         ) : Number(item.price || 0);
         
         return `

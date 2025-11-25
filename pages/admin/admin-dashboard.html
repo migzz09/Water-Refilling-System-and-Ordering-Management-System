@@ -1498,6 +1498,7 @@ function showAdminToast(message, type = 'info', duration = 3500) {
 
                         // Update stock in database
                         const stockPromise = fetch('/WRSOMS/api/admin/inventory.php', {
+                           
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
                             credentials: 'same-origin',
@@ -2351,229 +2352,224 @@ function showAdminToast(message, type = 'info', duration = 3500) {
             });
         }
 
-// ...existing code...
-
-// ===== USER MANAGEMENT =====
-function showUserManagement() {
-    if (typeof checkFeatureAllowed === 'function' && !checkFeatureAllowed('User Management')) {
-        const mainContent = document.getElementById('mainContent');
-        mainContent.innerHTML = `
-            <div class="dashboard-inner">
-                <header class="header"><h1 class="title">Access Denied</h1></header>
-                <div style="padding: 24px; color: #ef4444;">You do not have permission to view User Management.</div>
-            </div>
-        `;
-        updateActiveNav('showDashboard()');
-        return;
-    }
-    
-    const mainContent = document.getElementById('mainContent');
-    mainContent.innerHTML = `
-        <div class="dashboard-inner">
-            <header class="header">
-                <h1 class="title">User Management</h1>
-                <div class="date-time" aria-live="polite">Date: ${new Date().toLocaleDateString()} | Time: ${new Date().toLocaleTimeString()}</div>
-            </header>
-            
-            <section class="quick-actions" aria-label="Quick actions">
-                <button type="button" onclick="loadUsersData()" aria-label="Refresh customer data">
-                    <i class="fa fa-refresh"></i> Refresh Data
-                </button>
-            </section>
-            
-            <section class="metrics" aria-label="Customer Statistics">
-                <div class="metric-card" data-color="blue">
-                    <div class="metric-card-inner">
-                        <span class="metric-icon"><i class="fa fa-users"></i></span>
-                        <div class="metric-text">
-                            <h3>Total Customers</h3>
-                            <p id="totalCustomers">0</p>
-                        </div>
+        // ===== USER MANAGEMENT =====
+        function showUserManagement() {
+            if (typeof checkFeatureAllowed === 'function' && !checkFeatureAllowed('User Management')) {
+                const mainContent = document.getElementById('mainContent');
+                mainContent.innerHTML = `
+                    <div class="dashboard-inner">
+                        <header class="header"><h1 class="title">Access Denied</h1></header>
+                        <div style="padding: 24px; color: #ef4444;">You do not have permission to view User Management.</div>
                     </div>
-                </div>
-                <div class="metric-card" data-color="green">
-                    <div class="metric-card-inner">
-                        <span class="metric-icon"><i class="fa fa-user-check"></i></span>
-                        <div class="metric-text">
-                            <h3>Active Customers</h3>
-                            <p id="activeCustomers">0</p>
-                            <small style="color: #6b7280; font-size: 0.75rem;">Last 24 hours</small>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            
-            <section class="metric-card" role="region" aria-label="Customer List">
-                <h3>Registered Customers</h3>
-                <div style="overflow-x: auto;">
-                    <table class="batch-table" aria-describedby="customer-table-desc">
-                        <caption id="customer-table-desc" class="sr-only">List of registered customers</caption>
-                        <thead>
-                            <tr>
-                                <th scope="col">User ID</th>
-                                <th scope="col">User Name</th>
-                                <th scope="col">Email</th>
-                                <th scope="col">Contact Number</th>
-                                <th scope="col">Address</th>
-                                <th scope="col">Registration Date</th>
-                                <th scope="col">Activity Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="customerTableBody">
-                            <tr><td colspan="7" style="text-align: center;">Loading customers...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </div>
-    `;
-    
-    updateActiveNav('showUserManagement()');
-    
-    // Load users immediately
-    loadUsersData();
-}
-
-function loadUsersData() {
-    const tbody = document.getElementById('customerTableBody');
-    if (tbody) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> Loading...</td></tr>';
-    }
-    
-    // Use absolute path from document root
-    const apiPath = window.location.origin + '/WRSOMS/api/admin/users.php';
-    console.log('Fetching from:', apiPath); // Debug log
-    
-    fetch(apiPath, { 
-        credentials: 'same-origin',
-        cache: 'no-cache'
-    })
-        .then(r => {
-            console.log('Response status:', r.status); // Debug log
-            console.log('Response headers:', r.headers); // Debug log
-            if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
-            return r.text();
-        })
-        .then(text => {
-            console.log('Raw response:', text); // Debug log
-            try { 
-                const json = JSON.parse(text);
-                console.log('Parsed JSON:', json); // Debug log
-                return json;
-            } 
-            catch (e) { 
-                console.error('JSON parse error:', e);
-                console.error('Response text:', text);
-                throw new Error('Invalid JSON from server. Response: ' + text.substring(0, 200)); 
+                `;
+                updateActiveNav('showDashboard()');
+                return;
             }
-        })
-        .then(response => {
-            console.log('Final response:', response); // Debug log
-            if (!response.success) throw new Error(response.message || 'Failed to load customers');
-            renderUsers(response.users || []);
-        })
-        .catch(error => {
-            console.error('Error loading users:', error);
+            
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="dashboard-inner">
+                    <header class="header">
+                        <h1 class="title">User Management</h1>
+                        <div class="date-time" aria-live="polite">Date: ${new Date().toLocaleDateString()} | Time: ${new Date().toLocaleTimeString()}</div>
+                    </header>
+                    
+                    <section class="quick-actions" aria-label="Quick actions">
+                        <button type="button" onclick="loadUsersData()" aria-label="Refresh customer data">
+                            <i class="fa fa-refresh"></i> Refresh Data
+                        </button>
+                    </section>
+                    
+                    <section class="metrics" aria-label="Customer Statistics">
+                        <div class="metric-card" data-color="blue">
+                            <div class="metric-card-inner">
+                                <span class="metric-icon"><i class="fa fa-users"></i></span>
+                                <div class="metric-text">
+                                    <h3>Total Customers</h3>
+                                    <p id="totalCustomers">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="metric-card" data-color="green">
+                            <div class="metric-card-inner">
+                                <span class="metric-icon"><i class="fa fa-user-check"></i></span>
+                                <div class="metric-text">
+                                    <h3>Active Customers</h3>
+                                    <p id="activeCustomers">0</p>
+                                    <small style="color: #6b7280; font-size: 0.75rem;">Last 24 hours</small>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <section class="metric-card" role="region" aria-label="Customer List">
+                        <h3>Registered Customers</h3>
+                        <div style="overflow-x: auto;">
+                            <table class="batch-table" aria-describedby="customer-table-desc">
+                                <caption id="customer-table-desc" class="sr-only">List of registered customers</caption>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">User ID</th>
+                                        <th scope="col">User Name</th>
+                                        <th scope="col">Email</th>
+                                        <th scope="col">Contact Number</th>
+                                        <th scope="col">Address</th>
+                                        <th scope="col">Registration Date</th>
+                                        <th scope="col">Activity Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="customerTableBody">
+                                    <tr><td colspan="7" style="text-align: center;">Loading customers...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            `;
+    
+            updateActiveNav('showUserManagement()');
+    
+            // Load users immediately
+            loadUsersData();
+        }
+
+        function loadUsersData() {
             const tbody = document.getElementById('customerTableBody');
             if (tbody) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="7" style="padding: 40px; text-align: center;">
-                            <div style="color: #ef4444;">
-                                <i class="fa fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px;"></i>
-                                <p style="font-weight: 600; margin-bottom: 8px;">Error loading customers</p>
-                                <p style="font-size: 0.875rem; color: #64748b;">${error.message}</p>
-                                <button onclick="loadUsersData()" class="btn btn-sm btn-primary" style="margin-top: 16px;">
-                                    <i class="fa fa-refresh"></i> Try Again
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> Loading...</td></tr>';
             }
-        });
-}
+            
+            // Use absolute path from document root
+            const apiPath = window.location.origin + '/WRSOMS/api/admin/users.php';
+            console.log('Fetching from:', apiPath); // Debug log
+            
+            fetch(apiPath, { 
+                credentials: 'same-origin',
+                cache: 'no-cache'
+            })
+                .then(r => {
+                    console.log('Response status:', r.status); // Debug log
+                    console.log('Response headers:', r.headers); // Debug log
+                    if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+                    return r.text();
+                })
+                .then(text => {
+                    console.log('Raw response:', text); // Debug log
+                    try { 
+                        const json = JSON.parse(text);
+                        console.log('Parsed JSON:', json); // Debug log
+                        return json;
+                    } 
+                    catch (e) { 
+                        console.error('JSON parse error:', e);
+                        console.error('Response text:', text);
+                        throw new Error('Invalid JSON from server. Response: ' + text.substring(0, 200)); 
+                    }
+                })
+                .then(response => {
+                    console.log('Final response:', response); // Debug log
+                    if (!response.success) throw new Error(response.message || 'Failed to load customers');
+                    renderUsers(response.users || []);
+                })
+                .catch(error => {
+                    console.error('Error loading users:', error);
+                    const tbody = document.getElementById('customerTableBody');
+                    if (tbody) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="6" style="padding: 40px; text-align: center;">
+                                    <div style="color: #ef4444;">
+                                        <i class="fa fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px;"></i>
+                                        <p style="font-weight: 600; margin-bottom: 8px;">Error loading customers</p>
+                                        <p style="font-size: 0.875rem; color: #64748b;">${error.message}</p>
+                                        <button onclick="loadUsers()" class="btn btn-sm btn-primary" style="margin-top: 16px;">
+                                            <i class="fa fa-refresh"></i> Try Again
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                });
+        }
 
-function renderUsers(users) {
-    const tbody = document.getElementById('customerTableBody');
-    if (!tbody) return;
-    
-    const customers = users.filter(user => !user.is_admin);
-    const now = new Date();
-    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const activeCustomers = customers.filter(u => u.last_activity && new Date(u.last_activity) >= twentyFourHoursAgo).length;
-    
-    const totalCustomersEl = document.getElementById('totalCustomers');
-    const activeCustomersEl = document.getElementById('activeCustomers');
-    if (totalCustomersEl) totalCustomersEl.textContent = customers.length;
-    if (activeCustomersEl) activeCustomersEl.textContent = activeCustomers;
-    
-    tbody.innerHTML = '';
-    if (customers.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon"><i class="fa fa-users"></i></div><h2 class="empty-state-title">No Customers Found</h2></div></td></tr>`;
-        return;
-    }
-    
-    customers.forEach(user => {
-        const addressParts = [user.street, user.barangay, user.city, user.province].filter(p => p && p.trim() !== '');
-        const address = addressParts.length ? addressParts.join(', ') : 'N/A';
-        const activityStatus = formatActivityStatus(user.last_activity);
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${escapeHtml(user.user_id)}</td>
-            <td><strong>${escapeHtml(user.username)}</strong></td>
-            <td>${escapeHtml(user.email || 'N/A')}</td>
-            <td>${escapeHtml(user.customer_contact || 'N/A')}</td>
-            <td>${escapeHtml(address)}</td>
-            <td>${formatDateTime(user.created_at)}</td>
-            <td>${activityStatus}</td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
+        function renderUsers(users) {
+            const tbody = document.getElementById('customerTableBody');
+            if (!tbody) return;
+            
+            const customers = users.filter(user => !user.is_admin);
+            const now = new Date();
+            const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            const activeCustomers = customers.filter(u => u.last_activity && new Date(u.last_activity) >= twentyFourHoursAgo).length;
+            
+            const totalCustomersEl = document.getElementById('totalCustomers');
+            const activeCustomersEl = document.getElementById('activeCustomers');
+            if (totalCustomersEl) totalCustomersEl.textContent = customers.length;
+            if (activeCustomersEl) activeCustomersEl.textContent = activeCustomers;
+            
+            tbody.innerHTML = '';
+            if (customers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon"><i class="fa fa-users"></i></div><h2 class="empty-state-title">No Customers Found</h2></div></td></tr>`;
+                return;
+            }
+            
+            customers.forEach(user => {
+                const addressParts = [user.street, user.barangay, user.city, user.province].filter(p => p && p.trim() !== '');
+                const address = addressParts.length ? addressParts.join(', ') : 'N/A';
+                const activityStatus = formatActivityStatus(user.last_activity);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${escapeHtml(user.user_id)}</td>
+                    <td><strong>${escapeHtml(user.username)}</strong></td>
+                    <td>${escapeHtml(user.email || 'N/A')}</td>
+                    <td>${escapeHtml(user.customer_contact || 'N/A')}</td>
+                    <td>${escapeHtml(address)}</td>
+                    <td>${formatDateTime(user.created_at)}</td>
+                    <td>${activityStatus}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
 
-function formatActivityStatus(lastActivity) {
-    if (!lastActivity) {
-        return '<span style="color: #64748b; font-style: italic;">No activity yet</span>';
-    }
-    
-    const now = new Date();
-    const activityDate = new Date(lastActivity);
-    const diffMs = now - activityDate;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-    
-    let statusText = '';
-    let statusColor = '#64748b';
-    
-    if (diffMins < 1) {
-        statusText = 'Just now';
-        statusColor = '#10b981';
-    } else if (diffMins < 60) {
-        statusText = `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
-        statusColor = '#10b981';
-    } else if (diffHours < 24) {
-        statusText = `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
-        statusColor = '#10b981';
-    } else if (diffDays < 7) {
-        statusText = `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
-        statusColor = '#f59e0b';
-    } else if (diffDays < 30) {
-        const weeks = Math.floor(diffDays / 7);
-        statusText = `${weeks} week${weeks !== 1 ? 's' : ''} ago`;
-        statusColor = '#ef4444';
-    } else {
-        const months = Math.floor(diffDays / 30);
-        statusText = `${months} month${months !== 1 ? 's' : ''} ago`;
-        statusColor = '#64748b';
-    }
-    
-    return `<span style="color: ${statusColor}; font-weight: 500;"><i class="fa fa-clock-o"></i> ${statusText}</span>`;
-}
-
-// ...existing code...
-
+        function formatActivityStatus(lastActivity) {
+            if (!lastActivity) {
+                return '<span style="color: #64748b; font-style: italic;">No activity yet</span>';
+            }
+            
+            const now = new Date();
+            const activityDate = new Date(lastActivity);
+            const diffMs = now - activityDate;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            let statusText = '';
+            let statusColor = '#64748b';
+            
+            if (diffMins < 1) {
+                statusText = 'Just now';
+                statusColor = '#10b981';
+            } else if (diffMins < 60) {
+                statusText = `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+                statusColor = '#10b981';
+            } else if (diffHours < 24) {
+                statusText = `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+                statusColor = '#10b981';
+            } else if (diffDays < 7) {
+                statusText = `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+                statusColor = '#f59e0b';
+            } else if (diffDays < 30) {
+                const weeks = Math.floor(diffDays / 7);
+                statusText = `${weeks} week${weeks !== 1 ? 's' : ''} ago`;
+                statusColor = '#ef4444';
+            } else {
+                const months = Math.floor(diffDays / 30);
+                statusText = `${months} month${months !== 1 ? 's' : ''} ago`;
+                statusColor = '#64748b';
+            }
+            
+            return `<span style="color: ${statusColor}; font-weight: 500;"><i class="fa fa-clock-o"></i> ${statusText}</span>`;
+        }
 
         // ===== STAFF MANAGEMENT =====
         function showStaffManagement() {
@@ -2612,12 +2608,14 @@ function formatActivityStatus(lastActivity) {
                                     <tr>
                                         <th scope="col">ID</th>
                                         <th scope="col">Username</th>
+                                        <th scope="col">First Name</th>
+                                        <th scope="col">Last Name</th>
                                         <th scope="col">Role</th>
                                         <th scope="col">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="staffTableBody">
-                                    <tr><td colspan="4" style="text-align: center;">Loading staff...</td></tr>
+                                    <tr><td colspan="6" style="text-align: center;">Loading staff...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -2631,7 +2629,7 @@ function formatActivityStatus(lastActivity) {
 
         function loadStaff() {
             const tbody = document.getElementById('staffTableBody');
-            if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;"><i class="fa fa-spinner fa-spin"></i> Loading...</td></tr>';
+            if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;"><i class="fa fa-spinner fa-spin"></i> Loading...</td></tr>';
 
             fetch('/WRSOMS/api/admin/staff.php', { credentials: 'same-origin' })
                 .then(r => r.json())
@@ -2641,7 +2639,7 @@ function formatActivityStatus(lastActivity) {
                 })
                 .catch(err => {
                     console.error('Error loading staff:', err);
-                    if (tbody) tbody.innerHTML = `<tr><td colspan="4" style="padding:40px;text-align:center;color:#ef4444;">Error loading staff: ${err.message}</td></tr>`;
+                    if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="padding:40px;text-align:center;color:#ef4444;">Error loading staff: ${err.message}</td></tr>`;
                 });
         }
 
@@ -2650,7 +2648,7 @@ function formatActivityStatus(lastActivity) {
             if (!tbody) return;
             tbody.innerHTML = '';
             if (!list || list.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="padding:0;"><div class="empty-state"><div class="empty-state-icon"><i class="fa fa-id-badge"></i></div><h2 class="empty-state-title">No Staff Found</h2></div></td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" style="padding:0;"><div class="empty-state"><div class="empty-state-icon"><i class="fa fa-id-badge"></i></div><h2 class="empty-state-title">No Staff Found</h2></div></td></tr>`;
                 return;
             }
 
@@ -2659,8 +2657,11 @@ function formatActivityStatus(lastActivity) {
                 tr.innerHTML = `
                     <td>${s.staff_id}</td>
                     <td>${escapeHtml(s.staff_user)}</td>
+                    <td>${escapeHtml(s.first_name || '—')}</td>
+                    <td>${escapeHtml(s.last_name || '—')}</td>
                     <td>${escapeHtml(s.staff_role)}</td>
                     <td class="action-buttons">
+                        <button class="btn btn-sm btn-info" onclick="editStaff(${s.staff_id})">Edit</button>
                         <button class="btn btn-sm btn-danger" onclick="deleteStaff(${s.staff_id})">Delete</button>
                     </td>
                 `;
@@ -2669,14 +2670,15 @@ function formatActivityStatus(lastActivity) {
         }
 
         function openCreateStaffModal() {
-            // Simple prompt-based modal for now
             const modalHtml = `
                 <div id="createStaffModal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;">
                     <div style="background:#fff;padding:20px;border-radius:8px;max-width:420px;width:100%;">
                         <h3 style="margin-top:0;">Create Staff Account</h3>
                         <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
-                            <input id="newStaffUsername" placeholder="Username" style="padding:8px;border:1px solid #ddd;border-radius:6px;">
-                            <input id="newStaffPassword" type="password" placeholder="Password" style="padding:8px;border:1px solid #ddd;border-radius:6px;">
+                            <input id="newStaffUsername" placeholder="Username *" style="padding:8px;border:1px solid #ddd;border-radius:6px;">
+                            <input id="newStaffPassword" type="password" placeholder="Password *" style="padding:8px;border:1px solid #ddd;border-radius:6px;">
+                            <input id="newStaffFirstName" placeholder="First Name *" style="padding:8px;border:1px solid #ddd;border-radius:6px;">
+                            <input id="newStaffLastName" placeholder="Last Name *" style="padding:8px;border:1px solid #ddd;border-radius:6px;">
                             <select id="newStaffRole" style="padding:8px;border:1px solid #ddd;border-radius:6px;">
                                 <option value="Driver">Driver</option>
                                 <option value="Sales Manager">Sales Manager</option>
@@ -2695,17 +2697,70 @@ function formatActivityStatus(lastActivity) {
             document.body.appendChild(wrapper);
         }
 
+        function editStaff(staffId) {
+            fetch('/WRSOMS/api/admin/staff.php', { credentials: 'same-origin' })
+                .then(r => r.json())
+                .then(res => {
+                    if (!res.success) throw new Error(res.message);
+                    const staff = res.staff.find(s => s.staff_id === staffId);
+                    if (!staff) throw new Error('Staff not found');
+                    
+                    const modalHtml = `
+                        <div id="editStaffModal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;">
+                            <div style="background:#fff;padding:20px;border-radius:8px;max-width:420px;width:100%;">
+                                <h3 style="margin-top:0;">Edit Staff Account</h3>
+                                <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+                                    <input id="editStaffFirstName" placeholder="First Name" value="${escapeHtml(staff.first_name || '')}" style="padding:8px;border:1px solid #ddd;border-radius:6px;">
+                                    <input id="editStaffLastName" placeholder="Last Name" value="${escapeHtml(staff.last_name || '')}" style="padding:8px;border:1px solid #ddd;border-radius:6px;">
+                                    <select id="editStaffRole" style="padding:8px;border:1px solid #ddd;border-radius:6px;">
+                                        <option value="Driver" ${staff.staff_role === 'Driver' ? 'selected' : ''}>Driver</option>
+                                        <option value="Sales Manager" ${staff.staff_role === 'Sales Manager' ? 'selected' : ''}>Sales Manager</option>
+                                        <option value="Customer Manager" ${staff.staff_role === 'Customer Manager' ? 'selected' : ''}>Customer Manager</option>
+                                    </select>
+                                    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+                                        <button onclick="document.getElementById('editStaffModal').remove()" class="btn btn-secondary">Cancel</button>
+                                        <button onclick="updateStaff(${staffId})" class="btn btn-primary">Update</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    const wrapper = document.createElement('div');
+                    wrapper.innerHTML = modalHtml;
+                    document.body.appendChild(wrapper);
+                })
+                .catch(err => alert('Error: ' + err.message));
+        }
+
         function createStaff() {
             const username = document.getElementById('newStaffUsername').value.trim();
             const password = document.getElementById('newStaffPassword').value;
+            const firstName = document.getElementById('newStaffFirstName').value.trim();
+            const lastName = document.getElementById('newStaffLastName').value.trim();
             const role = document.getElementById('newStaffRole').value;
-            if (!username || !password) { alert('Username and password are required'); return; }
+            
+            if (!username || !password) { 
+                alert('Username and password are required'); 
+                return; 
+            }
+            
+            if (!firstName || !lastName) {
+                alert('First name and last name are required');
+                return;
+            }
 
             fetch('/WRSOMS/api/admin/staff.php', {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'create', staff_user: username, staff_password: password, staff_role: role })
+                body: JSON.stringify({ 
+                    action: 'create', 
+                    staff_user: username, 
+                    staff_password: password, 
+                    first_name: firstName,
+                    last_name: lastName,
+                    staff_role: role 
+                })
             })
             .then(r => r.json())
             .then(res => {
@@ -2718,6 +2773,34 @@ function formatActivityStatus(lastActivity) {
             .catch(err => {
                 alert('Error: ' + err.message);
             });
+        }
+
+        function updateStaff(staffId) {
+            const firstName = document.getElementById('editStaffFirstName').value.trim();
+            const lastName = document.getElementById('editStaffLastName').value.trim();
+            const role = document.getElementById('editStaffRole').value;
+
+            fetch('/WRSOMS/api/admin/staff.php', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    action: 'update', 
+                    staff_id: staffId,
+                    first_name: firstName,
+                    last_name: lastName,
+                    staff_role: role 
+                })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (!res.success) throw new Error(res.message || 'Failed');
+                const modal = document.getElementById('editStaffModal');
+                if (modal) modal.remove();
+                loadStaff();
+                showAdminToast('Staff account updated', 'success');
+            })
+            .catch(err => alert('Error: ' + err.message));
         }
 
         function deleteStaff(id) {
@@ -2787,290 +2870,7 @@ function formatActivityStatus(lastActivity) {
         }
 
          // ===== CASH PAYMENTS =====
-        function showCashPayments() {
-    const mainContent = document.getElementById('mainContent');
-    mainContent.innerHTML = `
-        <div class="dashboard-inner">
-            <header class="header">
-                <h1 class="title">Cash Payments</h1>
-                <div class="date-time" aria-live="polite">Date: ${new Date().toLocaleDateString()} | Time: ${new Date().toLocaleTimeString()}</div>
-            </header>
-            
-            <section class="quick-actions" aria-label="Quick actions">
-                <button type="button" onclick="loadCashPayments()" aria-label="Refresh payment data">
-                    <i class="fa fa-refresh"></i> Refresh Data
-                </button>
-            </section>
-            
-            <!-- Payment Stats -->
-            <section class="metrics" aria-label="Payment Statistics">
-                <div class="metric-card" data-color="green">
-                    <div class="metric-card-inner">
-                        <span class="metric-icon"><i class="fa fa-check-circle"></i></span>
-                        <div class="metric-text">
-                            <h3>Paid</h3>
-                            <p id="verifiedCount">0</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="metric-card" data-color="blue">
-                    <div class="metric-card-inner">
-                        <span class="metric-icon"><i class="fa fa-clock-o"></i></span>
-                        <div class="metric-text">
-                            <h3>Pending</h3>
-                            <p id="pendingCount">0</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="metric-card" data-color="teal">
-                    <div class="metric-card-inner">
-                        <span class="metric-icon"><i class="fa fa-money"></i></span>
-                        <div class="metric-text">
-                            <h3>Total Sales</h3>
-                            <p id="totalAmount">₱0.00</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            
-            <section class="metric-card" role="region" aria-label="Cash Payment Records">
-                <h3>Cash Payment Records</h3>
-                <div style="overflow-x: auto;">
-                    <table class="batch-table" aria-describedby="payment-table-desc">
-                        <caption id="payment-table-desc" class="sr-only">List of cash payment records</caption>
-                        <thead>
-                            <tr>
-                                <th scope="col">Payment ID</th>
-                                <th scope="col">Order ID</th>
-                                <th scope="col">Customer</th>
-                                <th scope="col">Amount</th>
-                                <th scope="col">Payment Method</th>
-                                <th scope="col">Reference ID</th>
-                                <th scope="col">Payment Date</th>
-                                <th scope="col">Status</th>
-                                <th scope="col">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="paymentTableBody">
-                            <tr><td colspan="9" style="text-align: center;">Loading payments...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </div>
-    `;
-    
-    updateActiveNav('showCashPayments()');
-    loadCashPayments();
-}
-
-        function loadCashPayments() {
-            const tbody = document.getElementById('paymentTableBody');
-            if (tbody) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> Loading...</td></tr>';
-            }
-            
-            fetch('/WRSOMS/api/admin/cash_payments.php', { credentials: 'same-origin' })
-                .then(r => {
-                    if (!r.ok) {
-                        throw new Error(`HTTP ${r.status}: ${r.statusText}`);
-                    }
-                    return r.text();
-                })
-                .then(text => {
-                    try {
-                        return JSON.parse(text);
-                    } catch (e) {
-                        console.error('Invalid JSON response:', text);
-                        throw new Error('Server returned invalid JSON. The API endpoint may not exist or has an error.');
-                    }
-                })
-                .then(response => {
-                    if (!response.success) {
-                        throw new Error(response.message || 'Failed to load cash payments');
-                    }
-                    renderCashPayments(response.payments || []);
-                })
-                .catch(error => {
-                    console.error('Error loading cash payments:', error);
-                    const tbody = document.getElementById('paymentTableBody');
-                    if (tbody) {
-                        tbody.innerHTML = `
-                            <tr>
-                                <td colspan="7" style="padding: 40px; text-align: center;">
-                                    <div style="color: #ef4444;">
-                                        <i class="fa fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px;"></i>
-                                        <p style="font-weight: 600; margin-bottom: 8px;">Error loading payments</p>
-                                        <p style="font-size: 0.875rem; color: #64748b;">${error.message}</p>
-                                        <button onclick="loadCashPayments()" class="btn btn-sm btn-primary" style="margin-top: 16px;">
-                                            <i class="fa fa-refresh"></i> Try Again
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        `;
-                    }
-                });
-        }
-
-        // ...existing code...
-
-function renderCashPayments(payments) {
-    const tbody = document.getElementById('paymentTableBody');
-    if (!tbody) return;
-    
-    // Calculate stats - use correct status names from database
-    const verified = payments.filter(p => p.payment_status === 'Paid').length;
-    const pending = payments.filter(p => p.payment_status === 'Pending').length;
-    const total = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-    
-    // Calculate COD and GCash totals
-    const codCount = payments.filter(p => p.payment_method === 'COD').length;
-    const gcashCount = payments.filter(p => p.payment_method === 'GCash').length;
-    
-    // Update stats
-    const verifiedEl = document.getElementById('verifiedCount');
-    const pendingEl = document.getElementById('pendingCount');
-    const totalEl = document.getElementById('totalAmount');
-    const codEl = document.getElementById('codCount');
-    const gcashEl = document.getElementById('gcashCount');
-    
-    if (verifiedEl) verifiedEl.textContent = verified;
-    if (pendingEl) pendingEl.textContent = pending;
-    if (totalEl) totalEl.textContent = money(total);
-    if (codEl) codEl.textContent = codCount;
-    if (gcashEl) gcashEl.textContent = gcashCount;
-    
-    tbody.innerHTML = '';
-    
-    if (payments.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="9" style="padding: 0;">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">
-                            <i class="fa fa-money"></i>
-                        </div>
-                        <h2 class="empty-state-title">No Cash Payments</h2>
-                    </div>
-                </td>
-            </tr>
-        `;
-        return;
-    }
-    
-    payments.forEach(payment => {
-        const tr = document.createElement('tr');
-        const statusBadge = payment.payment_status === 'Paid' ? 
-            '<span class="badge bg-success">Paid</span>' : 
-            '<span class="badge bg-warning">Pending</span>';
-        
-        const actionBtn = payment.payment_status === 'Pending' ? 
-            `<button class="btn btn-sm btn-success" onclick="verifyPayment(${payment.payment_id})">
-                <i class="fa fa-check"></i> Mark as Paid
-            </button>` : 
-            '<span style="color: #10b981;"><i class="fa fa-check-circle"></i> Paid</span>';
-        
-        // Display reference ID only for GCash payments
-        const referenceDisplay = payment.payment_method === 'GCash' && payment.transaction_reference ? 
-            escapeHtml(payment.transaction_reference) : '—';
-        
-        tr.innerHTML = `
-            <td>${escapeHtml(payment.payment_id)}</td>
-            <td><strong>${escapeHtml(payment.reference_id || 'N/A')}</strong></td>
-            <td>${escapeHtml(payment.customer_name || 'N/A')}</td>
-            <td>${money(payment.amount)}</td>
-            <td>${escapeHtml(payment.payment_method || 'N/A')}</td>
-            <td>${referenceDisplay}</td>
-            <td>${formatDateTime(payment.payment_date)}</td>
-            <td>${statusBadge}</td>
-            <td>${actionBtn}</td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-function renderCashPayments(payments) {
-    const tbody = document.getElementById('paymentTableBody');
-    if (!tbody) return;
-    
-    // Calculate stats - use correct status names from database
-    const verified = payments.filter(p => p.payment_status === 'Paid').length;
-    const pending = payments.filter(p => p.payment_status === 'Pending').length;
-    const total = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-    
-    // Calculate COD and GCash amounts
-    const codAmount = payments
-        .filter(p => p.payment_method === 'COD')
-        .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-    
-    const gcashAmount = payments
-        .filter(p => p.payment_method === 'GCash')
-        .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-    
-    // Update stats
-    const verifiedEl = document.getElementById('verifiedCount');
-    const pendingEl = document.getElementById('pendingCount');
-    const totalEl = document.getElementById('totalAmount');
-    const codEl = document.getElementById('codAmount');
-    const gcashEl = document.getElementById('gcashAmount');
-    
-    if (verifiedEl) verifiedEl.textContent = verified;
-    if (pendingEl) pendingEl.textContent = pending;
-    if (totalEl) totalEl.textContent = money(total);
-    if (codEl) codEl.textContent = money(codAmount);
-    if (gcashEl) gcashEl.textContent = money(gcashAmount);
-    
-    tbody.innerHTML = '';
-    
-    if (payments.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="9" style="padding: 0;">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">
-                            <i class="fa fa-money"></i>
-                        </div>
-                        <h2 class="empty-state-title">No Cash Payments</h2>
-                    </div>
-                </td>
-            </tr>
-        `;
-        return;
-    }
-    
-    payments.forEach(payment => {
-        const tr = document.createElement('tr');
-        const statusBadge = payment.payment_status === 'Paid' ? 
-            '<span class="badge bg-success">Paid</span>' : 
-            '<span class="badge bg-warning">Pending</span>';
-        
-        const actionBtn = payment.payment_status === 'Pending' ? 
-            `<button class="btn btn-sm btn-success" onclick="verifyPayment(${payment.payment_id})">
-                <i class="fa fa-check"></i> Mark as Paid
-            </button>` : 
-            '<span style="color: #10b981;"><i class="fa fa-check-circle"></i> Paid</span>';
-        
-        // Display reference ID only for GCash payments
-        const referenceDisplay = payment.payment_method === 'GCash' && payment.transaction_reference ? 
-            escapeHtml(payment.transaction_reference) : '—';
-        
-        tr.innerHTML = `
-            <td>${escapeHtml(payment.payment_id)}</td>
-            <td><strong>${escapeHtml(payment.reference_id || 'N/A')}</strong></td>
-            <td>${escapeHtml(payment.customer_name || 'N/A')}</td>
-            <td>${money(payment.amount)}</td>
-            <td>${escapeHtml(payment.payment_method || 'N/A')}</td>
-            <td>${referenceDisplay}</td>
-            <td>${formatDateTime(payment.payment_date)}</td>
-            <td>${statusBadge}</td>
-            <td>${actionBtn}</td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-function showCashPayments() {
+         function showCashPayments() {
     const mainContent = document.getElementById('mainContent');
     mainContent.innerHTML = `
         <div class="dashboard-inner">
@@ -3153,7 +2953,7 @@ function showCashPayments() {
                                 <th scope="col">Reference ID</th>
                                 <th scope="col">Payment Date</th>
                                 <th scope="col">Status</th>
-                                <th scope="col">Actions</th>
+                                <th scope="col">Received By</th>
                             </tr>
                         </thead>
                         <tbody id="paymentTableBody">
@@ -3168,6 +2968,137 @@ function showCashPayments() {
     updateActiveNav('showCashPayments()');
     loadCashPayments();
 }
+
+        function loadCashPayments() {
+            const tbody = document.getElementById('paymentTableBody');
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> Loading...</td></tr>';
+            }
+            
+            fetch('/WRSOMS/api/admin/cash_payments.php', { credentials: 'same-origin' })
+                .then(r => {
+                    if (!r.ok) {
+                        throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+                    }
+                    return r.text();
+                })
+                .then(text => {
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        console.error('Invalid JSON response:', text);
+                        throw new Error('Server returned invalid JSON. The API endpoint may not exist or has an error.');
+                    }
+                })
+                .then(response => {
+                    if (!response.success) {
+                        throw new Error(response.message || 'Failed to load cash payments');
+                    }
+                    renderCashPayments(response.payments || []);
+                })
+                .catch(error => {
+                    console.error('Error loading cash payments:', error);
+                    const tbody = document.getElementById('paymentTableBody');
+                    if (tbody) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="7" style="padding: 40px; text-align: center;">
+                                    <div style="color: #ef4444;">
+                                        <i class="fa fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px;"></i>
+                                        <p style="font-weight: 600; margin-bottom: 8px;">Error loading payments</p>
+                                        <p style="font-size: 0.875rem; color: #64748b;">${error.message}</p>
+                                        <button onclick="loadCashPayments()" class="btn btn-sm btn-primary" style="margin-top: 16px;">
+                                            <i class="fa fa-refresh"></i> Try Again
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                });
+        }
+
+        function renderCashPayments(payments) {
+            const tbody = document.getElementById('paymentTableBody');
+            if (!tbody) return;
+            
+            // Calculate stats - use correct status names from database
+            const verified = payments.filter(p => p.payment_status === 'Paid').length;
+            const pending = payments.filter(p => p.payment_status === 'Pending').length;
+            const total = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+            
+            // Calculate COD and GCash amounts
+            const codAmount = payments
+                .filter(p => p.payment_method === 'COD')
+                .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+            
+            const gcashAmount = payments
+                .filter(p => p.payment_method === 'GCash')
+                .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+            
+            // Update stats
+            const verifiedEl = document.getElementById('verifiedCount');
+            const pendingEl = document.getElementById('pendingCount');
+            const totalEl = document.getElementById('totalAmount');
+            const codEl = document.getElementById('codAmount');
+            const gcashEl = document.getElementById('gcashAmount');
+            
+            if (verifiedEl) verifiedEl.textContent = verified;
+            if (pendingEl) pendingEl.textContent = pending;
+            if (totalEl) totalEl.textContent = money(total);
+            if (codEl) codEl.textContent = money(codAmount);
+            if (gcashEl) gcashEl.textContent = money(gcashAmount);
+            
+            tbody.innerHTML = '';
+            
+            if (payments.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" style="padding: 0;">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fa fa-money"></i>
+                                </div>
+                                <h2 class="empty-state-title">No Cash Payments</h2>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            payments.forEach(payment => {
+                const tr = document.createElement('tr');
+                const statusBadge = payment.payment_status === 'Paid' ? 
+                    '<span class="badge bg-success">Paid</span>' : 
+                    '<span class="badge bg-warning">Pending</span>';
+                
+                // Determine "Received By" based on payment method
+                let receivedBy = '—';
+                if (payment.payment_method === 'GCash') {
+                    receivedBy = 'GCash';
+                } else if (payment.payment_method === 'COD' && payment.driver_name) {
+                    receivedBy = escapeHtml(payment.driver_name);
+                }
+                
+                // Display reference ID only for GCash payments
+                const referenceDisplay = payment.payment_method === 'GCash' && payment.transaction_reference ? 
+                    escapeHtml(payment.transaction_reference) : '—';
+                
+                tr.innerHTML = `
+                    <td>${escapeHtml(payment.payment_id)}</td>
+                    <td><strong>${escapeHtml(payment.reference_id || 'N/A')}</strong></td>
+                    <td>${escapeHtml(payment.customer_name || 'N/A')}</td>
+                    <td>${money(payment.amount)}</td>
+                    <td>${escapeHtml(payment.payment_method || 'N/A')}</td>
+                    <td>${referenceDisplay}</td>
+                    <td>${formatDateTime(payment.payment_date)}</td>
+                    <td>${statusBadge}</td>
+                    <td>${receivedBy}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
 
         function verifyPayment(paymentId) {
             if (!confirm('Mark this cash payment as verified?')) return;

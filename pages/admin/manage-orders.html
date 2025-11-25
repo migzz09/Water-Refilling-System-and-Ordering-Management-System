@@ -158,344 +158,395 @@
             animation: slideOut 0.3s ease-in forwards;
         }
         
-        /* Confirmation Modal Styles */
-        .confirm-modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: fadeIn 0.2s ease-out;
-        }
-        
-        .confirm-modal {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 440px;
-            width: 90%;
-            overflow: hidden;
-            animation: scaleIn 0.3s ease-out;
-        }
-        
-        .confirm-modal-header {
-            padding: 24px 24px 16px 24px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            border-bottom: 1px solid #f3f4f6;
-        }
-        
-        .confirm-modal-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            flex-shrink: 0;
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            color: white;
-        }
-        
-        .confirm-modal-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: #111827;
-            line-height: 1.3;
-        }
-        
-        .confirm-modal-body {
-            padding: 20px 24px 24px 24px;
-        }
-        
-        .confirm-modal-message {
-            color: #6b7280;
-            font-size: 0.95rem;
-            line-height: 1.6;
-        }
-        
-        .confirm-modal-footer {
-            padding: 16px 24px;
-            background: #f9fafb;
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-        }
-        
-        .confirm-modal-btn {
-            padding: 10px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-            min-width: 100px;
-        }
-        
-        .confirm-modal-btn-cancel {
-            background: white;
-            color: #6b7280;
-            border: 1px solid #e5e7eb;
-        }
-        
-        .confirm-modal-btn-cancel:hover {
-            background: #f9fafb;
-            border-color: #d1d5db;
-        }
-        
-        .confirm-modal-btn-confirm {
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            color: white;
-            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-        }
-        
-        .confirm-modal-btn-confirm:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-        }
-        
-        .confirm-modal-btn-confirm:active {
-            transform: translateY(0);
-        }
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-        
-        @keyframes scaleIn {
-            from {
-                transform: scale(0.9);
-                opacity: 0;
-            }
-            to {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-    /* Table and card spacing improvements for Manage Orders */
-    .batches-grid { display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
-    .metric-card { padding: 18px; box-sizing: border-box; background: #fff; border-radius: 8px; flex: 1 1 360px; max-width: 420px; }
-    .recent-orders-table { width: 100%; border-collapse: collapse; min-width: 640px; }
-    .recent-orders-table th, .recent-orders-table td { padding: 10px 12px; vertical-align: middle; }
-    /* Ensure reference id column doesn't wrap and remains readable */
-    .recent-orders-table th:first-child, .recent-orders-table td:first-child { white-space: nowrap; min-width: 110px; }
-    /* Make order date and total columns reasonably wide to avoid squeezing reference id */
-    .recent-orders-table th:nth-child(2), .recent-orders-table td:nth-child(2),
-    .recent-orders-table th:nth-child(4), .recent-orders-table td:nth-child(4) { white-space: nowrap; min-width: 120px; }
-    /* Reduce header wrapping and improve contrast */
-    .recent-orders-table thead th { white-space: nowrap; }
-    /* Make the reference link display inline-block so it doesn't get clipped */
-    .order-ref-link { display: inline-block; max-width: 100%; color: #3b82f6; text-decoration: none; font-weight: 500; cursor: pointer !important; }
-    .order-ref-link:hover { text-decoration: underline; color: #2563eb; }
-    /* Allow horizontal scrolling inside each card when the table is too wide */
-    .metric-card .table-responsive { overflow-x: auto; }
-    /* Completed section styling */
-    .completed-section { background: transparent; }
-   
-    /* Navigation tabs styling */
-    .nav-tabs {
-        display: flex;
-        gap: 4px;
-        padding: 8px;
-        margin: 0 0 20px 0;
-        list-style: none;
-        border-bottom: none;
-        background: #f9fafb;
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        /* Modal backdrop - FIXED positioning */
+.ww-modal-backdrop {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    backdrop-filter: blur(4px);
+    z-index: 99999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Modal content - centered */
+.ww-modal {
+    position: relative !important;
+    background: white !important;
+    border-radius: 16px !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4) !important;
+    max-width: 500px !important;
+    width: 90% !important;
+    max-height: 85vh !important;
+    overflow-y: auto !important;
+    margin: 0 auto !important;
+}
+
+.ww-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.ww-modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.ww-modal-body {
+    padding: 24px;
+}
+
+.ww-modal-body input,
+.ww-modal-body textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    margin-bottom: 8px;
+}
+
+.ww-modal-body input:focus,
+.ww-modal-body textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.ww-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.close-btn {
+    background: #f3f4f6;
+    border: none;
+    color: #111827;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.close-btn:hover {
+    background: #e5e7eb;
+}
+
+.confirm-modal-btn-confirm {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.confirm-modal-btn-confirm:hover {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+.confirm-modal-btn-confirm:disabled {
+    background: #d1d5db;
+    cursor: not-allowed;
+}
+
+/* Confirmation Modal Styles */
+.confirm-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease-out;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.confirm-modal {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalSlideIn 0.3s ease-out;
+    position: relative;
+    margin: auto;
+}
+
+.confirm-modal-header {
+    padding: 24px 24px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.confirm-modal-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.confirm-modal-icon i {
+    color: #ffffff;
+    font-size: 24px;
+}
+
+.confirm-modal-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+}
+
+.confirm-modal-body {
+    padding: 24px;
+    color: #374151;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.confirm-modal-body input,
+.confirm-modal-body textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    margin-top: 8px;
+}
+
+.confirm-modal-body input:focus,
+.confirm-modal-body textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.confirm-modal-body textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.confirm-modal-message {
+    margin-bottom: 16px;
+    padding: 12px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border-left: 4px solid #3b82f6;
+}
+
+.confirm-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.confirm-modal-btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 100px;
+}
+
+.confirm-modal-btn-cancel {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.confirm-modal-btn-cancel:hover {
+    background: #e5e7eb;
+}
+
+.confirm-modal-btn-confirm {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: #ffffff;
+}
+
+.confirm-modal-btn-confirm:hover {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+}
+
+.confirm-modal-btn-confirm:active {
+    transform: translateY(0);
+}
+
+.confirm-modal-btn-confirm:disabled {
+    background: #d1d5db;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
     }
-    .nav-item {
-        margin: 0;
+    to {
+        opacity: 1;
     }
-    .nav-link.vehicle-tab-btn,
-    .vehicle-tab-btn,
-    button.vehicle-tab-btn {
-        background: #ffffff !important;
-        border: 2px solid #d1d5db !important;
-        padding: 12px 24px;
-        cursor: pointer;
-        font-weight: 700;
-        color: #111827 !important;
-        border-radius: 6px;
-        transition: all 0.2s ease;
-        font-size: 0.95rem;
-        text-decoration: none;
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
     }
-    .nav-link.vehicle-tab-btn:hover,
-    .vehicle-tab-btn:hover,
-    button.vehicle-tab-btn:hover {
-        color: #000000 !important;
-        background: #f3f4f6 !important;
-        border-color: #9ca3af !important;
+    to {
+        transform: scale(1);
+        opacity: 1;
     }
-    .nav-link.vehicle-tab-btn.active,
-    .vehicle-tab-btn.active,
-    button.vehicle-tab-btn.active {
-        color: #ffffff !important;
-        background: #3b82f6 !important;
-        border-color: #3b82f6 !important;
-        box-shadow: 0 2px 4px rgba(59,130,246,0.4);
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-30px);
+        opacity: 0;
     }
-   
-    /* Prevent batch card hover from interfering */
-    .metric-card {
-        position: relative;
-        pointer-events: auto;
-        isolation: isolate;
+    to {
+        transform: translateY(0);
+        opacity: 1;
     }
-   
-    .metric-card:hover {
-        /* Prevent card-level hover effects */
-        background: #fff !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .confirm-modal-overlay {
+        padding: 16px;
     }
-   
-    /* Clickable row styling */
-    .recent-orders-table {
-        position: relative;
-        z-index: 10;
-    }
-    .recent-orders-table tbody tr.order-row {
-        cursor: pointer !important;
-        transition: all 0.2s ease;
-        position: relative;
-        isolation: isolate;
-    }
-    .recent-orders-table tbody tr.order-row td {
-        cursor: pointer !important;
-    }
-    .recent-orders-table tbody tr.order-row td * {
-        cursor: pointer !important;
-    }
-    .recent-orders-table tbody tr.order-row:hover {
-        background-color: #dbeafe !important;
-        box-shadow: inset 0 0 0 2px #60a5fa;
-        transform: scale(1.001);
-        z-index: 20;
-    }
-    .recent-orders-table tbody tr.order-row:active {
-        background-color: #bfdbfe !important;
-        transform: scale(0.999);
-    }
-        /* Simple modal for order details (no dependency on Bootstrap JS) */
-        .ww-modal {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
-            animation: modalSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        @keyframes modalSlideIn {
-            from {
-                opacity: 0;
-                transform: translate(-50%, -45%) scale(0.9);
-            }
-            to {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(1);
-            }
-        }
-        .ww-modal-backdrop {
-            backdrop-filter: blur(4px);
-            animation: fadeIn 0.2s ease-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        .ww-modal-header {
-            padding: 24px 28px;
-            border-bottom: 2px solid #e5e7eb;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
-            border-radius: 16px 16px 0 0;
-        }
-        .ww-modal-body {
-            padding: 24px 28px;
-            max-height: 60vh;
-            overflow-y: auto;
-        }
-        .ww-modal-body::-webkit-scrollbar {
-            width: 8px;
-        }
-        .ww-modal-body::-webkit-scrollbar-track {
-            background: #f3f4f6;
-            border-radius: 4px;
-        }
-        .ww-modal-body::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        .ww-modal-body::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-        .ww-modal-footer {
-            padding: 20px 28px;
-            border-top: 2 2px solid #e5e7eb;
-            background: #f9fafb;
-            border-radius: 0 0 16px 16px;
-        }
-        .close-btn {
-            background: #ef4444;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
-        }
-        .close-btn:hover {
-            background: #dc2626;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
-        }
-        .close-btn:active {
-            transform: translateY(0);
-        }
-        .order-items table {
-            margin-top: 12px;
-            font-size: 0.95rem;
-        }
-    </style>
-    <!-- Container expected by admin-dashboard loader -->
-    <div class="container">
-        <div class="orders-card">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <form id="ordersSearchForm" class="search-bar" style="display:flex;gap:8px;">
-                    <input id="ordersSearchInput" type="search" placeholder="Search reference, customer, address..." class="form-control" />
-                    <button type="submit" class="btn btn-primary">Search</button>
-                </form>
-                <div class="text-end d-flex gap-2 align-items-center">
-                    <button id="archiveCompletedBtn" class="btn btn-warning" title="Archive all completed orders">
-                        <i class="fa fa-archive"></i> Archive Completed
-                    </button>
-                    <small class="text-muted">Manage today's batches and orders</small>
-                </div>
-            </div>
-            <div id="batchesContainer">Loading…</div>
-            <div id="unassignedContainer" style="margin-top:12px;"></div>
-        </div>
-    </div>
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
     
-    <script>
+    .confirm-modal {
+        max-width: 100%;
+        max-height: 85vh;
+    }
+    
+    .confirm-modal-header {
+        padding: 20px 16px 12px;
+    }
+    
+    .confirm-modal-body {
+        padding: 16px;
+    }
+    
+    .confirm-modal-footer {
+        padding: 12px 16px;
+        flex-direction: column;
+    }
+    
+    .confirm-modal-btn {
+        width: 100%;
+    }
+}
+
+/* Modal z-index overrides (keeps above all app layers) */
+.modal,
+.modal-backdrop {
+    z-index: 11000;
+}
+
+.modal-backdrop.show {
+    opacity: .55;
+}
+
+/* DELETE THIS ENTIRE BLOCK - IT'S BREAKING THE MODAL */
+/* 
+.ww-modal,
+.confirm-modal-overlay,
+.confirm-modal {
+    position: static;
+    inset: auto;
+}
+*/
+
+/* Optional: tighten inputs inside modals */
+.modal input[type=number],
+.modal textarea {
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.modal input:focus,
+.modal textarea:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+    outline: none;
+}
+        </style>
+    </head>
+    <body>
+        <!-- Container expected by admin-dashboard loader -->
+        <div class="container">
+            <div class="orders-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <form id="ordersSearchForm" class="search-bar" style="display:flex;gap:8px;">
+                        <input id="ordersSearchInput" type="search" placeholder="Search reference, customer, address..." class="form-control" />
+                        <button type="submit" class="btn btn-primary">Search</button>
+                    </form>
+                    <div class="text-end d-flex gap-2 align-items-center">
+                        <button id="archiveCompletedBtn" class="btn btn-warning" title="Archive all completed orders">
+                            <i class="fa fa-archive"></i> Archive Completed
+                        </button>
+                        <small class="text-muted">Manage today's batches and orders</small>
+                    </div>
+                </div>
+                <div id="batchesContainer">Loading…</div>
+                <div id="unassignedContainer" style="margin-top:12px;"></div>
+            </div>
+        </div>
+        <!-- Toast Container -->
+        <div class="toast-container" id="toastContainer"></div>
+        
+        <script>
         (function(){
             // Toast Notification Function
             function showToast(type, title, message) {
@@ -554,90 +605,127 @@
                                 left: 0 !important;
                                 right: 0 !important;
                                 bottom: 0 !important;
-                                background: rgba(0, 0, 0, 0.5) !important;
+                                width: 100vw !important;
+                                height: 100vh !important;
+                                background: rgba(0, 0, 0, 0.6) !important;
                                 backdrop-filter: blur(4px);
                                 z-index: 10000 !important;
                                 display: flex !important;
                                 align-items: center !important;
                                 justify-content: center !important;
                                 animation: fadeIn 0.2s ease-out;
+                                padding: 20px;
+                                box-sizing: border-box;
                             }
                             .confirm-modal {
-                                background: white !important;
+                                background: #ffffff !important;
                                 border-radius: 16px !important;
                                 box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
-                                max-width: 440px !important;
-                                width: 90% !important;
-                                overflow: hidden !important;
-                                animation: scaleIn 0.3s ease-out;
+                                max-width: 500px !important;
+                                width: 100% !important;
+                                max-height: 90vh !important;
+                                overflow-y: auto !important;
+                                animation: modalSlideIn 0.3s ease-out;
+                                position: relative !important;
+                                margin: auto !important;
                             }
                             .confirm-modal-header {
-                                padding: 24px 24px 16px 24px !important;
+                                padding: 24px 24px 16px !important;
+                                border-bottom: 1px solid #e5e7eb !important;
                                 display: flex !important;
                                 align-items: center !important;
                                 gap: 16px !important;
-                                border-bottom: 1px solid #f3f4f6 !important;
                             }
                             .confirm-modal-icon {
                                 width: 48px !important;
                                 height: 48px !important;
                                 border-radius: 12px !important;
+                                background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
                                 display: flex !important;
                                 align-items: center !important;
                                 justify-content: center !important;
-                                font-size: 24px !important;
                                 flex-shrink: 0 !important;
-                                background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
-                                color: white !important;
+                            }
+                            .confirm-modal-icon i {
+                                color: #ffffff;
+                                font-size: 24px;
                             }
                             .confirm-modal-title {
-                                font-size: 1.25rem !important;
-                                font-weight: 700 !important;
+                                font-size: 1.5rem !important;
+                                font-weight: 600 !important;
                                 color: #111827 !important;
-                                line-height: 1.3 !important;
+                                margin: 0;
                             }
                             .confirm-modal-body {
-                                padding: 20px 24px 24px 24px !important;
+                                padding: 24px !important;
+                                color: #374151;
+                                font-size: 1rem !important;
+                                line-height: 1.6;
+                            }
+                            .confirm-modal-body input,
+                            .confirm-modal-body textarea {
+                                width: 100% !important;
+                                padding: 12px !important;
+                                border: 2px solid #e5e7eb !important;
+                                border-radius: 8px !important;
+                                font-size: 1rem !important;
+                                font-family: inherit !important;
+                                transition: border-color 0.2s, box-shadow 0.2s;
+                                box-sizing: border-box;
+                                margin-top: 8px !important;
+                            }
+                            .confirm-modal-body input:focus,
+                            .confirm-modal-body textarea:focus {
+                                outline: none;
+                                border-color: #3b82f6;
+                                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                            }
+                            .confirm-modal-body textarea {
+                                resize: vertical !important;
+                                min-height: 100px !important;
                             }
                             .confirm-modal-message {
-                                color: #6b7280 !important;
-                                font-size: 0.95rem !important;
-                                line-height: 1.6 !important;
+                                margin-bottom: 16px;
+                                padding: 12px;
+                                background: #f9fafb;
+                                border-radius: 8px;
+                                border-left: 4px solid #3b82f6;
                             }
                             .confirm-modal-footer {
                                 padding: 16px 24px !important;
-                                background: #f9fafb !important;
+                                border-top: 1px solid #e5e7eb !important;
                                 display: flex !important;
                                 gap: 12px !important;
                                 justify-content: flex-end !important;
                             }
                             .confirm-modal-btn {
-                                padding: 10px 24px !important;
+                                padding: 12px 24px !important;
                                 border-radius: 8px !important;
+                                font-size: 1rem !important;
                                 font-weight: 600 !important;
-                                font-size: 0.9rem !important;
                                 border: none !important;
                                 cursor: pointer !important;
                                 transition: all 0.2s !important;
+                                display: inline-flex;
+                                align-items: center;
+                                justify-content: center;
                                 min-width: 100px !important;
                             }
                             .confirm-modal-btn-cancel {
-                                background: white !important;
-                                color: #6b7280 !important;
-                                border: 1px solid #e5e7eb !important;
+                                background: #f3f4f6 !important;
+                                color: #374151 !important;
                             }
                             .confirm-modal-btn-cancel:hover {
-                                background: #f9fafb !important;
-                                border-color: #d1d5db !important;
+                                background: #e5e7eb !important;
                             }
                             .confirm-modal-btn-confirm {
                                 background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
-                                color: white !important;
-                                box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3) !important;
+                                color: #ffffff !important;
                             }
                             .confirm-modal-btn-confirm:hover {
-                                transform: translateY(-1px) !important;
-                                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
+                                background: linear-gradient(135deg, #2563eb, #1d4ed8);
+                                transform: translateY(-1px);
+                                box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
                             }
                             @keyframes fadeIn {
                                 from { opacity: 0; }
@@ -646,6 +734,16 @@
                             @keyframes scaleIn {
                                 from { transform: scale(0.9); opacity: 0; }
                                 to { transform: scale(1); opacity: 1; }
+                            }
+                            @keyframes modalSlideIn {
+                                from {
+                                    transform: translateY(-30px);
+                                    opacity: 0;
+                                }
+                                to {
+                                    transform: translateY(0);
+                                    opacity: 1;
+                                }
                             }
                         `;
                         document.head.appendChild(styleEl);
@@ -743,6 +841,62 @@
             function renderOrderRow(o, batchStatus, batchId) {
                 // store order object for modal usage
                 if (o && o.reference_id) ordersMap[o.reference_id] = o;
+                
+                // Get delivery personnel name if available
+                const deliveryPersonnel = o.delivery_personnel_name || '—';
+                
+                // Check if order is already completed or failed (PRIORITY CHECK)
+                const orderStatus = (o.order_status || '').toLowerCase();
+                const deliveryStatus = (o.delivery_status || '').toLowerCase();
+                
+                // Check multiple conditions for completed state
+                const isCompleted = orderStatus.includes('completed') || 
+                                   orderStatus.includes('delivered') ||
+                                   deliveryStatus.includes('delivered') ||
+                                   deliveryStatus.includes('completed') ||
+                                   o.delivery_completed_at != null;
+                
+                // Check multiple conditions for failed state
+                const isFailed = orderStatus.includes('failed') ||
+                                deliveryStatus.includes('failed') ||
+                                o.delivery_failed_at != null ||
+                                o.failed_reason != null;
+                
+                let deliveryActionsHtml = '';
+                
+                // PRIORITY 1: Show final status if completed or failed
+                if (isCompleted) {
+                    deliveryActionsHtml = '<span class="text-success fw-bold" style="font-size:0.9rem;">✓ Complete</span>';
+                } else if (isFailed) {
+                    const failReason = o.failed_reason ? `<br><span style="font-weight:normal;font-size:0.85rem;color:#6b7280;">Reason: ${escapeHtml(o.failed_reason)}</span>` : '';
+                    deliveryActionsHtml = `<span class="text-danger fw-bold" style="display:block;"><span style="display:inline-flex;align-items:center;gap:6px;"><i class="fa fa-times-circle"></i> Failed</span>${failReason}</span>`;
+                } 
+                // PRIORITY 2: Show action buttons only if delivery has started
+                else {
+                    const showDeliveryActions = deliveryStatus.includes('out for delivery') || 
+                                               deliveryStatus.includes('in progress') ||
+                                               deliveryStatus.includes('dispatched');
+                    
+                    if (showDeliveryActions) {
+                        deliveryActionsHtml = `
+                            <button class="btn btn-sm btn-success me-1 delivery-action-btn" 
+                                    data-ref="${escapeHtml(o.reference_id)}" 
+                                    data-action="complete"
+                                    onclick="completeDelivery('${escapeHtml(o.reference_id)}', this)">
+                                Complete
+                            </button>
+                            <button class="btn btn-sm btn-danger delivery-action-btn" 
+                                    data-ref="${escapeHtml(o.reference_id)}" 
+                                    data-action="fail"
+                                    onclick="failedDelivery('${escapeHtml(o.reference_id)}', this)">
+                                Failed
+                            </button>
+                        `;
+                    } else {
+                        deliveryActionsHtml = '<span class="text-muted" style="font-size:0.85rem;">—</span>';
+                    }
+                }
+                
                 return `
                     <tr class="order-row" data-ref="${escapeHtml(o.reference_id)}" ${batchId ? `data-batch="${escapeHtml(batchId)}"` : ''}>
                         <td><a href="#" class="order-ref-link" data-ref="${escapeHtml(o.reference_id)}">${escapeHtml(o.reference_id)}</a></td>
@@ -750,136 +904,378 @@
                         <td>${escapeHtml(o.payment_method || o.payment || '')}</td>
                         <td>${escapeHtml(Number(o.total_amount).toFixed(2))}</td>
                         <td class="payment-status">${escapeHtml(o.payment_status || '')}</td>
-                        <!-- Prefer the order's own delivery_status over the batch-level status so pickup actions don't incorrectly change per-order delivery status -->
+                        <td class="delivery-personnel">${escapeHtml(deliveryPersonnel)}</td>
                         <td class="status">${escapeHtml(o.delivery_status || batchStatus || '')}</td>
+                        <td class="delivery-actions">${deliveryActionsHtml}</td>
                     </tr>
                 `;
             }
-            function renderBatch(batch, idx) {
-                const orders = batch.orders || [];
-                const pickupTime = batch.pickup_time ? batch.pickup_time : '—';
-                const deliveryTime = batch.delivery_time ? batch.delivery_time : '—';
-                const pickupStatusDisplay = batch.pickup_status || '—';
-                const deliveryStatusDisplay = batch.delivery_status || '—';
-                
-                console.log(`[renderBatch] Batch ${batch.batch_id}:`, {
-                    pickup_status: batch.pickup_status,
-                    delivery_status: batch.delivery_status,
-                    batch_status: batch.batch_status
-                });
-                
-                const header = `Vehicle: ${escapeHtml(batch.vehicle_type)} — Batch #${escapeHtml(batch.batch_number)} — Orders: ${orders.length}`;
-                const totalQty = typeof batch.total_quantity !== 'undefined' ? batch.total_quantity : null;
-                const capacity = typeof batch.capacity !== 'undefined' ? batch.capacity : null;
-                const isFull = batch.is_full === true || batch.is_full === '1' || batch.is_full === 1;
-                const isCompleted = batch.is_completed === true || batch.is_completed === '1' || batch.is_completed === 1;
-                const tableRows = orders.length ? orders.map(o => renderOrderRow(o, batch.batch_status, batch.batch_id)).join('') : `<tr><td colspan="8" class="text-center text-muted">No orders in this batch</td></tr>`;
-                // Determine batch status more strictly - only show one button at a time in sequential order
-                const pickupStatus = (batch.pickup_status || '').toLowerCase();
-                const deliveryStatus = (batch.delivery_status || '').toLowerCase();
-                
-                console.log(`Batch ${batch.batch_id}: pickup="${pickupStatus}", delivery="${deliveryStatus}"`);
-                
-                // Show buttons based on current status - strictly sequential
-                // Database values: 1=Pending, 2=In Progress, 3=Completed, 4=Failed
-                let buttonsHtml = '';
-                
-                // Step 4: Delivery completed (final state) - delivery is "completed"
-                if (deliveryStatus === 'completed') {
-                    buttonsHtml = '<div class="text-muted small" style="font-weight: 600; color: #10b981 !important;">✓ Completed</div>';
-                }
-                // Step 3: Delivery in progress - show complete delivery button
-                else if (deliveryStatus === 'in progress') {
-                    buttonsHtml = `
-                        <button class="btn btn-sm btn-dark action-btn" data-action="complete_delivery"
-                            onclick="performBatchAction('${escapeHtml(batch.batch_id)}', 'complete_delivery', this)">Complete Delivery</button>
-                    `;
-                }
-                // Step 2: Pickup completed - show start delivery button
-                else if (pickupStatus === 'completed') {
-                    buttonsHtml = `
-                        <button class="btn btn-sm btn-warning action-btn" data-action="start_delivery"
-                            onclick="performBatchAction('${escapeHtml(batch.batch_id)}', 'start_delivery', this)">Start Delivery</button>
-                    `;
-                }
-                // Step 1.5: Pickup in progress - show complete pickup button
-                else if (pickupStatus === 'in progress') {
-                    buttonsHtml = `
-                        <button class="btn btn-sm btn-success action-btn" data-action="complete_pickup"
-                            onclick="performBatchAction('${escapeHtml(batch.batch_id)}', 'complete_pickup', this)">Complete Pickup</button>
-                    `;
-                }
-                // Step 1: Initial state (pickup pending or no status) - show start pickup button
-                else {
-                    buttonsHtml = `
-                        <button class="btn btn-sm btn-primary action-btn" data-action="start_pickup"
-                            onclick="performBatchAction('${escapeHtml(batch.batch_id)}', 'start_pickup', this)">Start Pickup</button>
-                    `;
+            // Complete Delivery function
+            window.completeDelivery = async function(refId, btn) {
+                const order = ordersMap[refId];
+                if (!order) {
+                    showToast('error', 'Error', 'Order not found');
+                    return;
                 }
 
-                // Role-based visibility: Drivers can only perform delivery-related actions
-                try {
-                    const rawRole = (window.CURRENT_STAFF_ROLE || '').toLowerCase();
-                    // Normalize role strings: treat 'rider' as driver to match DB seeds
-                    const role = (rawRole.indexOf('driver') !== -1 || rawRole.indexOf('rider') !== -1) ? 'driver' : rawRole;
-                    if (role === 'driver') {
-                        // Only keep delivery actions (start_delivery, complete_delivery) or final Completed marker
-                        if (deliveryStatus === 'completed') {
-                            // already the completed marker
-                        } else if (deliveryStatus === 'in progress') {
-                            // keep Complete Delivery button (already set above)
-                        } else if (pickupStatus === 'completed') {
-                            // keep Start Delivery button (already set above)
+                const paymentMethod = (order.payment_method || '').toUpperCase();
+
+                if (paymentMethod === 'COD') {
+                    const existingBackdrop = document.getElementById('codAmountBackdrop');
+                    if (existingBackdrop) existingBackdrop.remove();
+                    
+                    const backdrop = document.createElement('div');
+                    backdrop.id = 'codAmountBackdrop';
+                    backdrop.style.cssText = 'position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100vw!important;height:100vh!important;background:rgba(0,0,0,0.6)!important;z-index:999999!important;display:flex!important;align-items:center!important;justify-content:center!important;';
+                    
+                    const modal = document.createElement('div');
+                    modal.style.cssText = 'background:white;border-radius:16px;max-width:500px;width:90%;box-shadow:0 25px 50px rgba(0,0,0,0.4);position:relative;';
+                    modal.innerHTML = `
+                        <div style="padding:20px 24px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
+                            <h2 style="margin:0;font-size:1.25rem;font-weight:600;">Enter Amount Collected</h2>
+                            <button id="codCloseBtn" style="background:#f3f4f6;border:none;width:32px;height:32px;border-radius:8px;font-size:1.5rem;cursor:pointer;line-height:1;">&times;</button>
+                        </div>
+                        <div style="padding:24px;">
+                            <p style="margin-bottom:12px;">Order Total: <strong>₱${Number(order.total_amount).toFixed(2)}</strong></p>
+                            <label style="display:block;margin-bottom:8px;font-weight:600;">Amount Received:</label>
+                            <input type="number" id="codAmountInput" step="0.01" min="0" placeholder="Enter exact amount" 
+                                style="width:100%;padding:12px;border:2px solid #e5e7eb;border-radius:8px;font-size:1rem;">
+                            <div id="amountError" style="color:#ef4444;font-size:0.875rem;margin-top:8px;display:none;">
+                                Amount must match order total exactly.
+                            </div>
+                        </div>
+                        <div style="padding:16px 24px;border-top:1px solid #e5e7eb;display:flex;gap:12px;justify-content:flex-end;">
+                            <button id="codCancelBtn" style="background:#f3f4f6;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-weight:600;">Cancel</button>
+                            <button id="confirmCodBtn" disabled style="background:#d1d5db;color:white;border:none;padding:10px 24px;border-radius:8px;cursor:not-allowed;font-weight:600;">Confirm</button>
+                        </div>
+                    `;
+                    
+                    backdrop.appendChild(modal);
+                    document.body.appendChild(backdrop);
+
+                    const input = document.getElementById('codAmountInput');
+                    const confirmBtn = document.getElementById('confirmCodBtn');
+                    const errorDiv = document.getElementById('amountError');
+                    const expectedAmount = parseFloat(order.total_amount);
+
+                    setTimeout(() => input.focus(), 100);
+
+                    input.addEventListener('input', function() {
+                        const enteredAmount = parseFloat(this.value);
+                        if (!isNaN(enteredAmount) && Math.abs(enteredAmount - expectedAmount) < 0.01) {
+                            confirmBtn.disabled = false;
+                            confirmBtn.style.background = '#3b82f6';
+                            confirmBtn.style.cursor = 'pointer';
+                            errorDiv.style.display = 'none';
+                            input.style.borderColor = '#10b981';
                         } else {
-                            // For pickup in-progress or initial pickup states, drivers should not see pickup actions
-                            // Show an empty placeholder to avoid confusing buttons
+                            confirmBtn.disabled = true;
+                            confirmBtn.style.background = '#d1d5db';
+                            confirmBtn.style.cursor = 'not-allowed';
+                            if (this.value) {
+                                errorDiv.style.display = 'block';
+                                input.style.borderColor = '#ef4444';
+                            }
+                        }
+                    });
+
+                    const closeModal = () => backdrop.remove();
+                    document.getElementById('codCloseBtn').onclick = closeModal;
+                    document.getElementById('codCancelBtn').onclick = closeModal;
+                    backdrop.onclick = (e) => { if (e.target === backdrop) closeModal(); };
+
+                    confirmBtn.onclick = async function() {
+                        const enteredAmount = parseFloat(input.value);
+                        if (Math.abs(enteredAmount - expectedAmount) < 0.01) {
+                            backdrop.remove();
+                            await proceedWithComplete(refId, btn, enteredAmount);
+                        }
+                    };
+                } else {
+                    await proceedWithComplete(refId, btn, null);
+                }
+            };
+
+            async function proceedWithComplete(refId, btn, amount) {
+                if (btn) btn.disabled = true;
+                
+                try {
+                    const response = await fetch('/WRSOMS/api/admin/order_delivery_action.php', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'complete',
+                            reference_id: refId,
+                            amount: amount
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (!result.success) throw new Error(result.message || 'Failed to complete delivery');
+                    
+                    showToast('success', 'Success', 'Delivery completed successfully');
+                    
+                    // Update UI - CRITICAL: Remove buttons and show status
+                    const row = document.querySelector(`tr.order-row[data-ref="${refId}"]`);
+                    if (row) {
+                        const personnelCell = row.querySelector('.delivery-personnel');
+                        const statusCell = row.querySelector('.status');
+                        const actionsCell = row.querySelector('.delivery-actions');
+                        
+                        if (personnelCell) personnelCell.textContent = result.data.delivery_personnel || '—';
+                        if (statusCell) statusCell.textContent = 'Delivered';
+                        
+                        // CRITICAL FIX: Replace buttons with status text
+                        if (actionsCell) {
+                            actionsCell.innerHTML = '<span class="text-success fw-bold" style="font-size:0.9rem;">✓ Complete</span>';
+                        }
+                        
+                        // Update payment status if COD
+                        if (result.data.payment_status) {
+                            const paymentCell = row.querySelector('.payment-status');
+                            if (paymentCell) paymentCell.textContent = result.data.payment_status;
+                        }
+                        
+                        // Update ordersMap to reflect completion
+                        if (ordersMap[refId]) {
+                            ordersMap[refId].delivery_completed_at = new Date().toISOString();
+                            ordersMap[refId].delivery_personnel_name = result.data.delivery_personnel;
+                            ordersMap[refId].order_status = 'Completed';
+                            ordersMap[refId].delivery_status = 'Delivered';
+                        }
+                    }
+                    
+                    // Reload data to ensure consistency
+                    setTimeout(() => loadData(), 500);
+                    
+                } catch (err) {
+                    console.error('Complete delivery error:', err);
+                    showToast('error', 'Error', err.message || 'Failed to complete delivery');
+                } finally {
+                    if (btn) btn.disabled = false;
+                }
+            }
+
+            // Failed Delivery function
+            window.failedDelivery = async function(refId, btn) {
+                const existingBackdrop = document.getElementById('failedReasonBackdrop');
+                if (existingBackdrop) existingBackdrop.remove();
+                
+                const backdrop = document.createElement('div');
+                backdrop.id = 'failedReasonBackdrop';
+                backdrop.style.cssText = 'position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100vw!important;height:100vh!important;background:rgba(0,0,0,0.6)!important;z-index:999999!important;display:flex!important;align-items:center!important;justify-content:center!important;';
+                
+                const modal = document.createElement('div');
+                modal.style.cssText = 'background:white;border-radius:16px;max-width:500px;width:90%;box-shadow:0 25px 50px rgba(0,0,0,0.4);position:relative;';
+                modal.innerHTML = `
+                    <div style="padding:20px 24px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
+                        <h2 style="margin:0;font-size:1.25rem;font-weight:600;color:#ef4444;">
+                            <i class="fa fa-exclamation-triangle" style="margin-right:8px;"></i>Mark Delivery Failed
+                        </h2>
+                        <button id="failedCloseBtn" style="background:#f3f4f6;border:none;width:32px;height:32px;border-radius:8px;font-size:1.5rem;cursor:pointer;line-height:1;">&times;</button>
+                    </div>
+                    <div style="padding:24px;">
+                        <label style="display:block;margin-bottom:8px;font-weight:600;">Reason for Failure:</label>
+                        <textarea id="failedReasonInput" rows="4" placeholder="Enter detailed reason..." 
+                            style="width:100%;padding:12px;border:2px solid #e5e7eb;border-radius:8px;font-size:1rem;resize:vertical;"></textarea>
+                        <div id="reasonError" style="color:#ef4444;font-size:0.875rem;margin-top:8px;display:none;">
+                            Please provide a reason for the failure.
+                        </div>
+                    </div>
+                    <div style="padding:16px 24px;border-top:1px solid #e5e7eb;display:flex;gap:12px;justify-content:flex-end;">
+                        <button id="failedCancelBtn" style="background:#f3f4f6;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-weight:600;">Cancel</button>
+                        <button id="confirmFailedBtn" disabled style="background:#d1d5db;color:white;border:none;padding:10px 24px;border-radius:8px;cursor:not-allowed;font-weight:600;">Confirm</button>
+                    </div>
+                `;
+                
+                backdrop.appendChild(modal);
+                document.body.appendChild(backdrop);
+
+                const textarea = document.getElementById('failedReasonInput');
+                const confirmBtn = document.getElementById('confirmFailedBtn');
+                const errorDiv = document.getElementById('reasonError');
+
+                setTimeout(() => textarea.focus(), 100);
+
+                textarea.addEventListener('input', function() {
+                    const reason = this.value.trim();
+                    if (reason.length > 0) {
+                        confirmBtn.disabled = false;
+                        confirmBtn.style.background = '#ef4444';
+                        confirmBtn.style.cursor = 'pointer';
+                        errorDiv.style.display = 'none';
+                    } else {
+                        confirmBtn.disabled = true;
+                        confirmBtn.style.background = '#d1d5db';
+                        confirmBtn.style.cursor = 'not-allowed';
+                    }
+                });
+
+                const closeModal = () => backdrop.remove();
+                document.getElementById('failedCloseBtn').onclick = closeModal;
+                document.getElementById('failedCancelBtn').onclick = closeModal;
+                backdrop.onclick = (e) => { if (e.target === backdrop) closeModal(); };
+
+                confirmBtn.onclick = async function() {
+                    const reason = textarea.value.trim();
+                    if (!reason) {
+                        errorDiv.style.display = 'block';
+                        textarea.style.borderColor = '#ef4444';
+                        return;
+                    }
+                    backdrop.remove();
+                    if (btn) btn.disabled = true;
+                    
+                    try {
+                        const response = await fetch('/WRSOMS/api/admin/order_delivery_action.php', {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'fail', reference_id: refId, reason: reason })
+                        });
+                        const result = await response.json();
+                        if (!result.success) throw new Error(result.message || 'Failed to mark as failed');
+                        
+                        showToast('error', 'Marked as Failed', `Delivery marked as failed`);
+                        
+                        // Update UI - CRITICAL: Remove buttons and show status
+                        const row = document.querySelector(`tr.order-row[data-ref="${refId}"]`);
+                        if (row) {
+                            const personnelCell = row.querySelector('.delivery-personnel');
+                            const statusCell = row.querySelector('.status');
+                            const actionsCell = row.querySelector('.delivery-actions');
+                            
+                            if (personnelCell) personnelCell.textContent = result.data.delivery_personnel || '—';
+                            if (statusCell) statusCell.textContent = 'Failed';
+                            
+                            // CRITICAL FIX: Replace buttons with status text
+                            if (actionsCell) {
+                                actionsCell.innerHTML = `<span class="text-danger fw-bold" style="display:block;"><span style="display:inline-flex;align-items:center;gap:6px;"><i class="fa fa-times-circle"></i> Failed</span><br><span style="font-weight:normal;font-size:0.85rem;color:#6b7280;">Reason: ${escapeHtml(reason)}</span></span>`;
+                            }
+                            
+                            // Update ordersMap to reflect failure
+                            if (ordersMap[refId]) {
+                                ordersMap[refId].delivery_failed_at = new Date().toISOString();
+                                ordersMap[refId].failed_reason = reason;
+                                ordersMap[refId].delivery_personnel_name = result.data.delivery_personnel;
+                                ordersMap[refId].order_status = 'Failed';
+                                ordersMap[refId].delivery_status = 'Failed';
+                            }
+                        }
+                        
+                        setTimeout(() => loadData(), 500);
+                    } catch (err) {
+                        showToast('error', 'Error', err.message || 'Failed to mark delivery as failed');
+                    } finally {
+                        if (btn) btn.disabled = false;
+                    }
+                };
+            };
+
+            function renderBatch(batch, idx) {
+                const orders = batch.orders || [];
+                const header = `Vehicle: ${escapeHtml(batch.vehicle_type)} — Batch #${escapeHtml(batch.batch_number)} — Orders: ${orders.length}`;
+                const pickupTime = batch.pickup_time || '—';
+                const deliveryTime = batch.delivery_time || '—';
+                const pickupStatusDisplay = batch.pickup_status || '—';
+                const deliveryStatusDisplay = batch.delivery_status || '—';
+                const tableRows = orders.length
+                    ? orders.map(o => renderOrderRow(o, batch.batch_status, batch.batch_id)).join('')
+                    : `<tr><td colspan="8" class="text-center text-muted">No orders in this batch</td></tr>`;
+
+                // Button sequence
+                const ps = (batch.pickup_status || '').toLowerCase();
+                const ds = (batch.delivery_status || '').toLowerCase();
+                let buttonsHtml = '';
+                
+                // Step 4: Delivery completed (final state)
+                if (ds === 'completed' || ds.includes('delivered')) {
+                    buttonsHtml = '<div class="text-success fw-semibold" style="font-size:.9rem;">✓ Delivery Completed</div>';
+                } 
+                // Step 3: Delivery in progress - show complete delivery button
+                else if (ds === 'in progress' || ds.includes('out for delivery')) {
+                    buttonsHtml = `<button class="btn btn-sm btn-dark action-btn" data-action="complete_delivery"
+                        onclick="performBatchAction('${escapeHtml(batch.batch_id)}','complete_delivery',this)">Complete Delivery</button>`;
+                } 
+                // Step 2: Pickup completed - show start delivery button
+                else if (ps === 'completed') {
+                    buttonsHtml = `<button class="btn btn-sm btn-warning action-btn" data-action="start_delivery"
+                        onclick="performBatchAction('${escapeHtml(batch.batch_id)}','start_delivery',this)">Start Delivery</button>`;
+                } 
+                // Step 1.5: Pickup in progress - show complete pickup button
+                else if (ps === 'in progress') {
+                    buttonsHtml = `<button class="btn btn-sm btn-success action-btn" data-action="complete_pickup"
+                        onclick="performBatchAction('${escapeHtml(batch.batch_id)}','complete_pickup',this)">Complete Pickup</button>`;
+                } 
+                // Step 1: Initial state (pickup pending or no status) - show start pickup button
+                else {
+                    buttonsHtml = `<button class="btn btn-sm btn-primary action-btn" data-action="start_pickup"
+                        onclick="performBatchAction('${escapeHtml(batch.batch_id)}','start_pickup',this)">Start Pickup</button>`;
+                }
+
+                // Driver role restriction
+                try {
+                    const role = (window.CURRENT_STAFF_ROLE || '').toLowerCase();
+                    if (role.includes('driver') || role.includes('rider')) {
+                        // Drivers can only see and use delivery-related actions
+                        if (ds === 'completed' || ds.includes('delivered')) {
+                            // Keep the completed status display
+                        } else if (ds === 'in progress' || ds.includes('out for delivery')) {
+                            // Keep the Complete Delivery button
+                        } else if (ps === 'completed') {
+                            // Keep the Start Delivery button
+                        } else {
+                            // Hide all pickup actions for drivers
                             buttonsHtml = '<div class="text-muted small">No delivery actions available</div>';
                         }
                     }
-                } catch (e) {
-                    console.warn('Role-based filtering failed', e);
-                }
-                // Modified batch card header with sequential buttons
+                } catch(e){}
+
                 return `
-                    <div class="metric-card mb-3" data-batch-id="${escapeHtml(batch.batch_id)}">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <div>
-                                <strong>${escapeHtml(header)}</strong>
-                                <div class="text-muted small">Pickup: <span class="pickup-time">${escapeHtml(pickupTime)}</span> &nbsp;|&nbsp; Delivery: <span class="delivery-time">${escapeHtml(deliveryTime)}</span></div>
-                                <div class="text-muted small">Pickup status: <span class="pickup-status">${escapeHtml(pickupStatusDisplay)}</span> &nbsp;|&nbsp; Delivery status: <span class="delivery-status">${escapeHtml(deliveryStatusDisplay)}</span></div>
+                <div class="metric-card mb-3" data-batch-id="${escapeHtml(batch.batch_id)}">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <strong>${header}</strong>
+                            <div class="text-muted small">
+                                Pickup: <span class="pickup-time">${escapeHtml(pickupTime)}</span> |
+                                Delivery: <span class="delivery-time">${escapeHtml(deliveryTime)}</span>
                             </div>
-                            <div class="d-flex gap-2 batch-actions" data-batch-id="${escapeHtml(batch.batch_id)}">
-                                ${buttonsHtml}
+                            <div class="text-muted small">
+                                Pickup status: <span class="pickup-status">${escapeHtml(pickupStatusDisplay)}</span> |
+                                Delivery status: <span class="delivery-status">${escapeHtml(deliveryStatusDisplay)}</span>
                             </div>
                         </div>
-                        <div id="batchBody${idx}" class="collapse show">
-                            <div class="table-responsive">
-                                <table class="recent-orders-table mb-0">
-                                    <thead>
-                                                        <tr>
-                                                                                <th>Reference ID</th>
-                                                                                <th>Order Date</th>
-                                                                                <th>Payment Method</th>
-                                                                                <th>Total</th>
-                                                                                <th>Payment Status</th>
-                                                                                <th>Delivery Status</th>
-                                                                            </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${tableRows}
-                                    </tbody>
-                                </table>
-                            </div>
+                        <div class="batch-actions d-flex gap-2" data-batch-id="${escapeHtml(batch.batch_id)}">
+                            ${buttonsHtml}
                         </div>
                     </div>
-                `;
+                    <div class="table-responsive">
+                        <table class="recent-orders-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Reference ID</th>
+                                    <th>Order Date</th>
+                                    <th>Payment Method</th>
+                                    <th>Total</th>
+                                    <th>Payment Status</th>
+                                    <th>Delivery Personnel</th>
+                                    <th>Delivery Status</th>
+                                    <th>Delivery Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>${tableRows}</tbody>
+                        </table>
+                    </div>
+                </div>`;
             }
             function renderUnassigned(list) {
                 if (!list.length) {
                     unassignedContainer.innerHTML = '';
                     return;
                 }
-                const rows = list.map(renderOrderRow).join('');
+                const rows = list.map(o => renderOrderRow(o, '', null)).join('');
                 unassignedContainer.innerHTML = `
                     <div class="metric-card">
                         <h4>Unassigned Orders</h4>
@@ -892,7 +1288,9 @@
                                         <th>Payment Method</th>
                                         <th>Total</th>
                                         <th>Payment Status</th>
+                                        <th>Delivery Personnel</th>
                                         <th>Delivery Status</th>
+                                        <th>Delivery Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1252,12 +1650,6 @@
                 })
                 .catch(err => {
                     console.error('Batch action error', err);
-                    showToast('error', 'Action Failed', err.message || 'Failed to perform action. Please try again.');
-                })
-                .finally(() => {
-                    if (btn) btn.disabled = false;
-                });
-            };
             
             // Test that the function is accessible
             console.log('window.performBatchAction defined:', typeof window.performBatchAction);
@@ -1355,7 +1747,7 @@
                             </div>
                            
                             <!-- Customer & Address in Single Row -->
-                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                                                       <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
                                 <div style="background:#f9fafb; padding:18px; border-radius:10px; border:1px solid #e5e7eb;">
                                     <h4 style="font-size:0.85rem; margin:0 0 12px 0; color:#6b7280; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Customer</h4>
                                     <div style="margin-bottom:8px;">
@@ -1400,73 +1792,23 @@
                     backdrop.style.boxSizing = 'border-box';
                     backdrop.style.background = 'rgba(0,0,0,0.45)';
                     backdrop.innerHTML = receiptHtml;
-                    (document.documentElement || document.body).appendChild(backdrop);
-                    backdrop.addEventListener('click', function(ev) {
-                        if (ev.target === backdrop) backdrop.style.display = 'none';
-                    });
-                } else {
-                    backdrop.innerHTML = receiptHtml;
+
+                    document.body.appendChild(backdrop);
                 }
-                function show() {
-                    backdrop.style.display = 'flex';
-                    const c1 = document.getElementById('wwModalCloseBtn');
-                    const c2 = document.getElementById('wwModalCloseBtn2');
-                    if (c1) c1.onclick = () => backdrop.style.display = 'none';
-                    if (c2) c2.onclick = () => backdrop.style.display = 'none';
-                }
-                show();
+                backdrop.style.display = 'flex';
+                
+                // Close buttons handler
+                document.querySelectorAll('#wwModalCloseBtn, #wwModalCloseBtn2').forEach(btn => {
+                    btn.onclick = function() {
+                        backdrop.style.display = 'none';
+                        setTimeout(() => {
+                            backdrop.remove();
+                        }, 300);
+                    };
+                });
             }
-            // Search behavior (client-side filtering)
-            document.getElementById('ordersSearchForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                const q = (document.getElementById('ordersSearchInput').value || '').trim().toLowerCase();
-                // if empty, reset visibility
-                if (!q) {
-                    document.querySelectorAll('tr.order-row').forEach(r => r.style.display = '');
-                    document.querySelectorAll('.metric-card').forEach(c => c.style.display = '');
-                    document.getElementById('unassignedContainer').style.display = '';
-                    return;
-                }
-                // find matching reference ids using ordersMap (populated during render)
-                const matches = new Set();
-                Object.keys(ordersMap).forEach(ref => {
-                    const o = ordersMap[ref] || {};
-                    const hay = [
-                        o.reference_id,
-                        o.customer_name,
-                        o.customer_contact,
-                        o.street,
-                        o.barangay,
-                        o.city,
-                        o.province,
-                        o.order_date,
-                        o.delivery_date
-                    ].filter(Boolean).join(' ').toLowerCase();
-                    if (hay.indexOf(q) !== -1) matches.add(ref);
-                });
-                // Show/hide order rows based on matches
-                document.querySelectorAll('tr.order-row').forEach(r => {
-                    const ref = r.getAttribute('data-ref');
-                    if (matches.has(ref)) r.style.display = ''; else r.style.display = 'none';
-                });
-                // Hide batch cards with no visible orders
-                document.querySelectorAll('.metric-card').forEach(card => {
-                    const rows = card.querySelectorAll('tr.order-row');
-                    let anyVisible = false;
-                    rows.forEach(rr => { if (rr.style.display !== 'none') anyVisible = true; });
-                    card.style.display = anyVisible ? '' : 'none';
-                });
-                // Handle unassigned orders visibility
-                const ua = document.getElementById('unassignedContainer');
-                if (ua) {
-                    const rows = ua.querySelectorAll('tr.order-row');
-                    let anyVisible = false;
-                    rows.forEach(rr => { if (rr.style.display !== 'none') anyVisible = true; });
-                    ua.style.display = anyVisible ? '' : 'none';
-                }
-            });
             
-            // Archive completed orders button
+            // Archive button handler (top right)
             const archiveBtn = document.getElementById('archiveCompletedBtn');
             if (archiveBtn) {
                 archiveBtn.addEventListener('click', async function() {
@@ -1564,6 +1906,8 @@
                         });
                 });
             }
+                }); // Close fetchArchivedIds().then() callback
+            }; // Close loadData function
         })();
     </script>
 </body>
