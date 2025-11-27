@@ -55,9 +55,9 @@ document.addEventListener('DOMContentLoaded', async function() {
   if (document.getElementById('productsGrid')) {
     try {
       const [productsResponse, waterTypesResponse, orderTypesResponse] = await Promise.all([
-        fetch('/WRSOMS/api/common/containers.php'),
-        fetch('/WRSOMS/api/common/water_types.php'),
-        fetch('/WRSOMS/api/common/order_types.php')
+          fetch('/api/common/containers.php'),
+          fetch('/api/common/water_types.php'),
+          fetch('/api/common/order_types.php')
       ]);
 
       if (!productsResponse.ok) throw new Error(`Products HTTP error! status: ${productsResponse.status}`);
@@ -89,8 +89,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     // If not on product listing page, we still want the modal selection options available for editing cart
     try {
       const [waterTypesResponse, orderTypesResponse] = await Promise.all([
-        fetch('/WRSOMS/api/common/water_types.php'),
-        fetch('/WRSOMS/api/common/order_types.php')
+          fetch('/api/common/water_types.php'),
+          fetch('/api/common/order_types.php')
       ]);
       if (waterTypesResponse.ok) {
         const waterTypes = await safeParseJSON(waterTypesResponse);
@@ -117,7 +117,7 @@ function renderProducts(products) {
   
   try {
     grid.innerHTML = products.map(product => {
-      const imageSrc = `/WRSOMS/assets/images/${product.image || 'placeholder.svg'}`;
+        const imageSrc = `/assets/images/${product.image || 'placeholder.svg'}`;
       return `
         <div class="product-card">
           <img src="${imageSrc}" 
