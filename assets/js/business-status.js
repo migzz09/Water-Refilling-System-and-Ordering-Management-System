@@ -27,7 +27,7 @@ function formatTime(timeStr) {
 async function checkBusinessStatus() {
     try {
            // ...existing code...
-        const response = await fetch('/WRSOMS/api/common/check_order_cutoff.php');
+        const response = await fetch('/api/common/check_order_cutoff.php');
         const data = await response.json();
         
         console.log('📊 Business status data:', data);

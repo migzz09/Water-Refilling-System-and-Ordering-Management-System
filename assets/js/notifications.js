@@ -29,7 +29,7 @@ function stopNotificationPolling() {
 
 async function checkNotifications() {
     try {
-        const res = await fetch('/wrsoms/api/notifications.php', {
+        const res = await fetch('/api/notifications.php', {
             method: 'GET',
             credentials: 'include',
             headers: { 'Accept': 'application/json' }

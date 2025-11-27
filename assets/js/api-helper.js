@@ -4,7 +4,7 @@
  */
 
 const API = {
-    baseURL: '/WRSOMS/api',
+    baseURL: '/api',
 
     /**
      * Make a GET request
