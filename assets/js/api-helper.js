@@ -4,7 +4,14 @@
  */
 
 const API = {
-    baseURL: '/api',
+    baseURL: (function() {
+        // If running on localhost and path includes /WRSOMS/, use /WRSOMS/api
+        if (window.location.pathname.startsWith('/WRSOMS/')) {
+            return '/WRSOMS/api';
+        }
+        // Otherwise, use /api for production
+        return '/api';
+    })(),
 
     /**
      * Make a GET request
