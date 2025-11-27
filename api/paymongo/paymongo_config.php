@@ -1,12 +1,15 @@
 <?php
-require_once __DIR__ . '/../../../vendor/autoload.php';
+
+require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
 
 use Dotenv\Dotenv;
 
-$dotenv = Dotenv::createImmutable(__DIR__ . '/../../../');
+
+$projectRoot = dirname(__DIR__, 2); // This should resolve to C:/xampp/htdocs/WRSOMS
+$dotenv = Dotenv::createImmutable($projectRoot);
 $dotenv->load();
 
-define('PAYMONGO_SECRET_KEY', getenv('PAYMONGO_SECRET_KEY'));
-define('PAYMONGO_PUBLIC_KEY', getenv('PAYMONGO_PUBLIC_KEY'));
-define('SUCCESS_URL', getenv('SUCCESS_URL'));
-define('FAILED_URL', getenv('FAILED_URL'));
+define('PAYMONGO_SECRET_KEY', $_ENV['PAYMONGO_SECRET_KEY'] ?? null);
+define('PAYMONGO_PUBLIC_KEY', $_ENV['PAYMONGO_PUBLIC_KEY'] ?? null);
+define('SUCCESS_URL', $_ENV['SUCCESS_URL'] ?? null);
+define('FAILED_URL', $_ENV['FAILED_URL'] ?? null);

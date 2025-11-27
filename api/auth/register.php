@@ -221,9 +221,14 @@ try {
             $mail->AltBody = "Hello $first_name,\nYour OTP for registration is: $otp\nThis OTP is valid for 10 minutes.";
 
             $mail->send();
+            // Debug: log mailer error info even if no exception
+            if (!empty($mail->ErrorInfo)) {
+                error_log('PHPMailer ErrorInfo: ' . $mail->ErrorInfo);
+            }
         } catch (\PHPMailer\PHPMailer\Exception $e) {
             // Log and continue - return success but note email failure
             error_log('PHPMailer error: ' . $e->getMessage());
+            error_log('PHPMailer ErrorInfo (exception): ' . ($mail->ErrorInfo ?? 'N/A'));
             jsonResponse(500, ['success' => false, 'message' => 'Failed to send OTP email.']);
         }
     }

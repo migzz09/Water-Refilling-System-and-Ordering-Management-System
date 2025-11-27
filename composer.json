@@ -2,7 +2,8 @@
     "name": "migzz09/wrsoms",
     "description": "Water Refilling System and Ordering Management System",
     "require": {
-        "vlucas/phpdotenv": "^5.5"
+        "vlucas/phpdotenv": "^5.5",
+        "phpmailer/phpmailer": "^7.0"
     },
     "authors": [
         {
