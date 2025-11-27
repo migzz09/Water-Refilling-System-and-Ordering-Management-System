@@ -1,0 +1,63 @@
+# Composer
+/vendor/
+composer.lock
+composer.json
+composer.phar
+
+# Configuration (contains sensitive data)
+config/config.php
+config/*.php
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+error.log
+access.log
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
+*.bak
+*.backup
+
+# Node modules (if added later)
+node_modules/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Database dumps (keep schema only)
+# *.sql
+# backup/
+
+# Setup scripts (local only)
+SETUP_COMPLETE.md
+CHECKLIST.md
+QUICK_REFERENCE.md
+SETUP_GUIDE.md
+setup.bat
+setup.ps1
+
+# Legacy PHP files (not needed for API version)
+php-legacy/
+
+# PHPStorm
+.phpintel/
+
+# Test files
+test/
+tests/

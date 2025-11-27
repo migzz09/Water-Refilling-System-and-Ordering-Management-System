@@ -1,0 +1,27 @@
+/* WaterWorld - manage_orders Page Styles */
+
+body {
+            background-color: #f8f9fa;
+        }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        table th {
+            background-color: #007bff;
+            color: white;
+            vertical-align: middle;
+        }
+        table td {
+            vertical-align: middle;
+        }
+        .search-bar {
+            max-width: 400px;
+        }
+        .btn-archive {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-archive:hover {
+            background-color: #bb2d3b;
+        }

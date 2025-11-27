@@ -1,0 +1,2452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Orders | Admin Panel</title>
+    <!-- This fragment is intended to be embedded inside the admin dashboard. Styles are pulled from the shared admin CSS. -->
+    <meta name="robots" content="noindex">
+    <style>
+        /* Keep minimal inline styles for embedding only - primary styles live in admin.css */
+        .search-bar { max-width: 420px; }
+        .orders-card { padding: 16px; border-radius: 8px; }
+        .orders-empty { padding: 40px 0; }
+        
+        /* Toast Notification Styles */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 400px;
+        }
+        
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #3b82f6;
+            animation: slideIn 0.3s ease-out;
+            min-width: 320px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .toast::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            animation: progressBar 3s linear;
+        }
+        
+        .toast.success {
+            border-left-color: #10b981;
+        }
+        
+        .toast.success::before {
+            background: linear-gradient(90deg, #10b981, #34d399);
+        }
+        
+        .toast.error {
+            border-left-color: #ef4444;
+        }
+        
+        .toast.error::before {
+            background: linear-gradient(90deg, #ef4444, #f87171);
+        }
+        
+        .toast-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .toast.success .toast-icon {
+            color: #10b981;
+        }
+        
+        .toast.error .toast-icon {
+            color: #ef4444;
+        }
+        
+        .toast.info .toast-icon {
+            color: #3b82f6;
+        }
+        
+        .toast-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .toast-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #111827;
+            line-height: 1.3;
+        }
+        
+        .toast-message {
+            font-size: 0.875rem;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+        
+        .toast-close {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        
+        .toast-close:hover {
+            background: #f3f4f6;
+            color: #111827;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes progressBar {
+            from {
+                width: 100%;
+            }
+            to {
+                width: 0%;
+            }
+        }
+        
+        .toast.closing {
+            animation: slideOut 0.3s ease-in forwards;
+        }
+        
+        /* Collapsible Batch Styles */
+        .collapse {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        
+        .collapse.show {
+            max-height: 5000px;
+            transition: max-height 0.5s ease-in;
+        }
+        
+        .collapse-icon {
+            transition: transform 0.3s ease;
+            display: inline-block;
+        }
+        
+        .collapse-icon.rotated {
+            transform: rotate(90deg);
+        }
+        
+        /* Modal backdrop - FIXED positioning */
+.ww-modal-backdrop {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    backdrop-filter: blur(4px);
+    z-index: 99999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Modal content - centered */
+.ww-modal {
+    position: relative !important;
+    background: white !important;
+    border-radius: 16px !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4) !important;
+    max-width: 500px !important;
+    width: 90% !important;
+    max-height: 85vh !important;
+    overflow-y: auto !important;
+    margin: 0 auto !important;
+}
+
+.ww-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.ww-modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.ww-modal-body {
+    padding: 24px;
+}
+
+.ww-modal-body input,
+.ww-modal-body textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    margin-bottom: 8px;
+}
+
+.ww-modal-body input:focus,
+.ww-modal-body textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.ww-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.close-btn {
+    background: #f3f4f6;
+    border: none;
+    color: #111827;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.close-btn:hover {
+    background: #e5e7eb;
+}
+
+.confirm-modal-btn-confirm {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.confirm-modal-btn-confirm:hover {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+.confirm-modal-btn-confirm:disabled {
+    background: #d1d5db;
+    cursor: not-allowed;
+}
+
+/* Confirmation Modal Styles */
+.confirm-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease-out;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.confirm-modal {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalSlideIn 0.3s ease-out;
+    position: relative;
+    margin: auto;
+}
+
+.confirm-modal-header {
+    padding: 24px 24px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.confirm-modal-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.confirm-modal-icon i {
+    color: #ffffff;
+    font-size: 24px;
+}
+
+.confirm-modal-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+}
+
+.confirm-modal-body {
+    padding: 24px;
+    color: #374151;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.confirm-modal-body input,
+.confirm-modal-body textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    margin-top: 8px;
+}
+
+.confirm-modal-body input:focus,
+.confirm-modal-body textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.confirm-modal-body textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.confirm-modal-message {
+    margin-bottom: 16px;
+    padding: 12px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border-left: 4px solid #3b82f6;
+}
+
+.confirm-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.confirm-modal-btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 100px;
+}
+
+.confirm-modal-btn-cancel {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.confirm-modal-btn-cancel:hover {
+    background: #e5e7eb;
+}
+
+.confirm-modal-btn-confirm {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: #ffffff;
+}
+
+.confirm-modal-btn-confirm:hover {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+}
+
+.confirm-modal-btn-confirm:active {
+    transform: translateY(0);
+}
+
+.confirm-modal-btn-confirm:disabled {
+    background: #d1d5db;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .confirm-modal-overlay {
+        padding: 16px;
+    }
+    
+    .confirm-modal {
+        max-width: 100%;
+        max-height: 85vh;
+    }
+    
+    .confirm-modal-header {
+        padding: 20px 16px 12px;
+    }
+    
+    .confirm-modal-body {
+        padding: 16px;
+    }
+    
+    .confirm-modal-footer {
+        padding: 12px 16px;
+        flex-direction: column;
+    }
+    
+    .confirm-modal-btn {
+        width: 100%;
+    }
+}
+
+/* Modal z-index overrides (keeps above all app layers) */
+.modal,
+.modal-backdrop {
+    z-index: 11000;
+}
+
+.modal-backdrop.show {
+    opacity: .55;
+}
+
+/* DELETE THIS ENTIRE BLOCK - IT'S BREAKING THE MODAL */
+/* 
+.ww-modal,
+.confirm-modal-overlay,
+.confirm-modal {
+    position: static;
+    inset: auto;
+}
+*/
+
+/* Optional: tighten inputs inside modals */
+.modal input[type=number],
+.modal textarea {
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.modal input:focus,
+.modal textarea:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+    outline: none;
+}
+        </style>
+    </head>
+    <body>
+        <!-- Container expected by admin-dashboard loader -->
+        <div class="container">
+            <div class="orders-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <form id="ordersSearchForm" class="search-bar" style="display:flex;gap:8px;">
+                        <input id="ordersSearchInput" type="search" placeholder="Search reference, customer, address..." class="form-control" />
+                        <button type="submit" class="btn btn-primary">Search</button>
+                    </form>
+                    <div class="text-end d-flex gap-2 align-items-center">
+                        <button id="archiveCompletedBtn" class="btn btn-warning" title="Archive all completed orders">
+                            <i class="fa fa-archive"></i> Archive Completed
+                        </button>
+                        <small class="text-muted">Manage today's batches and orders</small>
+                    </div>
+                </div>
+                <div id="batchesContainer">Loading…</div>
+                <div id="unassignedContainer" style="margin-top:12px;"></div>
+            </div>
+        </div>
+        <!-- Toast Container -->
+        <div class="toast-container" id="toastContainer"></div>
+        
+        <script>
+        (function(){
+            console.log('=== Manage Orders Script Starting ===');
+            // Toast Notification Function
+            function showToast(type, title, message) {
+                const container = document.getElementById('toastContainer');
+                if (!container) return;
+                
+                const icons = {
+                    success: '<i class="fa fa-check-circle"></i>',
+                    error: '<i class="fa fa-exclamation-circle"></i>',
+                    info: '<i class="fa fa-info-circle"></i>'
+                };
+                
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.innerHTML = `
+                    <div class="toast-icon">${icons[type] || icons.info}</div>
+                    <div class="toast-content">
+                        <div class="toast-title">${title}</div>
+                        <div class="toast-message">${message}</div>
+                    </div>
+                    <button class="toast-close">&times;</button>
+                `;
+                
+                container.appendChild(toast);
+                
+                // Close button handler
+                const closeBtn = toast.querySelector('.toast-close');
+                closeBtn.addEventListener('click', () => {
+                    toast.classList.add('closing');
+                    setTimeout(() => toast.remove(), 300);
+                });
+                
+                // Auto remove after 3 seconds
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.classList.add('closing');
+                        setTimeout(() => toast.remove(), 300);
+                    }
+                }, 3000);
+            }
+            
+            // Make showToast globally accessible
+            window.showToast = showToast;
+            
+            // Custom Confirmation Modal Function
+            function showConfirm(title, message) {
+                return new Promise((resolve) => {
+                    // Inject styles if not already present
+                    if (!document.getElementById('confirm-modal-styles')) {
+                        const styleEl = document.createElement('style');
+                        styleEl.id = 'confirm-modal-styles';
+                        styleEl.textContent = `
+                            .confirm-modal-overlay {
+                                position: fixed !important;
+                                top: 0 !important;
+                                left: 0 !important;
+                                right: 0 !important;
+                                bottom: 0 !important;
+                                width: 100vw !important;
+                                height: 100vh !important;
+                                background: rgba(0, 0, 0, 0.6) !important;
+                                backdrop-filter: blur(4px);
+                                z-index: 10000 !important;
+                                display: flex !important;
+                                align-items: center !important;
+                                justify-content: center !important;
+                                animation: fadeIn 0.2s ease-out;
+                                padding: 20px;
+                                box-sizing: border-box;
+                            }
+                            .confirm-modal {
+                                background: #ffffff !important;
+                                border-radius: 16px !important;
+                                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+                                max-width: 500px !important;
+                                width: 100% !important;
+                                max-height: 90vh !important;
+                                overflow-y: auto !important;
+                                animation: modalSlideIn 0.3s ease-out;
+                                position: relative !important;
+                                margin: auto !important;
+                            }
+                            .confirm-modal-header {
+                                padding: 24px 24px 16px !important;
+                                border-bottom: 1px solid #e5e7eb !important;
+                                display: flex !important;
+                                align-items: center !important;
+                                gap: 16px !important;
+                            }
+                            .confirm-modal-icon {
+                                width: 48px !important;
+                                height: 48px !important;
+                                border-radius: 12px !important;
+                                background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+                                display: flex !important;
+                                align-items: center !important;
+                                justify-content: center !important;
+                                flex-shrink: 0 !important;
+                            }
+                            .confirm-modal-icon i {
+                                color: #ffffff;
+                                font-size: 24px;
+                            }
+                            .confirm-modal-title {
+                                font-size: 1.5rem !important;
+                                font-weight: 600 !important;
+                                color: #111827 !important;
+                                margin: 0;
+                            }
+                            .confirm-modal-body {
+                                padding: 24px !important;
+                                color: #374151;
+                                font-size: 1rem !important;
+                                line-height: 1.6;
+                            }
+                            .confirm-modal-body input,
+                            .confirm-modal-body textarea {
+                                width: 100% !important;
+                                padding: 12px !important;
+                                border: 2px solid #e5e7eb !important;
+                                border-radius: 8px !important;
+                                font-size: 1rem !important;
+                                font-family: inherit !important;
+                                transition: border-color 0.2s, box-shadow 0.2s;
+                                box-sizing: border-box;
+                                margin-top: 8px !important;
+                            }
+                            .confirm-modal-body input:focus,
+                            .confirm-modal-body textarea:focus {
+                                outline: none;
+                                border-color: #3b82f6;
+                                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                            }
+                            .confirm-modal-body textarea {
+                                resize: vertical !important;
+                                min-height: 100px !important;
+                            }
+                            .confirm-modal-message {
+                                margin-bottom: 16px;
+                                padding: 12px;
+                                background: #f9fafb;
+                                border-radius: 8px;
+                                border-left: 4px solid #3b82f6;
+                            }
+                            .confirm-modal-footer {
+                                padding: 16px 24px !important;
+                                border-top: 1px solid #e5e7eb !important;
+                                display: flex !important;
+                                gap: 12px !important;
+                                justify-content: flex-end !important;
+                            }
+                            .confirm-modal-btn {
+                                padding: 12px 24px !important;
+                                border-radius: 8px !important;
+                                font-size: 1rem !important;
+                                font-weight: 600 !important;
+                                border: none !important;
+                                cursor: pointer !important;
+                                transition: all 0.2s !important;
+                                display: inline-flex;
+                                align-items: center;
+                                justify-content: center;
+                                min-width: 100px !important;
+                            }
+                            .confirm-modal-btn-cancel {
+                                background: #f3f4f6 !important;
+                                color: #374151 !important;
+                            }
+                            .confirm-modal-btn-cancel:hover {
+                                background: #e5e7eb !important;
+                            }
+                            .confirm-modal-btn-confirm {
+                                background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+                                color: #ffffff !important;
+                            }
+                            .confirm-modal-btn-confirm:hover {
+                                background: linear-gradient(135deg, #2563eb, #1d4ed8);
+                                transform: translateY(-1px);
+                                box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+                            }
+                            @keyframes fadeIn {
+                                from { opacity: 0; }
+                                to { opacity: 1; }
+                            }
+                            @keyframes scaleIn {
+                                from { transform: scale(0.9); opacity: 0; }
+                                to { transform: scale(1); opacity: 1; }
+                            }
+                            @keyframes modalSlideIn {
+                                from {
+                                    transform: translateY(-30px);
+                                    opacity: 0;
+                                }
+                                to {
+                                    transform: translateY(0);
+                                    opacity: 1;
+                                }
+                            }
+                        `;
+                        document.head.appendChild(styleEl);
+                    }
+                    
+                    const overlay = document.createElement('div');
+                    overlay.className = 'confirm-modal-overlay';
+                    overlay.innerHTML = `
+                        <div class="confirm-modal">
+                            <div class="confirm-modal-header">
+                                <div class="confirm-modal-icon">
+                                    <i class="fa fa-question-circle"></i>
+                                </div>
+                                <div class="confirm-modal-title">${title}</div>
+                            </div>
+                            <div class="confirm-modal-body">
+                                <div class="confirm-modal-message">${message}</div>
+                            </div>
+                            <div class="confirm-modal-footer">
+                                <button class="confirm-modal-btn confirm-modal-btn-cancel" data-action="cancel">
+                                    Cancel
+                                </button>
+                                <button class="confirm-modal-btn confirm-modal-btn-confirm" data-action="confirm">
+                                    Confirm
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.body.appendChild(overlay);
+                    
+                    // Focus confirm button
+                    setTimeout(() => {
+                        overlay.querySelector('.confirm-modal-btn-confirm').focus();
+                    }, 100);
+                    
+                    // Handle button clicks
+                    overlay.addEventListener('click', (e) => {
+                        const action = e.target.getAttribute('data-action');
+                        if (action === 'confirm') {
+                            overlay.remove();
+                            resolve(true);
+                        } else if (action === 'cancel' || e.target === overlay) {
+                            overlay.remove();
+                            resolve(false);
+                        }
+                    });
+                    
+                    // Handle ESC key
+                    const handleEsc = (e) => {
+                        if (e.key === 'Escape') {
+                            overlay.remove();
+                            document.removeEventListener('keydown', handleEsc);
+                            resolve(false);
+                        }
+                    };
+                    document.addEventListener('keydown', handleEsc);
+                });
+            }
+            
+            // Make showConfirm globally accessible
+            window.showConfirm = showConfirm;
+            
+            // Globals and DOM references expected by the script
+            var ordersMap = {};
+            // Role of current session (Admin, Driver, Sales Manager, Customer Manager, etc.)
+            window.CURRENT_STAFF_ROLE = null;
+            async function fetchStaffRole() {
+                try {
+                    const resp = await fetch('/WRSOMS/api/admin/staff-session.php', { credentials: 'same-origin' });
+                    const j = await resp.json();
+                    if (j && j.success) {
+                        window.CURRENT_STAFF_ROLE = j.role || null;
+                        console.log('Detected staff role:', window.CURRENT_STAFF_ROLE);
+                    }
+                } catch (e) {
+                    console.warn('Failed to fetch staff role:', e);
+                }
+            }
+            // If these elements are present in the parsed fragment they will be found; otherwise we fall back to querying later
+            var batchesContainer = document.getElementById('batchesContainer');
+            var unassignedContainer = document.getElementById('unassignedContainer');
+            
+            console.log('batchesContainer found:', !!batchesContainer);
+            console.log('unassignedContainer found:', !!unassignedContainer);
+            
+            if (!batchesContainer || !unassignedContainer) {
+                console.error('ERROR: Required DOM elements not found!');
+                alert('Error: Page elements not loaded correctly. Please refresh.');
+            }
+            
+            // Fallback API URL helper if not provided by the outer page
+            if (typeof getApiUrl !== 'function') {
+                function getApiUrl() { return '/WRSOMS/api/admin/manage_orders.php'; }
+            }
+            function escapeHtml(s) {
+                return String(s == null ? '' : s)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
+            function renderOrderRow(o, batchStatus, batchId, batchNumber) {
+                // store order object for modal usage with batch_number
+                if (o && o.reference_id) {
+                    o.batch_number = batchNumber; // Add batch_number to order
+                    ordersMap[o.reference_id] = o;
+                }
+                // Get delivery personnel name if available
+                const deliveryPersonnel = o.delivery_personnel_name || '—';
+                // Check if order is already completed or failed (PRIORITY CHECK)
+                const orderStatus = (o.order_status || '').toLowerCase();
+                const deliveryStatus = (o.delivery_status || '').toLowerCase();
+                // Check multiple conditions for completed state
+                const isCompleted = orderStatus.includes('completed') || 
+                                   orderStatus.includes('delivered') ||
+                                   deliveryStatus.includes('delivered') ||
+                                   deliveryStatus.includes('completed') ||
+                                   o.delivery_completed_at != null;
+                // Check multiple conditions for failed state
+                const isFailed = orderStatus.includes('failed') ||
+                                deliveryStatus.includes('failed') ||
+                                o.delivery_failed_at != null ||
+                                o.failed_reason != null;
+                let deliveryActionsHtml = '';
+                // PRIORITY 1: Show final status if completed or failed
+                if (isCompleted) {
+                    deliveryActionsHtml = '<span class="text-success fw-bold" style="font-size:0.9rem;">✓ Complete</span>';
+                } else if (isFailed) {
+                    const failReason = o.failed_reason ? `<br><span style="font-weight:normal;font-size:0.85rem;color:#6b7280;">Reason: ${escapeHtml(o.failed_reason)}</span>` : '';
+                    deliveryActionsHtml = `<span class="text-danger fw-bold" style="display:block;"><span style="display:inline-flex;align-items:center;gap:6px;"><i class="fa fa-times-circle"></i> Failed</span>${failReason}</span>`;
+                } 
+                // PRIORITY 2: Show action buttons only if delivery has started
+                else {
+                    const showDeliveryActions = deliveryStatus.includes('out for delivery') || 
+                                               deliveryStatus.includes('in progress') ||
+                                               deliveryStatus.includes('dispatched');
+                    if (showDeliveryActions) {
+                        deliveryActionsHtml = `
+                            <button class="btn btn-sm btn-success me-1 delivery-action-btn" 
+                                    data-ref="${escapeHtml(o.reference_id)}" 
+                                    data-action="complete"
+                                    onclick="completeDelivery('${escapeHtml(o.reference_id)}', this)">
+                                Complete
+                            </button>
+                            <button class="btn btn-sm btn-danger delivery-action-btn" 
+                                    data-ref="${escapeHtml(o.reference_id)}" 
+                                    data-action="fail"
+                                    onclick="failedDelivery('${escapeHtml(o.reference_id)}', this)">
+                                Failed
+                            </button>
+                        `;
+                    } else {
+                        deliveryActionsHtml = '<span class="text-muted" style="font-size:0.85rem;">—</span>';
+                    }
+                }
+                return `
+                    <tr class="order-row" data-ref="${escapeHtml(o.reference_id)}" ${batchId ? `data-batch="${escapeHtml(batchId)}"` : ''} style="cursor: pointer;" title="Click to view full order details including delivery address">
+                        <td><a href="#" class="order-ref-link" data-ref="${escapeHtml(o.reference_id)}" style="font-weight: 600; color: #3b82f6;">${escapeHtml(o.reference_id)}</a></td>
+                        <td>${escapeHtml(o.order_date)}</td>
+                        <td>${escapeHtml(o.payment_method || o.payment || '')}</td>
+                        <td>${escapeHtml(Number(o.total_amount).toFixed(2))}</td>
+                        <td class="payment-status">${escapeHtml(o.payment_status || '')}</td>
+                        <td class="delivery-personnel">${escapeHtml(deliveryPersonnel)}</td>
+                        <td class="status">${escapeHtml(o.delivery_status || batchStatus || '')}</td>
+                        <td class="delivery-actions">${deliveryActionsHtml}</td>
+                    </tr>
+                `;
+            }
+
+            // Complete/Fail Delivery Modal Logic
+            window.completeDelivery = function(refId, btn) {
+                const order = ordersMap[refId];
+                if (!order) return showToast('error', 'Order not found', 'Order data missing.');
+                if ((order.payment_method || '').toLowerCase() === 'cod' || (order.payment || '').toLowerCase() === 'cod') {
+                    // Show modal for COD
+                    showAmountModal(order, btn);
+                } else {
+                    // GCash or other: complete directly
+                    showConfirm('Complete Delivery', 'Are you sure you want to mark this order as completed?').then(confirmed => {
+                        if (!confirmed) return;
+                        btn.disabled = true;
+                        fetch('/WRSOMS/api/admin/order_delivery_action.php', {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'complete', reference_id: refId })
+                        })
+                        .then(r => r.json())
+                        .then(res => {
+                            if (!res.success) throw new Error(res.message || 'Failed to complete order');
+                            showToast('success', 'Order Completed', 'Order marked as completed.');
+                            setTimeout(() => window.loadData && window.loadData(), 500);
+                        })
+                        .catch(err => {
+                            showToast('error', 'Failed', err.message || 'Failed to complete order.');
+                        })
+                        .finally(() => { btn.disabled = false; });
+                    });
+                }
+            };
+
+            function showAmountModal(order, btn) {
+                // Modal for COD amount input
+                const overlay = document.createElement('div');
+                overlay.className = 'confirm-modal-overlay';
+                overlay.innerHTML = `
+                    <div class="confirm-modal">
+                        <div class="confirm-modal-header">
+                            <div class="confirm-modal-icon"><i class="fa fa-money"></i></div>
+                            <div class="confirm-modal-title">Enter Received Amount</div>
+                        </div>
+                        <div class="confirm-modal-body">
+                            <div class="confirm-modal-message">Please enter the exact amount received for this COD order.<br><b>Expected: ₱${Number(order.total_amount).toFixed(2)}</b></div>
+                            <input type="number" id="codAmountInput" min="0" step="0.01" placeholder="Enter amount received" autofocus />
+                            <div id="amountError" style="color:#ef4444;font-size:0.95rem;margin-top:4px;display:none;"></div>
+                        </div>
+                        <div class="confirm-modal-footer">
+                            <button class="confirm-modal-btn confirm-modal-btn-cancel" data-action="cancel">Cancel</button>
+                            <button class="confirm-modal-btn confirm-modal-btn-confirm" data-action="confirm">Confirm</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+                const input = overlay.querySelector('#codAmountInput');
+                const errorDiv = overlay.querySelector('#amountError');
+                overlay.querySelector('[data-action="cancel"]').onclick = () => overlay.remove();
+                overlay.querySelector('[data-action="confirm"]').onclick = () => {
+                    const val = parseFloat(input.value);
+                    if (isNaN(val) || val !== Number(order.total_amount)) {
+                        errorDiv.textContent = `Amount must match ₱${Number(order.total_amount).toFixed(2)}`;
+                        errorDiv.style.display = 'block';
+                        input.focus();
+                        return;
+                    }
+                    errorDiv.style.display = 'none';
+                    btn.disabled = true;
+                    fetch('/WRSOMS/api/admin/order_delivery_action.php', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'complete', reference_id: order.reference_id, amount: val })
+                    })
+                    .then(r => r.json())
+                    .then(res => {
+                        if (!res.success) throw new Error(res.message || 'Failed to complete order');
+                        showToast('success', 'Order Completed', 'Order marked as completed.');
+                        overlay.remove();
+                        setTimeout(() => window.loadData && window.loadData(), 500);
+                    })
+                    .catch(err => {
+                        showToast('error', 'Failed', err.message || 'Failed to complete order.');
+                        btn.disabled = false;
+                    });
+                };
+                input.onkeydown = e => { if (e.key === 'Enter') overlay.querySelector('[data-action="confirm"]').click(); };
+                setTimeout(() => input.focus(), 100);
+            }
+
+            window.failedDelivery = function(refId, btn) {
+                const order = ordersMap[refId];
+                if (!order) return showToast('error', 'Order not found', 'Order data missing.');
+                showFailReasonModal(order, btn);
+            };
+
+            function showFailReasonModal(order, btn) {
+                const overlay = document.createElement('div');
+                overlay.className = 'confirm-modal-overlay';
+                overlay.innerHTML = `
+                    <div class="confirm-modal">
+                        <div class="confirm-modal-header">
+                            <div class="confirm-modal-icon"><i class="fa fa-times-circle"></i></div>
+                            <div class="confirm-modal-title">Fail Order</div>
+                        </div>
+                        <div class="confirm-modal-body">
+                            <div class="confirm-modal-message">Please provide a reason for failing this order.</div>
+                            <textarea id="failReasonInput" placeholder="Enter reason for failure" autofocus></textarea>
+                            <div id="failError" style="color:#ef4444;font-size:0.95rem;margin-top:4px;display:none;"></div>
+                        </div>
+                        <div class="confirm-modal-footer">
+                            <button class="confirm-modal-btn confirm-modal-btn-cancel" data-action="cancel">Cancel</button>
+                            <button class="confirm-modal-btn confirm-modal-btn-confirm" data-action="confirm">Confirm</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+                const input = overlay.querySelector('#failReasonInput');
+                const errorDiv = overlay.querySelector('#failError');
+                overlay.querySelector('[data-action="cancel"]').onclick = () => overlay.remove();
+                overlay.querySelector('[data-action="confirm"]').onclick = () => {
+                    const val = input.value.trim();
+                    if (!val) {
+                        errorDiv.textContent = 'Reason is required.';
+                        errorDiv.style.display = 'block';
+                        input.focus();
+                        return;
+                    }
+                    errorDiv.style.display = 'none';
+                    btn.disabled = true;
+                    fetch('/WRSOMS/api/admin/order_delivery_action.php', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'fail', reference_id: order.reference_id, reason: val })
+                    })
+                    .then(r => r.json())
+                    .then(res => {
+                        if (!res.success) throw new Error(res.message || 'Failed to fail order');
+                        showToast('success', 'Order Failed', 'Order marked as failed.');
+                        overlay.remove();
+                        setTimeout(() => window.loadData && window.loadData(), 500);
+                    })
+                    .catch(err => {
+                        showToast('error', 'Failed', err.message || 'Failed to fail order.');
+                        btn.disabled = false;
+                    });
+                };
+                input.onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) overlay.querySelector('[data-action="confirm"]').click(); };
+                setTimeout(() => input.focus(), 100);
+            }
+            
+            // Helper function to check if all orders in a batch are complete or failed
+            window.checkBatchOrdersComplete = function(batchId) {
+                console.log('Checking batch completion for batch:', batchId);
+                const card = document.querySelector(`.metric-card[data-batch-id="${batchId}"]`);
+                if (!card) {
+                    console.log('Card not found for batch:', batchId);
+                    return { allComplete: false, total: 0, processed: 0 };
+                }
+                
+                // Look for compact order cards instead of table rows
+                const orderItems = card.querySelectorAll('div.order-item');
+                let total = orderItems.length;
+                let processed = 0;
+                
+                console.log('Total orders in batch:', total);
+                
+                orderItems.forEach(item => {
+                    const refId = item.getAttribute('data-ref');
+                    const order = ordersMap[refId];
+                    console.log('Checking order:', refId, 'Order data:', order);
+                    if (order) {
+                        const isCompleted = order.delivery_completed_at != null;
+                        const isFailed = order.delivery_failed_at != null;
+                        console.log('  - isCompleted:', isCompleted, 'isFailed:', isFailed);
+                        if (isCompleted || isFailed) {
+                            processed++;
+                        }
+                    }
+                });
+                
+                console.log('Processed orders:', processed, 'Total:', total);
+                return { allComplete: processed === total && total > 0, total, processed };
+            };
+            
+            // Helper function to update Complete Delivery button state
+            window.updateCompleteDeliveryButton = function(batchId) {
+                const card = document.querySelector(`.metric-card[data-batch-id="${batchId}"]`);
+                if (!card) return;
+                
+                const completeBtn = card.querySelector('button[data-action="complete_delivery"]');
+                if (!completeBtn) return;
+                
+                const status = window.checkBatchOrdersComplete(batchId);
+                
+                if (status.allComplete) {
+                    completeBtn.disabled = false;
+                    completeBtn.style.opacity = '1';
+                    completeBtn.style.cursor = 'pointer';
+                    completeBtn.title = 'All orders processed - ready to complete';
+                } else {
+                    completeBtn.disabled = true;
+                    completeBtn.style.opacity = '0.5';
+                    completeBtn.style.cursor = 'not-allowed';
+                    completeBtn.title = `${status.processed}/${status.total} orders processed. Complete or mark all orders as failed first.`;
+                }
+            };
+            
+            // Complete Delivery function
+            window.completeDelivery = async function(refId, btn) {
+                const order = ordersMap[refId];
+                if (!order) {
+                    showToast('error', 'Error', 'Order not found');
+                    return;
+                }
+
+                const paymentMethod = (order.payment_method || '').toUpperCase();
+
+                if (paymentMethod === 'COD') {
+                    const existingBackdrop = document.getElementById('codAmountBackdrop');
+                    if (existingBackdrop) existingBackdrop.remove();
+                    
+                    const backdrop = document.createElement('div');
+                    backdrop.id = 'codAmountBackdrop';
+                    backdrop.style.cssText = 'position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100vw!important;height:100vh!important;background:rgba(0,0,0,0.6)!important;z-index:999999!important;display:flex!important;align-items:center!important;justify-content:center!important;';
+                    
+                    const modal = document.createElement('div');
+                    modal.style.cssText = 'background:white;border-radius:16px;max-width:500px;width:90%;box-shadow:0 25px 50px rgba(0,0,0,0.4);position:relative;';
+                    modal.innerHTML = `
+                        <div style="padding:20px 24px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
+                            <h2 style="margin:0;font-size:1.25rem;font-weight:600;">Enter Amount Collected</h2>
+                            <button id="codCloseBtn" style="background:#f3f4f6;border:none;width:32px;height:32px;border-radius:8px;font-size:1.5rem;cursor:pointer;line-height:1;">&times;</button>
+                        </div>
+                        <div style="padding:24px;">
+                            <p style="margin-bottom:12px;">Order Total: <strong>₱${Number(order.total_amount).toFixed(2)}</strong></p>
+                            <label style="display:block;margin-bottom:8px;font-weight:600;">Amount Received:</label>
+                            <input type="number" id="codAmountInput" step="0.01" min="0" placeholder="Enter exact amount" 
+                                style="width:100%;padding:12px;border:2px solid #e5e7eb;border-radius:8px;font-size:1rem;">
+                            <div id="amountError" style="color:#ef4444;font-size:0.875rem;margin-top:8px;display:none;">
+                                Amount must match order total exactly.
+                            </div>
+                        </div>
+                        <div style="padding:16px 24px;border-top:1px solid #e5e7eb;display:flex;gap:12px;justify-content:flex-end;">
+                            <button id="codCancelBtn" style="background:#f3f4f6;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-weight:600;">Cancel</button>
+                            <button id="confirmCodBtn" disabled style="background:#d1d5db;color:white;border:none;padding:10px 24px;border-radius:8px;cursor:not-allowed;font-weight:600;">Confirm</button>
+                        </div>
+                    `;
+                    
+                    backdrop.appendChild(modal);
+                    document.body.appendChild(backdrop);
+
+                    const input = document.getElementById('codAmountInput');
+                    const confirmBtn = document.getElementById('confirmCodBtn');
+                    const errorDiv = document.getElementById('amountError');
+                    const expectedAmount = parseFloat(order.total_amount);
+
+                    setTimeout(() => input.focus(), 100);
+
+                    input.addEventListener('input', function() {
+                        const enteredAmount = parseFloat(this.value);
+                        if (!isNaN(enteredAmount) && Math.abs(enteredAmount - expectedAmount) < 0.01) {
+                            confirmBtn.disabled = false;
+                            confirmBtn.style.background = '#3b82f6';
+                            confirmBtn.style.cursor = 'pointer';
+                            errorDiv.style.display = 'none';
+                            input.style.borderColor = '#10b981';
+                        } else {
+                            confirmBtn.disabled = true;
+                            confirmBtn.style.background = '#d1d5db';
+                            confirmBtn.style.cursor = 'not-allowed';
+                            if (this.value) {
+                                errorDiv.style.display = 'block';
+                                input.style.borderColor = '#ef4444';
+                            }
+                        }
+                    });
+
+                    const closeModal = () => backdrop.remove();
+                    document.getElementById('codCloseBtn').onclick = closeModal;
+                    document.getElementById('codCancelBtn').onclick = closeModal;
+                    backdrop.onclick = (e) => { if (e.target === backdrop) closeModal(); };
+
+                    confirmBtn.onclick = async function() {
+                        const enteredAmount = parseFloat(input.value);
+                        if (Math.abs(enteredAmount - expectedAmount) < 0.01) {
+                            backdrop.remove();
+                            await proceedWithComplete(refId, btn, enteredAmount);
+                        }
+                    };
+                } else {
+                    await proceedWithComplete(refId, btn, null);
+                }
+            };
+
+            async function proceedWithComplete(refId, btn, amount) {
+                if (btn) btn.disabled = true;
+                
+                try {
+                    const response = await fetch('/WRSOMS/api/admin/order_delivery_action.php', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'complete',
+                            reference_id: refId,
+                            amount: amount
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (!result.success) throw new Error(result.message || 'Failed to complete delivery');
+                    
+                    showToast('success', 'Success', 'Delivery completed successfully');
+                    
+                    // Update UI - CRITICAL: Update compact order card
+                    const orderCard = document.querySelector(`div.order-item[data-ref="${refId}"]`);
+                    if (orderCard) {
+                        // Replace action buttons with completed status
+                        const actionsDiv = orderCard.querySelector('.d-flex.gap-2.align-items-center');
+                        if (actionsDiv) {
+                            actionsDiv.innerHTML = '<span class="text-success small fw-bold">✓ Delivered</span>';
+                        }
+                        
+                        // Update ordersMap to reflect completion
+                        if (ordersMap[refId]) {
+                            ordersMap[refId].delivery_completed_at = new Date().toISOString();
+                            ordersMap[refId].delivery_personnel_name = result.data.delivery_personnel;
+                            ordersMap[refId].order_status = 'Completed';
+                            ordersMap[refId].delivery_status = 'Delivered';
+                            if (result.data.payment_status) {
+                                ordersMap[refId].payment_status = result.data.payment_status;
+                            }
+                        }
+                        
+                        // Update Complete Delivery button state for this batch
+                        const batchId = orderCard.getAttribute('data-batch-id');
+                        if (batchId) {
+                            setTimeout(() => window.updateCompleteDeliveryButton(batchId), 100);
+                        }
+                    }
+                    
+                    // Reload data to ensure consistency
+                    setTimeout(() => loadData(), 500);
+                    
+                } catch (err) {
+                    console.error('Complete delivery error:', err);
+                    showToast('error', 'Error', err.message || 'Failed to complete delivery');
+                } finally {
+                    if (btn) btn.disabled = false;
+                }
+            }
+
+            // Wrapper function for order delivery actions from compact order cards
+            window.performOrderDeliveryAction = function(refId, action, btn, event) {
+                if (event) event.stopPropagation(); // Prevent card click from triggering
+                
+                if (action === 'complete') {
+                    window.completeDelivery(refId, btn);
+                } else if (action === 'fail') {
+                    window.failedDelivery(refId, btn);
+                }
+            };
+
+            // Failed Delivery function
+            window.failedDelivery = async function(refId, btn) {
+                const existingBackdrop = document.getElementById('failedReasonBackdrop');
+                if (existingBackdrop) existingBackdrop.remove();
+                
+                const backdrop = document.createElement('div');
+                backdrop.id = 'failedReasonBackdrop';
+                backdrop.style.cssText = 'position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100vw!important;height:100vh!important;background:rgba(0,0,0,0.6)!important;z-index:999999!important;display:flex!important;align-items:center!important;justify-content:center!important;';
+                
+                const modal = document.createElement('div');
+                modal.style.cssText = 'background:white;border-radius:16px;max-width:500px;width:90%;box-shadow:0 25px 50px rgba(0,0,0,0.4);position:relative;';
+                modal.innerHTML = `
+                    <div style="padding:20px 24px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
+                        <h2 style="margin:0;font-size:1.25rem;font-weight:600;color:#ef4444;">
+                            <i class="fa fa-exclamation-triangle" style="margin-right:8px;"></i>Mark Delivery Failed
+                        </h2>
+                        <button id="failedCloseBtn" style="background:#f3f4f6;border:none;width:32px;height:32px;border-radius:8px;font-size:1.5rem;cursor:pointer;line-height:1;">&times;</button>
+                    </div>
+                    <div style="padding:24px;">
+                        <label style="display:block;margin-bottom:8px;font-weight:600;">Reason for Failure:</label>
+                        <textarea id="failedReasonInput" rows="4" placeholder="Enter detailed reason..." 
+                            style="width:100%;padding:12px;border:2px solid #e5e7eb;border-radius:8px;font-size:1rem;resize:vertical;"></textarea>
+                        <div id="reasonError" style="color:#ef4444;font-size:0.875rem;margin-top:8px;display:none;">
+                            Please provide a reason for the failure.
+                        </div>
+                    </div>
+                    <div style="padding:16px 24px;border-top:1px solid #e5e7eb;display:flex;gap:12px;justify-content:flex-end;">
+                        <button id="failedCancelBtn" style="background:#f3f4f6;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-weight:600;">Cancel</button>
+                        <button id="confirmFailedBtn" disabled style="background:#d1d5db;color:white;border:none;padding:10px 24px;border-radius:8px;cursor:not-allowed;font-weight:600;">Confirm</button>
+                    </div>
+                `;
+                
+                backdrop.appendChild(modal);
+                document.body.appendChild(backdrop);
+
+                const textarea = document.getElementById('failedReasonInput');
+                const confirmBtn = document.getElementById('confirmFailedBtn');
+                const errorDiv = document.getElementById('reasonError');
+
+                setTimeout(() => textarea.focus(), 100);
+
+                textarea.addEventListener('input', function() {
+                    const reason = this.value.trim();
+                    if (reason.length > 0) {
+                        confirmBtn.disabled = false;
+                        confirmBtn.style.background = '#ef4444';
+                        confirmBtn.style.cursor = 'pointer';
+                        errorDiv.style.display = 'none';
+                    } else {
+                        confirmBtn.disabled = true;
+                        confirmBtn.style.background = '#d1d5db';
+                        confirmBtn.style.cursor = 'not-allowed';
+                    }
+                });
+
+                const closeModal = () => backdrop.remove();
+                document.getElementById('failedCloseBtn').onclick = closeModal;
+                document.getElementById('failedCancelBtn').onclick = closeModal;
+                backdrop.onclick = (e) => { if (e.target === backdrop) closeModal(); };
+
+                confirmBtn.onclick = async function() {
+                    const reason = textarea.value.trim();
+                    if (!reason) {
+                        errorDiv.style.display = 'block';
+                        textarea.style.borderColor = '#ef4444';
+                        return;
+                    }
+                    backdrop.remove();
+                    if (btn) btn.disabled = true;
+                    
+                    try {
+                        const response = await fetch('/WRSOMS/api/admin/order_delivery_action.php', {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'fail', reference_id: refId, reason: reason })
+                        });
+                        const result = await response.json();
+                        if (!result.success) throw new Error(result.message || 'Failed to mark as failed');
+                        
+                        showToast('error', 'Marked as Failed', `Delivery marked as failed`);
+                        
+                        // Update UI - CRITICAL: Update compact order card
+                        const failedOrderCard = document.querySelector(`div.order-item[data-ref="${refId}"]`);
+                        if (failedOrderCard) {
+                            // Replace action buttons with failed status
+                            const actionsDiv = failedOrderCard.querySelector('.d-flex.gap-2.align-items-center');
+                            if (actionsDiv) {
+                                actionsDiv.innerHTML = `<span class="text-danger small fw-bold">✗ Failed</span>`;
+                            }
+                            
+                            // Update ordersMap to reflect failure
+                            if (ordersMap[refId]) {
+                                ordersMap[refId].delivery_failed_at = new Date().toISOString();
+                                ordersMap[refId].failed_reason = reason;
+                                ordersMap[refId].delivery_personnel_name = result.data.delivery_personnel;
+                                ordersMap[refId].order_status = 'Failed';
+                                ordersMap[refId].delivery_status = 'Failed';
+                            }
+                            
+                            // Update Complete Delivery button state for this batch
+                            const batchId = failedOrderCard.getAttribute('data-batch-id');
+                            if (batchId) {
+                                setTimeout(() => window.updateCompleteDeliveryButton(batchId), 100);
+                            }
+                        }
+                        
+                        setTimeout(() => loadData(), 500);
+                    } catch (err) {
+                        showToast('error', 'Error', err.message || 'Failed to mark delivery as failed');
+                    } finally {
+                        if (btn) btn.disabled = false;
+                    }
+                };
+            };
+
+            function renderBatch(batch, idx) {
+                const orders = batch.orders || [];
+                const collapseId = `batch-collapse-${idx}`;
+                const header = `Vehicle: ${escapeHtml(batch.vehicle_type)} — Batch #${escapeHtml(batch.batch_number)} — Orders: ${orders.length}`;
+                const pickupTime = batch.pickup_time || '—';
+                const deliveryTime = batch.delivery_time || '—';
+                const pickupStatusDisplay = batch.pickup_status || '—';
+                const deliveryStatusDisplay = batch.delivery_status || '—';
+
+                // Calculate total containers for this batch
+                const totalContainers = batch.total_quantity || 0;
+                const capacity = batch.capacity || 0;
+
+                // Button sequence
+                const ps = (batch.pickup_status || '').toLowerCase();
+                const ds = (batch.delivery_status || '').toLowerCase();
+                let buttonsHtml = '';
+                
+                // Step 4: Delivery completed (final state)
+                if (ds === 'completed' || ds.includes('delivered')) {
+                    buttonsHtml = '<div class="text-success fw-semibold" style="font-size:.9rem;">✓ Delivery Completed</div>';
+                } 
+                // Step 3: Delivery in progress - show complete delivery button (initially disabled)
+                else if (ds === 'in progress' || ds.includes('out for delivery')) {
+                    // Check if all orders are complete or failed to determine button state
+                    let allProcessed = true;
+                    orders.forEach(o => {
+                        const isCompleted = o.delivery_completed_at != null;
+                        const isFailed = o.delivery_failed_at != null;
+                        if (!isCompleted && !isFailed) {
+                            allProcessed = false;
+                        }
+                    });
+                    
+                    const btnDisabled = allProcessed ? '' : 'disabled';
+                    const btnStyle = allProcessed ? '' : 'style="opacity:0.5;cursor:not-allowed;"';
+                    const btnTitle = allProcessed ? 'All orders processed - ready to complete' : 'Complete or mark all orders as failed first';
+                    
+                    buttonsHtml = `<button class="btn btn-sm btn-dark action-btn" data-action="complete_delivery"
+                        onclick="performBatchAction('${escapeHtml(batch.batch_id)}','complete_delivery',this)" 
+                        ${btnDisabled} ${btnStyle} title="${btnTitle}">Complete Delivery</button>`;
+                } 
+                // Step 2: Pickup completed - show start delivery button
+                else if (ps === 'completed') {
+                    buttonsHtml = `<button class="btn btn-sm btn-warning action-btn" data-action="start_delivery"
+                        onclick="performBatchAction('${escapeHtml(batch.batch_id)}','start_delivery',this)">Start Delivery</button>`;
+                } 
+                // Step 1.5: Pickup in progress - show complete pickup button
+                else if (ps === 'in progress') {
+                    buttonsHtml = `<button class="btn btn-sm btn-success action-btn" data-action="complete_pickup"
+                        onclick="performBatchAction('${escapeHtml(batch.batch_id)}','complete_pickup',this)">Complete Pickup</button>`;
+                } 
+                // Step 1: Initial state (pickup pending or no status) - show start pickup button
+                else {
+                    buttonsHtml = `<button class="btn btn-sm btn-primary action-btn" data-action="start_pickup"
+                        onclick="performBatchAction('${escapeHtml(batch.batch_id)}','start_pickup',this)">Start Pickup</button>`;
+                }
+
+                // Driver role restriction
+                try {
+                    const role = (window.CURRENT_STAFF_ROLE || '').toLowerCase();
+                    if (role.includes('driver') || role.includes('rider')) {
+                        // Drivers can only see and use delivery-related actions
+                        if (ds === 'completed' || ds.includes('delivered')) {
+                            // Keep the completed status display
+                        } else if (ds === 'in progress' || ds.includes('out for delivery')) {
+                            // Keep the Complete Delivery button
+                        } else if (ps === 'completed') {
+                            // Keep the Start Delivery button
+                        } else {
+                            // Hide all pickup actions for drivers
+                            buttonsHtml = '<div class="text-muted small">No delivery actions available</div>';
+                        }
+                    }
+                } catch(e){}
+
+                // Create compact order list instead of table
+                const orderListHtml = orders.length ? orders.map(o => {
+                    const ref = o.reference_id || 'N/A';
+                    
+                    // CRITICAL: Store order in ordersMap for modal access
+                    if (ref && ref !== 'N/A') {
+                        o.batch_number = batch.batch_number; // Add batch info
+                        ordersMap[ref] = o;
+                    }
+                    
+                    const status = o.delivery_status || o.order_status || 'Pending';
+                    const total = Number(o.total_amount || 0).toFixed(2);
+                    const paymentStatus = o.payment_status || 'Pending';
+                    const deliveryPersonnel = o.delivery_personnel_name || '—';
+                    
+                    // Determine status color
+                    let statusColor = '#6b7280';
+                    let statusBg = '#f3f4f6';
+                    if (status.toLowerCase().includes('delivered') || status.toLowerCase().includes('completed')) {
+                        statusColor = '#059669';
+                        statusBg = '#d1fae5';
+                    } else if (status.toLowerCase().includes('pending')) {
+                        statusColor = '#d97706';
+                        statusBg = '#fef3c7';
+                    } else if (status.toLowerCase().includes('failed')) {
+                        statusColor = '#dc2626';
+                        statusBg = '#fee2e2';
+                    }
+                    
+                    const isCompleted = o.delivery_completed_at != null;
+                    const isFailed = o.delivery_failed_at != null;
+                    
+                    // Delivery action buttons
+                    let actionButtonsHtml = '';
+                    if (ds === 'in progress' || ds.includes('out for delivery')) {
+                        if (isCompleted) {
+                            actionButtonsHtml = '<span class="text-success small fw-bold">✓ Delivered</span>';
+                        } else if (isFailed) {
+                            actionButtonsHtml = `<span class="text-danger small fw-bold">✗ Failed</span>`;
+                        } else {
+                            actionButtonsHtml = `
+                                <button class="btn btn-success btn-sm" style="padding:4px 8px;font-size:0.75rem;" onclick="performOrderDeliveryAction('${escapeHtml(ref)}','complete',this,event)">Complete</button>
+                                <button class="btn btn-danger btn-sm" style="padding:4px 8px;font-size:0.75rem;" onclick="performOrderDeliveryAction('${escapeHtml(ref)}','fail',this,event)">Fail</button>
+                            `;
+                        }
+                    }
+                    
+                    return `
+                        <div class="order-item" style="padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; background: white; cursor: pointer; transition: all 0.2s ease; margin-bottom: 8px;" 
+                             data-ref="${escapeHtml(ref)}"
+                             data-batch-id="${escapeHtml(batch.batch_id)}"
+                             onmouseover="this.style.background='#f9fafb'; this.style.borderColor='#3b82f6'; this.style.transform='translateX(4px)';" 
+                             onmouseout="this.style.background='white'; this.style.borderColor='#e5e7eb'; this.style.transform='translateX(0)';">
+                            <div class="d-flex justify-content-between align-items-center gap-3">
+                                <div class="d-flex align-items-center gap-3 flex-grow-1 order-clickable" style="cursor: pointer;">
+                                    <div style="font-weight: 700; font-size: 1rem; color: #1e40af; min-width: 120px;">#${escapeHtml(ref)}</div>
+                                    <div style="padding: 4px 10px; border-radius: 6px; background: ${statusBg}; color: ${statusColor}; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">${escapeHtml(status)}</div>
+                                    <div style="font-size: 0.85rem; color: #6b7280; min-width: 100px;">₱${total}</div>
+                                    <div style="font-size: 0.85rem; color: #6b7280; flex-grow: 1;">${escapeHtml(deliveryPersonnel)}</div>
+                                </div>
+                                <div class="d-flex gap-2 align-items-center" onclick="event.stopPropagation();">
+                                    ${actionButtonsHtml}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('') : '<div class="text-center text-muted p-3">No orders in this batch</div>';
+
+                return `
+                <div class="metric-card mb-3" data-batch-id="${escapeHtml(batch.batch_id)}" style="overflow: hidden;">
+                    <!-- Collapsible Header - Click to Expand -->
+                    <div class="d-flex justify-content-between align-items-center p-3" style="cursor: pointer; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border-radius: 8px; border: 1px solid #cbd5e1;" onclick="document.getElementById('${collapseId}').classList.toggle('show'); this.querySelector('.collapse-icon').classList.toggle('rotated');">
+                        <div class="d-flex align-items-center gap-3 flex-grow-1">
+                            <div class="collapse-icon" style="transition: transform 0.3s ease; font-size: 1.2rem; color: #64748b;">▶</div>
+                            <div>
+                                <div style="font-weight: 700; font-size: 1.05rem; color: #1e293b; margin-bottom: 4px;">
+                                    ${escapeHtml(batch.vehicle_type)} — Batch #${escapeHtml(batch.batch_number)}
+                                    ${batch.batch_date ? `<span style="font-weight: 400; font-size: 0.85rem; color: #64748b; margin-left: 8px;">(${new Date(batch.batch_date).toLocaleDateString('en-US', {month: 'short', day: 'numeric'})})</span>` : ''}
+                                </div>
+                                <div class="d-flex gap-3 flex-wrap" style="font-size: 0.85rem; color: #64748b;">
+                                    <span><strong>${orders.length}</strong> order${orders.length !== 1 ? 's' : ''}</span>
+                                    <span>•</span>
+                                    <span><strong>${totalContainers}/${capacity}</strong> containers</span>
+                                    <span>•</span>
+                                    <span>Pickup: <strong>${escapeHtml(pickupStatusDisplay)}</strong></span>
+                                    <span>•</span>
+                                    <span>Delivery: <strong>${escapeHtml(deliveryStatusDisplay)}</strong></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="batch-actions d-flex gap-2" onclick="event.stopPropagation();" data-batch-id="${escapeHtml(batch.batch_id)}">
+                            ${buttonsHtml}
+                        </div>
+                    </div>
+                    
+                    <!-- Collapsible Content - Hidden by default -->
+                    <div id="${collapseId}" class="collapse" style="transition: all 0.3s ease;">
+                        <div class="p-3 pt-2">
+                            <div class="text-muted small mb-3" style="font-size: 0.85rem;">
+                                <strong>Pickup:</strong> ${escapeHtml(pickupTime)} | <strong>Delivery:</strong> ${escapeHtml(deliveryTime)} | <em>Click any order to view full details</em>
+                            </div>
+                            <div class="orders-list">
+                                ${orderListHtml}
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }
+            function renderUnassigned(list) {
+                if (!list.length) {
+                    unassignedContainer.innerHTML = '';
+                    return;
+                }
+                const rows = list.map(o => renderOrderRow(o, '', null)).join('');
+                unassignedContainer.innerHTML = `
+                    <div class="metric-card">
+                        <h4>Unassigned Orders</h4>
+                        <div class="table-responsive">
+                            <table class="recent-orders-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Reference ID</th>
+                                        <th>Order Date</th>
+                                        <th>Payment Method</th>
+                                        <th>Total</th>
+                                        <th>Payment Status</th>
+                                        <th>Delivery Personnel</th>
+                                        <th>Delivery Status</th>
+                                        <th>Delivery Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${rows}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Helper function to format order items HTML
+            function formatItemsHtml(items) {
+                if (!items || !items.length) return '<div style="text-align:center; padding:30px; color:#9ca3af; font-size:0.95rem;">No items in this order</div>';
+               
+                return `<table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:#f9fafb;">
+                            <th style="padding:12px 18px; text-align:left; font-size:0.75rem; color:#6b7280; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; border-bottom:2px solid #e5e7eb;">Item</th>
+                            <th style="padding:12px 18px; text-align:left; font-size:0.75rem; color:#6b7280; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; border-bottom:2px solid #e5e7eb;">Type</th>
+                            <th style="padding:12px 18px; text-align:center; font-size:0.75rem; color:#6b7280; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; border-bottom:2px solid #e5e7eb;">Qty</th>
+                            <th style="padding:12px 18px; text-align:right; font-size:0.75rem; color:#6b7280; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; border-bottom:2px solid #e5e7eb;">Price</th>
+                            <th style="padding:12px 18px; text-align:right; font-size:0.75rem; color:#6b7280; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; border-bottom:2px solid #e5e7eb;">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>${items.map(it => `
+                        <tr style="border-bottom:1px solid #f3f4f6;">
+                            <td style="padding:14px 18px; font-weight:700; color:#111827; font-size:0.95rem;">${escapeHtml(it.container_type || ('#'+(it.container_id||'')))}</td>
+                            <td style="padding:14px 18px; color:#6b7280; font-size:0.9rem;">${escapeHtml(it.order_type_display || it.water_type || it.order_type || 'Refill')}</td>
+                            <td style="padding:14px 18px; text-align:center;">
+                                <span style="display:inline-block; background:#dbeafe; color:#1e40af; padding:3px 10px; border-radius:5px; font-weight:700; font-size:0.9rem;">${escapeHtml(it.quantity)}</span>
+                            </td>
+                            <td style="padding:14px 18px; text-align:right; color:#6b7280; font-size:0.9rem;">₱${Number(it.price||0).toFixed(2)}</td>
+                            <td style="padding:14px 18px; text-align:right; font-weight:700; color:#111827; font-size:0.95rem;">₱${Number(it.subtotal||0).toFixed(2)}</td>
+                        </tr>
+                    `).join('')}</tbody>
+                </table>`;
+            }
+            
+            // Modal function to show order details - MUST BE DEFINED BEFORE USE
+            window.showOrderModal = function(o) {
+                // Render a receipt-style modal using the existing checkout/receipt layout
+                let backdrop = document.getElementById('wwOrderModalBackdrop');
+               
+                // Determine status badge color and icon
+                const status = o.delivery_status || o.order_status || 'Unknown';
+                let statusColor = '#6b7280';
+                let statusBg = '#f3f4f6';
+                let statusIcon = '📦';
+                
+                if (status.toLowerCase().includes('delivered') || status.toLowerCase().includes('completed')) {
+                    statusColor = '#059669';
+                    statusBg = '#d1fae5';
+                    statusIcon = '✓';
+                } else if (status.toLowerCase().includes('pending')) {
+                    statusColor = '#d97706';
+                    statusBg = '#fef3c7';
+                    statusIcon = '⏱';
+                } else if (status.toLowerCase().includes('dispatched')) {
+                    statusColor = '#2563eb';
+                    statusBg = '#dbeafe';
+                    statusIcon = '🚚';
+                }
+               
+                const receiptHtml = `
+                    <div class="ww-modal" role="dialog" aria-modal="true" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.95); max-width:900px; width:94%; max-height:calc(100vh - 40px); overflow:hidden; display:flex; flex-direction:column; background:linear-gradient(to bottom, #ffffff 0%, #f9fafb 100%); border-radius:20px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.05); animation: modalSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;">
+                        <!-- Header with Gradient -->
+                        <div class="ww-modal-header" style="padding:28px 32px; border-bottom:none; background:linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%); border-radius:20px 20px 0 0; position:relative; overflow:hidden;">
+                            <div style="position:absolute; top:0; left:0; right:0; bottom:0; opacity:0.1; background-image:url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1200 120\"%3E%3Cpath d=\"M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z\" fill=\"%23ffffff\"%3E%3C/path%3E%3C/svg%3E'); background-repeat:no-repeat; background-position:bottom; background-size:cover;"></div>
+                            <div style="position:relative; z-index:1; display:flex; align-items:flex-start; justify-content:space-between;">
+                                <div style="flex: 1;">
+                                    <div style="display:flex; align-items:center; gap:14px; margin-bottom:8px;">
+                                        <div style="background:rgba(255,255,255,0.2); backdrop-filter:blur(10px); padding:8px 14px; border-radius:12px; border:1px solid rgba(255,255,255,0.3);">
+                                            <h3 style="margin:0; font-size:1.75rem; color:white; font-weight:900; letter-spacing:-0.5px; text-shadow:0 2px 4px rgba(0,0,0,0.1);">#${escapeHtml(o.reference_id || 'N/A')}</h3>
+                                        </div>
+                                        <span style="display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:24px; background:${statusBg}; color:${statusColor}; font-size:0.8rem; font-weight:800; letter-spacing:0.5px; text-transform:uppercase; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                                            <span style="font-size:1rem;">${statusIcon}</span>
+                                            ${escapeHtml(status)}
+                                        </span>
+                                    </div>
+                                    <div style="color:rgba(255,255,255,0.9); font-size:0.95rem; font-weight:500; text-shadow:0 1px 2px rgba(0,0,0,0.1);">📋 Complete order details and delivery information</div>
+                                </div>
+                                <button class="close-btn" id="wwModalCloseBtn" style="font-size:1.8rem; width:44px; height:44px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:12px; line-height:1; background:rgba(255,255,255,0.2); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.3); color:white; cursor:pointer; transition:all 0.2s ease; font-weight:300;" onmouseover="this.style.background='rgba(255,255,255,0.3)'; this.style.transform='rotate(90deg)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'; this.style.transform='rotate(0deg)'">×</button>
+                            </div>
+                        </div>
+                       
+                        <!-- Body -->
+                        <div class="ww-modal-body" style="flex: 1; overflow-y:auto; padding:24px 32px 28px 32px; background:transparent;">
+                            <!-- Order Info Cards with Icons -->
+                            <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:24px;">
+                                <div style="background:white; padding:20px; border-radius:16px; border:2px solid #e0e7ff; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05); transition:all 0.2s ease;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 24px -4px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px -1px rgba(0,0,0,0.05)'">
+                                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                                        <div style="background:linear-gradient(135deg, #3b82f6, #2563eb); width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; box-shadow:0 4px 8px rgba(59,130,246,0.3);">📅</div>
+                                        <div style="font-size:0.7rem; color:#6b7280; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Order Date</div>
+                                    </div>
+                                    <div style="font-size:1.1rem; font-weight:800; color:#111827; margin-left:46px;">${escapeHtml(o.order_date || 'N/A')}</div>
+                                </div>
+                                <div style="background:white; padding:20px; border-radius:16px; border:2px solid #d1fae5; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05); transition:all 0.2s ease;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 24px -4px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px -1px rgba(0,0,0,0.05)'">
+                                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                                        <div style="background:linear-gradient(135deg, #10b981, #059669); width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; box-shadow:0 4px 8px rgba(16,185,129,0.3);">🚚</div>
+                                        <div style="font-size:0.7rem; color:#6b7280; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Delivery</div>
+                                    </div>
+                                    <div style="font-size:1.1rem; font-weight:800; color:#111827; margin-left:46px;">${escapeHtml(o.delivery_date || 'N/A')}</div>
+                                </div>
+                                <div style="background:white; padding:20px; border-radius:16px; border:2px solid #fef3c7; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05); transition:all 0.2s ease;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 24px -4px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px -1px rgba(0,0,0,0.05)'">
+                                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                                        <div style="background:linear-gradient(135deg, #f59e0b, #d97706); width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; box-shadow:0 4px 8px rgba(245,158,11,0.3);">📦</div>
+                                        <div style="font-size:0.7rem; color:#6b7280; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Batch Number</div>
+                                    </div>
+                                    <div style="font-size:1.1rem; font-weight:800; color:#111827; margin-left:46px;">${o.batch_number ? '#' + escapeHtml(o.batch_number) : 'Unassigned'}</div>
+                                </div>
+                                <div style="background:white; padding:20px; border-radius:16px; border:2px solid #ddd6fe; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05); transition:all 0.2s ease;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 24px -4px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px -1px rgba(0,0,0,0.05)'">
+                                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                                        <div style="background:linear-gradient(135deg, #8b5cf6, #7c3aed); width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; box-shadow:0 4px 8px rgba(139,92,246,0.3);">💳</div>
+                                        <div style="font-size:0.7rem; color:#6b7280; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Payment</div>
+                                    </div>
+                                    <div style="font-size:1.1rem; font-weight:800; color:#111827; margin-left:46px;">${escapeHtml(o.payment_method || 'N/A')}</div>
+                                </div>
+                            </div>
+                           
+                            <!-- Customer & Address Cards -->
+                            <div style="display:grid; grid-template-columns:1fr 1.2fr; gap:20px; margin-bottom:24px;">
+                                <div style="background:white; padding:24px; border-radius:16px; border:2px solid #e5e7eb; box-shadow:0 4px 12px rgba(0,0,0,0.08); transition:all 0.2s ease;" onmouseover="this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)'" onmouseout="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'">
+                                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+                                        <div style="background:linear-gradient(135deg, #8b5cf6, #7c3aed); width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; box-shadow:0 4px 12px rgba(139,92,246,0.3);">👤</div>
+                                        <h4 style="font-size:0.85rem; margin:0; color:#6b7280; font-weight:800; text-transform:uppercase; letter-spacing:1px;">Customer Info</h4>
+                                    </div>
+                                    <div style="background:linear-gradient(135deg, #f9fafb, #ffffff); padding:16px; border-radius:12px; border:1px solid #e5e7eb;">
+                                        <div style="font-weight:800; color:#111827; font-size:1.15rem; margin-bottom:6px; display:flex; align-items:center; gap:8px;">
+                                            <span style="color:#8b5cf6;">●</span>
+                                            ${escapeHtml(o.customer_name || 'N/A')}
+                                        </div>
+                                        <div style="color:#6b7280; font-size:0.95rem; font-weight:600; display:flex; align-items:center; gap:8px;">
+                                            <span style="font-size:1.1rem;">📞</span>
+                                            ${escapeHtml(o.customer_contact || 'N/A')}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="background:white; padding:24px; border-radius:16px; border:2px solid #e5e7eb; box-shadow:0 4px 12px rgba(0,0,0,0.08); transition:all 0.2s ease;" onmouseover="this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)'" onmouseout="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'">
+                                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+                                        <div style="background:linear-gradient(135deg, #ec4899, #db2777); width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; box-shadow:0 4px 12px rgba(236,72,153,0.3);">📍</div>
+                                        <h4 style="font-size:0.85rem; margin:0; color:#6b7280; font-weight:800; text-transform:uppercase; letter-spacing:1px;">Delivery Address</h4>
+                                    </div>
+                                    <div style="background:linear-gradient(135deg, #f9fafb, #ffffff); padding:16px; border-radius:12px; border:1px solid #e5e7eb;">
+                                        <div style="color:#111827; font-weight:700; line-height:1.6; font-size:1rem; display:flex; align-items:start; gap:10px;">
+                                            <span style="color:#ec4899; font-size:1.2rem; line-height:1;">📮</span>
+                                            <span>${escapeHtml([o.street, o.barangay, o.city, o.province].filter(Boolean).join(', ') || 'Not provided')}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                           
+                            <!-- Order Items with Enhanced Styling -->
+                            <div style="background:white; border-radius:16px; border:2px solid #e5e7eb; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+                                <div style="background:linear-gradient(135deg, #111827 0%, #1f2937 100%); padding:18px 24px; display:flex; align-items:center; gap:12px;">
+                                    <div style="background:rgba(255,255,255,0.1); width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem;">🛒</div>
+                                    <h4 style="font-size:0.9rem; margin:0; color:white; font-weight:800; text-transform:uppercase; letter-spacing:1.2px;">Order Items</h4>
+                                </div>
+                                ${formatItemsHtml(o.items)}
+                            </div>
+                        </div>
+                       
+                        <!-- Footer with Gradient -->
+                        <div class="ww-modal-footer" style="padding:24px 32px; display:flex; justify-content:space-between; align-items:center; border-top:2px solid #e5e7eb; background:linear-gradient(to top, #f9fafb, #ffffff); border-radius:0 0 20px 20px;">
+                            <div style="display:flex; align-items:center; gap:12px;">
+                                <div style="font-size:0.9rem; color:#6b7280; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Total Amount</div>
+                                <div style="background:linear-gradient(135deg, #3b82f6, #2563eb); padding:12px 24px; border-radius:12px; box-shadow:0 4px 12px rgba(59,130,246,0.3);">
+                                    <span style="font-size:1.6rem; font-weight:900; color:white; letter-spacing:-0.5px;">₱${Number(o.total_amount||0).toFixed(2)}</span>
+                                </div>
+                            </div>
+                            <button class="close-btn" id="wwModalCloseBtn2" style="padding:14px 32px; font-size:1rem; font-weight:700; background:linear-gradient(135deg, #ef4444, #dc2626); color:white; border:none; border-radius:12px; cursor:pointer; transition:all 0.2s ease; box-shadow:0 4px 12px rgba(239,68,68,0.3); text-transform:uppercase; letter-spacing:0.5px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(239,68,68,0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(239,68,68,0.3)'">✕ Close</button>
+                        </div>
+                        
+                        <style>
+                            @keyframes modalSlideIn {
+                                from {
+                                    opacity: 0;
+                                    transform: translate(-50%, -50%) scale(0.9);
+                                }
+                                to {
+                                    opacity: 1;
+                                    transform: translate(-50%, -50%) scale(1);
+                                }
+                            }
+                            .ww-modal-body::-webkit-scrollbar {
+                                width: 8px;
+                            }
+                            .ww-modal-body::-webkit-scrollbar-track {
+                                background: #f1f5f9;
+                                border-radius: 10px;
+                            }
+                            .ww-modal-body::-webkit-scrollbar-thumb {
+                                background: linear-gradient(135deg, #3b82f6, #2563eb);
+                                border-radius: 10px;
+                            }
+                            .ww-modal-body::-webkit-scrollbar-thumb:hover {
+                                background: linear-gradient(135deg, #2563eb, #1e40af);
+                            }
+                        </style>
+                    </div>`;
+                if (!backdrop) {
+                    backdrop = document.createElement('div');
+                    backdrop.id = 'wwOrderModalBackdrop';
+                    backdrop.className = 'ww-modal-backdrop';
+                    backdrop.style.position = 'fixed';
+                    backdrop.style.top = '0';
+                    backdrop.style.left = '0';
+                    backdrop.style.right = '0';
+                    backdrop.style.bottom = '0';
+                    backdrop.style.zIndex = '2147483647';
+                    backdrop.style.display = 'none';
+                    backdrop.style.alignItems = 'center';
+                    backdrop.style.justifyContent = 'center';
+                    backdrop.style.padding = '20px';
+                    backdrop.style.boxSizing = 'border-box';
+                    backdrop.style.background = 'rgba(0,0,0,0)';
+                    backdrop.style.transition = 'background 0.3s ease';
+                    backdrop.innerHTML = receiptHtml;
+                    document.body.appendChild(backdrop);
+                } else {
+                    backdrop.innerHTML = receiptHtml;
+                }
+                
+                // Animate backdrop
+                backdrop.style.display = 'flex';
+                setTimeout(() => {
+                    backdrop.style.background = 'rgba(0,0,0,0.6)';
+                }, 10);
+                
+                // Close buttons handler with animation
+                document.querySelectorAll('#wwModalCloseBtn, #wwModalCloseBtn2').forEach(btn => {
+                    btn.onclick = function() {
+                        const modal = document.querySelector('.ww-modal');
+                        if (modal) {
+                            modal.style.animation = 'modalSlideOut 0.25s cubic-bezier(0.36, 0, 0.66, -0.56) forwards';
+                        }
+                        backdrop.style.background = 'rgba(0,0,0,0)';
+                        setTimeout(() => {
+                            backdrop.style.display = 'none';
+                            if (backdrop.parentNode) backdrop.remove();
+                        }, 250);
+                    };
+                });
+                
+                // Add slide out animation
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes modalSlideOut {
+                        from {
+                            opacity: 1;
+                            transform: translate(-50%, -50%) scale(1);
+                        }
+                        to {
+                            opacity: 0;
+                            transform: translate(-50%, -50%) scale(0.9);
+                        }
+                    }
+                `;
+                if (!document.getElementById('modal-animations')) {
+                    style.id = 'modal-animations';
+                    document.head.appendChild(style);
+                }
+            };
+            
+            // Store archived order IDs for client-side filtering
+            let archivedOrderIds = new Set();
+            
+            // Fetch archived order IDs
+            async function fetchArchivedIds() {
+                try {
+                    const resp = await fetch('/WRSOMS/api/admin/get_archived_ids.php', { credentials: 'same-origin' });
+                    const result = await resp.json();
+                    if (result.success && result.data && Array.isArray(result.data.archived_ids)) {
+                        archivedOrderIds = new Set(result.data.archived_ids);
+                        console.log(`Loaded ${archivedOrderIds.size} archived order IDs for filtering`);
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch archived IDs:', err);
+                }
+            }
+            
+            // Initial fetch
+            function loadData() {
+                console.log('=== loadData() called ===');
+                const apiUrl = getApiUrl();
+                console.log('API URL:', apiUrl);
+                batchesContainer.innerHTML = '<p class="text-muted">Loading batches and orders…</p>';
+                unassignedContainer.innerHTML = '';
+                
+                // Fetch archived IDs first, then load orders
+                console.log('Fetching archived IDs...');
+                fetchArchivedIds().then(() => {
+                    console.log('Archived IDs fetched, now fetching orders...');
+                    fetch(apiUrl, { credentials: 'same-origin' })
+                    .then(r => {
+                        console.log('API response status:', r.status);
+                        return r.json();
+                    })
+                    .then(res => {
+                        console.log('API response:', res);
+                        if (!res.success) throw new Error(res.message || 'Failed to load');
+                        const data = res.data || {};
+                        let batches = data.batches || [];
+                        let unassigned = data.unassigned || [];
+                        
+                        // CLIENT-SIDE FILTERING: Remove archived orders
+                        batches.forEach(batch => {
+                            if (batch.orders && Array.isArray(batch.orders)) {
+                                batch.orders = batch.orders.filter(order => !archivedOrderIds.has(order.reference_id));
+                            }
+                        });
+                        unassigned = unassigned.filter(order => !archivedOrderIds.has(order.reference_id));
+                        
+                        // Remove empty batches
+                        batches = batches.filter(batch => batch.orders && batch.orders.length > 0);
+                    if (!batches.length && !unassigned.length) {
+                        batchesContainer.innerHTML = '<p class="text-muted orders-empty">No batches or orders found for today.</p>';
+                        return;
+                    }
+                    // Group batches by vehicle type so Car and Tricycle batches render in separate sections
+                    const tricycleBatches = batches.filter(b => (b.vehicle_type || '').toLowerCase() === 'tricycle');
+                    const carBatches = batches.filter(b => (b.vehicle_type || '').toLowerCase() === 'car');
+                    const isCompleted = (b) => {
+                        // Treat batch as completed when its delivery_status indicates 'Delivered' or batch_status contains 'completed'
+                        const ds = (b.delivery_status || '') + '';
+                        const bs = (b.batch_status || '') + '';
+                        if (ds.toLowerCase().indexOf('delivered') !== -1) return true;
+                        if (bs.toLowerCase().indexOf('completed') !== -1) return true;
+                        return false;
+                    };
+                    // Split active vs completed
+                    const activeTricycle = tricycleBatches.filter(b => !isCompleted(b));
+                    const completedTricycle = tricycleBatches.filter(b => isCompleted(b));
+                    const activeCar = carBatches.filter(b => !isCompleted(b));
+                    const completedCar = carBatches.filter(b => isCompleted(b));
+                    // Compute aggregates per vehicle type (active only)
+                    const sumQuantity = (arr) => arr.reduce((s, x) => s + (Number(x.total_quantity) || 0), 0);
+                    const sumCapacity = (arr) => arr.reduce((s, x) => s + (Number(x.capacity) || 0), 0);
+                    const tricycleTotalAssigned = sumQuantity(activeTricycle);
+                    const tricycleTotalCapacity = sumCapacity(activeTricycle) || (activeTricycle.length ? activeTricycle.length * 5 : 0);
+                    const carTotalAssigned = sumQuantity(activeCar);
+                    const carTotalCapacity = sumCapacity(activeCar) || (activeCar.length ? activeCar.length * 10 : 0);
+                    // Build tabbed controls for filtering (include Completed tab)
+                    let out = '';
+                    
+                    // Determine default tab based on what's available
+                    let defaultTab = 'tricycle';
+                    if (!activeTricycle.length && activeCar.length) defaultTab = 'car';
+                    if (!activeTricycle.length && !activeCar.length && (completedTricycle.length || completedCar.length)) defaultTab = 'completed';
+                    
+                    out += `<div class="mb-3">
+                        <ul class="nav nav-tabs" role="tablist" id="vehicleTabs">
+                            <li class="nav-item"><button class="nav-link ${defaultTab === 'tricycle' ? 'active' : ''} vehicle-tab-btn" data-target="tricycle" type="button" style="color: ${defaultTab === 'tricycle' ? '#ffffff' : '#111827'} !important; background: ${defaultTab === 'tricycle' ? '#3b82f6' : '#ffffff'} !important; border-color: ${defaultTab === 'tricycle' ? '#3b82f6' : '#d1d5db'} !important;">Tricycle${activeTricycle.length ? ' (' + activeTricycle.length + ')' : ''}</button></li>
+                            <li class="nav-item"><button class="nav-link ${defaultTab === 'car' ? 'active' : ''} vehicle-tab-btn" data-target="car" type="button" style="color: ${defaultTab === 'car' ? '#ffffff' : '#111827'} !important; background: ${defaultTab === 'car' ? '#3b82f6' : '#ffffff'} !important; border-color: ${defaultTab === 'car' ? '#3b82f6' : '#d1d5db'} !important;">Car${activeCar.length ? ' (' + activeCar.length + ')' : ''}</button></li>
+                            <li class="nav-item"><button class="nav-link ${defaultTab === 'completed' ? 'active' : ''} vehicle-tab-btn" data-target="completed" type="button" style="color: ${defaultTab === 'completed' ? '#ffffff' : '#111827'} !important; background: ${defaultTab === 'completed' ? '#3b82f6' : '#ffffff'} !important; border-color: ${defaultTab === 'completed' ? '#3b82f6' : '#d1d5db'} !important;">Completed${(completedTricycle.length + completedCar.length) ? ' (' + (completedTricycle.length + completedCar.length) + ')' : ''}</button></li>
+                        </ul>
+                    </div>`;
+                    // Active sections - Initially hide car if tricycle exists (show based on default tab)
+                    if (activeTricycle.length) {
+                        out += `<section class="vehicle-section mb-3" data-vehicle="tricycle" data-status="active" ${defaultTab !== 'tricycle' ? 'style="display: none;"' : ''}>`;
+                        out += `<h4 class="mb-2">Tricycle <small class="text-muted">(Assigned: ${escapeHtml(String(tricycleTotalAssigned))}/${escapeHtml(String(tricycleTotalCapacity))} containers)</small></h4>`;
+                        out += `<div class="batches-grid">${activeTricycle.map((b, i) => renderBatch(b, 'tricycle-' + i)).join('')}</div>`;
+                        out += '</section>';
+                    }
+                    if (activeCar.length) {
+                        out += `<section class="vehicle-section mb-3" data-vehicle="car" data-status="active" ${defaultTab !== 'car' ? 'style="display: none;"' : ''}>`;
+                        out += `<h4 class="mb-2">Car <small class="text-muted">(Assigned: ${escapeHtml(String(carTotalAssigned))}/${escapeHtml(String(carTotalCapacity))} containers)</small></h4>`;
+                        out += `<div class="batches-grid">${activeCar.map((b, i) => renderBatch(b, 'car-' + i)).join('')}</div>`;
+                        out += '</section>';
+                    }
+                    // Completed sections: render separate vehicle-type completed groups (Tricycle and Car) - Initially hidden unless default
+                    if (completedTricycle.length) {
+                        out += `<section class="vehicle-section mb-3 completed-section" data-vehicle="tricycle" data-status="completed" ${defaultTab !== 'completed' ? 'style="display: none;"' : ''}>`;
+                        out += `<h4 class="mb-2">Tricycle (Completed) <small class="text-muted">(${escapeHtml(String(completedTricycle.length))} batch${completedTricycle.length>1?'es':''})</small></h4>`;
+                        out += `<div class="batches-grid">${completedTricycle.map((b, i) => renderBatch(b, 'completed-tricycle-' + i)).join('')}</div>`;
+                        out += '</section>';
+                    }
+                    if (completedCar.length) {
+                        out += `<section class="vehicle-section mb-3 completed-section" data-vehicle="car" data-status="completed" ${defaultTab !== 'completed' ? 'style="display: none;"' : ''}>`;
+                        out += `<h4 class="mb-2">Car (Completed) <small class="text-muted">(${escapeHtml(String(completedCar.length))} batch${completedCar.length>1?'es':''})</small></h4>`;
+                        out += `<div class="batches-grid">${completedCar.map((b, i) => renderBatch(b, 'completed-car-' + i)).join('')}</div>`;
+                        out += '</section>';
+                    }
+                    // If no batches for either active types or completed groups, render a fallback empty message
+                    if (!activeTricycle.length && !activeCar.length && !completedTricycle.length && !completedCar.length) out += '<p class="text-muted orders-empty">No batches or orders found for today.</p>';
+                    batchesContainer.innerHTML = out;
+                    // Wire up vehicle tab buttons with proper filtering
+                    document.querySelectorAll('.vehicle-tab-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            console.log('Tab clicked:', this.getAttribute('data-target'));
+                            
+                            // Remove active class from all tabs and reset to inactive colors
+                            document.querySelectorAll('.vehicle-tab-btn').forEach(n => {
+                                n.classList.remove('active');
+                                n.style.color = '#111827';
+                                n.style.background = '#ffffff';
+                                n.style.borderColor = '#d1d5db';
+                            });
+                            
+                            // Set active tab with blue background and white text
+                            this.classList.add('active');
+                            this.style.color = '#ffffff';
+                            this.style.background = '#3b82f6';
+                            this.style.borderColor = '#3b82f6';
+                            
+                            const target = this.getAttribute('data-target');
+                            
+                            if (target === 'completed') {
+                                // Show only completed sections (hide active)
+                                document.querySelectorAll('.vehicle-section').forEach(s => {
+                                    const status = s.getAttribute('data-status');
+                                    if (status === 'completed') {
+                                        s.style.display = 'block';
+                                    } else {
+                                        s.style.display = 'none';
+                                    }
+                                });
+                            } else {
+                                // Show only the selected vehicle type (active batches only)
+                                document.querySelectorAll('.vehicle-section').forEach(s => {
+                                    const vehicleType = s.getAttribute('data-vehicle');
+                                    const status = s.getAttribute('data-status');
+                                    
+                                    // Show only active batches of the selected vehicle type
+                                    if (vehicleType === target && status === 'active') {
+                                        s.style.display = 'block';
+                                    } else {
+                                        s.style.display = 'none';
+                                    }
+                                });
+                            }
+                        });
+                    });
+                    renderUnassigned(unassigned);
+                    
+                    // Wire up simple collapse toggles (Bootstrap's JS should already be loaded by the parent page)
+                    // Wire up collapse toggles for batch cards
+                    document.querySelectorAll('[data-toggle="collapse"]').forEach(btn => {
+                        btn.addEventListener('click', (ev) => {
+                            const target = btn.getAttribute('data-target');
+                            const el = document.querySelector(target);
+                            if (!el) return;
+                            el.classList.toggle('show');
+                            // rotate icon if present
+                            btn.classList.toggle('active');
+                        });
+                    });
+                    
+                    // Wire up clicks for order items in compact view
+                    document.querySelectorAll('.order-item').forEach(item => {
+                        const clickableArea = item.querySelector('.order-clickable');
+                        if (clickableArea) {
+                            clickableArea.addEventListener('click', function(e) {
+                                const ref = item.getAttribute('data-ref');
+                                console.log('Order clicked:', ref, 'ordersMap has it:', !!ordersMap[ref]);
+                                if (ref && ordersMap[ref]) {
+                                    showOrderModal(ordersMap[ref]);
+                                } else {
+                                    console.error('Order not found in ordersMap:', ref);
+                                }
+                            });
+                        }
+                    });
+                    // Wire up entire row click to open modal (including the link)
+                    document.querySelectorAll('tr.order-row').forEach(row => {
+                        row.addEventListener('click', function(e) {
+                            // Don't trigger if clicking on a button (but allow links)
+                            if (e.target.tagName === 'BUTTON') return;
+                           
+                            // Prevent default for links
+                            if (e.target.tagName === 'A') {
+                                e.preventDefault();
+                            }
+                           
+                            const ref = this.getAttribute('data-ref');
+                            const ord = ordersMap[ref];
+                            if (ord) showOrderModal(ord);
+                        });
+                    });
+                    })
+                    .catch(err => {
+                        console.error('Manage orders load error', err);
+                        batchesContainer.innerHTML = '<p class="text-danger">Error loading orders. Check the API or session.</p>';
+                    });
+                });
+            }
+            // initial call: fetch staff role first so UI can apply role-based filtering
+            console.log('=== Fetching staff role ===');
+            fetchStaffRole().then(() => {
+                console.log('=== Staff role fetched, calling loadData() ===');
+                loadData();
+            }).catch(err => {
+                console.error('=== Error in fetchStaffRole ===', err);
+                loadData(); // Try to load anyway
+            });
+            // Perform batch action: start/complete pickup/delivery
+            // CRITICAL: Must be on window for inline onclick handlers to work
+            if (typeof window.performBatchAction !== 'undefined') {
+                console.log('performBatchAction already exists, overwriting...');
+            }
+            
+            window.performBatchAction = async function(batchId, action, btn) {
+                console.log('performBatchAction called:', { batchId, action, btn });
+                
+                // Check if all orders are complete/failed before allowing batch completion
+                if (action === 'complete_delivery') {
+                    const status = window.checkBatchOrdersComplete(batchId);
+                    if (!status.allComplete) {
+                        showToast('warning', 'Cannot Complete Delivery', 
+                            `Please complete or mark all orders as failed first. (${status.processed}/${status.total} processed)`);
+                        return;
+                    }
+                }
+                
+                const actionTitles = {
+                    start_pickup: "Start Pickup",
+                    complete_pickup: "Complete Pickup",
+                    start_delivery: "Start Delivery",
+                    complete_delivery: "Complete Delivery"
+                };
+                const actionMessages = {
+                    start_pickup: "Are you sure you want to start pickup for this batch?",
+                    complete_pickup: "Are you sure you want to mark pickup as completed for this batch?",
+                    start_delivery: "Are you sure you want to start delivery for this batch?",
+                    complete_delivery: "Are you sure you want to mark delivery as completed for this batch?"
+                };
+                
+                const confirmed = await showConfirm(
+                    actionTitles[action] || 'Confirm Action',
+                    actionMessages[action] || 'Are you sure you want to proceed?'
+                );
+                
+                if (!confirmed) {
+                    console.log('Action cancelled by user');
+                    return;
+                }
+                console.log('Action confirmed, making API call...');
+                if (btn) btn.disabled = true;
+               
+                fetch('/WRSOMS/api/admin/batch_action.php', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: action, batch_id: batchId })
+                })
+                .then(r => {
+                    console.log('Batch action HTTP status:', r.status);
+                    return r.text();
+                })
+                .then(text => {
+                    console.log('Batch action response text:', text);
+                    try {
+                        return JSON.parse(text);
+                    } catch(e) {
+                        throw new Error('Invalid JSON response: ' + text.substring(0, 200));
+                    }
+                })
+                .then(res => {
+                    console.log('Batch action parsed response:', res);
+                    if (!res.success) throw new Error(res.message || 'Action failed');
+                   
+                    // Show success message immediately
+                    const successMessages = {
+                        start_pickup: "Pickup started successfully",
+                        complete_pickup: "Pickup completed successfully",
+                        start_delivery: "Delivery started successfully",
+                        complete_delivery: "Delivery completed successfully"
+                    };
+                    showToast('success', 'Success', successMessages[action] || 'Action completed successfully');
+                    
+                    const card = document.querySelector(`.metric-card[data-batch-id="${batchId}"]`);
+                    if (card) {
+                        const pickupStatusEl = card.querySelector('.pickup-status');
+                        const deliveryStatusEl = card.querySelector('.delivery-status');
+                        const pickupTimeEl = card.querySelector('.pickup-time');
+                        const deliveryTimeEl = card.querySelector('.delivery-time');
+                        const actionsDiv = card.querySelector('.batch-actions');
+                        // Update status and buttons based on action
+                        switch(action) {
+                            case 'start_pickup':
+                                if (pickupStatusEl) pickupStatusEl.textContent = 'In Progress';
+                                if (actionsDiv) {
+                                    actionsDiv.innerHTML = `
+                                        <button class="btn btn-sm btn-success action-btn" data-action="complete_pickup"
+                                            onclick="performBatchAction('${batchId}', 'complete_pickup', this)">Complete Pickup</button>
+                                    `;
+                                }
+                                break;
+                               
+                            case 'complete_pickup':
+                                if (pickupStatusEl) pickupStatusEl.textContent = 'Completed';
+                                if (pickupTimeEl) pickupTimeEl.textContent = new Date().toLocaleString();
+                                if (actionsDiv) {
+                                    actionsDiv.innerHTML = `
+                                        <button class="btn btn-sm btn-warning action-btn" data-action="start_delivery"
+                                            onclick="performBatchAction('${batchId}', 'start_delivery', this)">Start Delivery</button>
+                                    `;
+                                }
+                                break;
+                               
+                            case 'start_delivery':
+                                if (deliveryStatusEl) deliveryStatusEl.textContent = 'In Progress';
+                                if (actionsDiv) {
+                                    actionsDiv.innerHTML = `
+                                        <button class="btn btn-sm btn-dark action-btn" data-action="complete_delivery"
+                                            onclick="performBatchAction('${batchId}', 'complete_delivery', this)" 
+                                            disabled style="opacity:0.5;cursor:not-allowed;"
+                                            title="Complete or mark all orders as failed first">Complete Delivery</button>
+                                    `;
+                                }
+                                
+                                // CRITICAL FIX: Update all order rows in this batch to show Complete/Failed buttons
+                                const orderRows = card.querySelectorAll('tr.order-row');
+                                orderRows.forEach(row => {
+                                    const refId = row.getAttribute('data-ref');
+                                    const statusCell = row.querySelector('.status');
+                                    const actionsCell = row.querySelector('.delivery-actions');
+                                    
+                                    // Update delivery status text
+                                    if (statusCell) {
+                                        statusCell.textContent = 'Out for Delivery';
+                                    }
+                                    
+                                    // Update ordersMap to reflect the new status
+                                    if (ordersMap[refId]) {
+                                        ordersMap[refId].delivery_status = 'Out for Delivery';
+                                        ordersMap[refId].order_status = 'In Progress';
+                                    }
+                                    
+                                    // Show Complete and Failed buttons
+                                    if (actionsCell) {
+                                        const isCompleted = ordersMap[refId]?.delivery_completed_at != null;
+                                        const isFailed = ordersMap[refId]?.delivery_failed_at != null;
+                                        
+                                        if (!isCompleted && !isFailed) {
+                                            actionsCell.innerHTML = `
+                                                <button class="btn btn-sm btn-success me-1 delivery-action-btn" 
+                                                        data-ref="${escapeHtml(refId)}" 
+                                                        data-action="complete"
+                                                        onclick="completeDelivery('${escapeHtml(refId)}', this)">
+                                                    Complete
+                                                </button>
+                                                <button class="btn btn-sm btn-danger delivery-action-btn" 
+                                                        data-ref="${escapeHtml(refId)}" 
+                                                        data-action="fail"
+                                                        onclick="failedDelivery('${escapeHtml(refId)}', this)">
+                                                    Failed
+                                                </button>
+                                            `;
+                                        }
+                                    }
+                                });
+                                
+                                // Update Complete Delivery button state
+                                setTimeout(() => window.updateCompleteDeliveryButton(batchId), 100);
+                                break;
+                               
+                            case 'complete_delivery':
+                                if (deliveryStatusEl) deliveryStatusEl.textContent = 'Delivered';
+                                if (deliveryTimeEl) deliveryTimeEl.textContent = new Date().toLocaleString();
+                                if (actionsDiv) {
+                                    actionsDiv.innerHTML = '<div class="text-muted small">Completed</div>';
+                                }
+                                break;
+                        }
+                        // Update all order statuses within the batch
+                        const orderRows = card.querySelectorAll('tr.order-row');
+                        orderRows.forEach(row => {
+                            const statusCell = row.querySelector('.status');
+                            if (statusCell) {
+                                switch(action) {
+                                    case 'start_pickup':
+                                        statusCell.textContent = 'Pickup In Progress';
+                                        break;
+                                    case 'complete_pickup':
+                                        statusCell.textContent = 'Pickup Completed';
+                                        break;
+                                    case 'start_delivery':
+                                        statusCell.textContent = 'Out for Delivery';
+                                        break;
+                                    case 'complete_delivery':
+                                        statusCell.textContent = 'Delivered';
+                                        break;
+                                }
+                            }
+                        });
+                        
+                        // Reload data after complete_delivery to refresh payment status for COD orders
+                        if (action === 'complete_delivery') {
+                            setTimeout(() => {
+                                loadData();
+                            }, 500);
+                        }
+                    } else {
+                        console.warn('Batch card not found for batch_id:', batchId);
+                    }
+                })
+                .catch(err => {
+                    console.error('Batch action error', err);
+            
+            // Test that the function is accessible
+            console.log('window.performBatchAction defined:', typeof window.performBatchAction);
+            
+            // FALLBACK: Add event delegation for action buttons in case inline onclick doesn't work
+            document.addEventListener('click', function(e) {
+                const actionBtn = e.target.closest('.action-btn');
+                if (actionBtn) {
+                    const action = actionBtn.getAttribute('data-action');
+                    const card = actionBtn.closest('.metric-card');
+                    const batchId = card ? card.getAttribute('data-batch-id') : null;
+                    
+                    if (action && batchId) {
+                        console.log('Event delegation triggered:', { action, batchId });
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.performBatchAction(batchId, action, actionBtn);
+                    }
+                }
+            }, true); // Use capture phase to catch event before inline handlers
+            
+            console.log('Event delegation for action buttons installed');
+            
+            // Archive button handler (top right)
+            const archiveBtn = document.getElementById('archiveCompletedBtn');
+            if (archiveBtn) {
+                archiveBtn.addEventListener('click', async function() {
+                    alert('Archive Completed button clicked');
+                    console.log('[DEBUG] Archive Completed button clicked');
+                    const confirmed = await showConfirm(
+                        'Archive Completed Orders',
+                        'Are you sure you want to archive all completed orders for today? This will move them to the archive table and clear them from the active list. You can still view them in reports and order history.'
+                    );
+                    if (!confirmed) {
+                        return;
+                    }
+                    
+                    archiveBtn.disabled = true;
+                    archiveBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Archiving...';
+                    
+                    const formData = new FormData();
+                    formData.append('archive_type', 'manual');
+                    // Use local date (YYYY-MM-DD) to avoid UTC offset issues
+                    (function(){
+                        const d = new Date();
+                        const y = d.getFullYear();
+                        const m = String(d.getMonth() + 1).padStart(2, '0');
+                        const day = String(d.getDate()).padStart(2, '0');
+                        formData.append('date_filter', `${y}-${m}-${day}`);
+                    })();
+                    
+                    fetch('/WRSOMS/api/admin/archive_completed.php', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        body: formData
+                    })
+                    .then(r => {
+                        console.log('Archive response status:', r.status);
+                        return r.text();
+                    })
+                    .then(text => {
+                        console.log('Archive response text:', text);
+                        try {
+                            return JSON.parse(text);
+                        } catch(e) {
+                            throw new Error('Invalid JSON response: ' + text.substring(0, 200));
+                        }
+                    })
+                    .then(async res => {
+                        console.log('Archive response:', res);
+                        
+                        // If server returned diagnostics and zero archived, show diagnostics
+                        if (res.data && res.data.orders_archived === 0 && res.data.diagnostics) {
+                                console.log('Archive diagnostics:', res.data.diagnostics);
+                                const d = res.data.diagnostics;
+                                const diagMsg = `Orders on date: ${d.orders_on_date_count}\nSample: ${Array.isArray(d.orders_on_date_sample)?d.orders_on_date_sample.join(', '):d.orders_on_date_sample}\nBatches: ${JSON.stringify(d.batches)}\nDeliveries: ${JSON.stringify(d.deliveries)}`;
+
+                                // If no orders exist for the local date, try UTC date as a fallback
+                                if ((d.orders_on_date_count || 0) === 0) {
+                                    // Try UTC date fallback once
+                                    const utcDate = new Date().toISOString().split('T')[0];
+                                    console.log('No orders for local date, retrying with UTC date:', utcDate);
+                                    const fd2 = new FormData();
+                                    fd2.append('archive_type', 'manual');
+                                    fd2.append('date_filter', utcDate);
+
+                                    try {
+                                        const resp2 = await fetch('/WRSOMS/api/admin/archive_completed.php', { method: 'POST', credentials: 'same-origin', body: fd2 });
+                                        const res2 = await resp2.json();
+                                        if (!res2.success) throw new Error(res2.message || 'UTC fallback archive failed');
+                                        const ordersCount2 = res2.data.orders_archived;
+                                        showToast('success', 'Archive Complete', `${ordersCount2} ${ordersCount2 === 1 ? 'order' : 'orders'} archived successfully!`);
+                                        loadData();
+                                        return;
+                                    } catch (err2) {
+                                        console.error('Archive UTC fallback error:', err2);
+                                        showToast('error', 'Archive Failed', err2.message || 'Failed to archive orders. Please try again.');
+                                        return;
+                                    }
+                                }
+
+                                // Otherwise just show diagnostics to help debugging
+                                const ordersCount3 = res.data.orders_archived;
+                                showToast('success', 'Archive Complete', `${ordersCount3} ${ordersCount3 === 1 ? 'order' : 'orders'} archived successfully!`);
+                                loadData();
+                                return;
+                            }
+
+                            // Normal success path
+                            const ordersCount = res.data.orders_archived;
+                            showToast('success', 'Archive Complete', `${ordersCount} ${ordersCount === 1 ? 'order' : 'orders'} archived successfully!`);
+                            loadData();
+                        })
+                        .catch(err => {
+                            console.error('Archive error:', err);
+                            showToast('error', 'Archive Failed', err.message || 'Failed to archive orders. Please try again.');
+                        })
+                        .finally(() => {
+                            archiveBtn.disabled = false;
+                            archiveBtn.innerHTML = '<i class="fa fa-archive"></i> Archive Completed';
+                        });
+                });
+            }
+                }); // Close fetchArchivedIds().then() callback
+            }; // Close loadData function
+        })();
+    </script>
+</body>
+</html>

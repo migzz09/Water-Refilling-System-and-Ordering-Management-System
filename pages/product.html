@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Products - Water World</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="../assets/css/index.css">
+  <link rel="stylesheet" href="../assets/css/product.css">
+  <link rel="stylesheet" href="../assets/css/header.css">
+  <link rel="stylesheet" href="../assets/css/notifications.css">
+  <link rel="stylesheet" href="../assets/css/business-status.css">
+</head>
+<body>
+  <nav class="navbar glass">
+    <div class="container">
+      <div class="nav-content">
+        <div class="nav-brand">
+          <img src="../assets/images/ww_logo.png" alt="WaterWorld Logo" class="nav-logo">
+          <span class="brand-name">Water World</span>
+        </div>
+
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+          <span class="icon-menu"></span>
+        </button>
+
+        <div class="nav-menu" id="navMenu">
+          <a href="../index.html" class="nav-link">
+            <i class="fa fa-home"></i>
+            Home
+          </a>
+          <a href="product.html" class="nav-link active">
+            <i class="fa fa-shopping-cart"></i>
+            Products
+          </a>
+          <a href="order-tracking.html" class="nav-link">
+            <i class="fa fa-search"></i>
+            Track Order
+          </a>
+          <a href="../index.html#services" class="nav-link">
+            <i class="fa fa-tint"></i>
+            Services
+          </a>
+          <a href="../index.html#contact" class="nav-link">
+            <i class="fa fa-envelope"></i>
+            Contact
+          </a>
+        </div>
+
+        <div class="nav-actions" id="navActions">
+          <a href="login.html" class="btn btn-outline btn-sm" id="loginBtn">
+            <i class="fa fa-sign-in"></i>
+            Login
+          </a>
+          <a href="register.html" class="btn btn-primary btn-sm" id="registerBtn">
+            <i class="fa fa-user-plus"></i>
+            Register
+          </a>
+          
+          <!-- Notifications (hidden by default; JS will reveal only when logged in) -->
+          <div class="notifications-menu" id="notificationsMenu" style="display: none;">
+            <button class="btn btn-outline btn-sm notifications-btn" onclick="toggleNotifications()" aria-label="Notifications" title="Notifications">
+              <i class="fa fa-bell"></i>
+              <span class="notifications-badge" id="notificationsBadge" style="display: none;">0</span>
+            </button>
+
+            <div class="notifications-dropdown" id="notificationsDropdown" style="display: none;">
+              <div class="notifications-header">
+                <strong>Notifications</strong>
+                <button class="mark-all-read" id="markAllReadBtn" onclick="markAllAsRead()">Mark all read</button>
+              </div>
+              <div class="notifications-list" id="notificationsList">
+                <div class="empty-notifications">No notifications</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="user-menu" id="userMenu" style="display:none;">
+            <button class="btn btn-outline btn-sm profile-btn" onclick="toggleUserDropdown()" aria-label="Profile" title="Profile">
+              <i class="fa fa-user-circle"></i>
+              <span id="userName">Profile</span>
+              <i class="fa fa-chevron-down"></i>
+            </button>
+            <div class="user-dropdown" id="userDropdown" style="display:none;">
+              <a href="product.html" class="dropdown-item"><i class="fa fa-shopping-cart"></i> View Products</a>
+              <a href="usertransaction-history.html" class="dropdown-item"><i class="fa fa-history"></i> Order History</a>
+              <a href="order-tracking.html" class="dropdown-item"><i class="fa fa-search"></i> Track Order</a>
+              <a href="feedback.html" class="dropdown-item"><i class="fa fa-comment"></i> Feedback</a>
+              <a href="settings.html" class="dropdown-item"><i class="fa fa-cog"></i> Settings</a>
+              <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
+              <a href="#" onclick="logout()" class="dropdown-item"><i class="fa fa-sign-out"></i> Logout</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <section class="hero water-bg product-hero">
+    <div class="container">
+      <div class="hero-content animate-fade-in" style="padding: 4rem 0;">
+        <div class="hero-badge">
+          <i class="fa fa-tint"></i>
+          Premium Quality Water
+        </div>
+        <h1 class="hero-title" style="font-size: 3rem;">Our Products</h1>
+        <p class="hero-description">Premium water containers for your home and business</p>
+      </div>
+    </div>
+    <div class="hero-wave">
+      <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+        <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".25" fill="currentColor"></path>
+        <path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" opacity=".5" fill="currentColor"></path>
+        <path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z" fill="currentColor"></path>
+      </svg>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-header text-center">
+        <h2 class="section-title">Available Products</h2>
+        <p class="section-description">Choose from our range of high-quality water containers</p>
+      </div>
+      <div class="products-grid" id="productsGrid">
+        <div class="loader">Loading products...</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="floating-cart" onclick="toggleCart()" role="button" tabindex="0" aria-label="Open cart" title="Open cart">
+    <i class="fa fa-shopping-cart"></i>
+    <span class="cart-count" id="cartCount">0</span>
+  </div>
+
+  <div class="cart-panel" id="cartPanel">
+    <div class="cart-header">
+      <h2>Your Cart</h2>
+      <button class="close-cart" onclick="toggleCart()" aria-label="Close cart" title="Close cart">&times;</button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <div class="empty-cart"><div class="empty-cart-icon">🛒</div><p>Your cart is empty</p></div>
+    </div>
+    <div class="cart-footer">
+      <div class="cart-total"><span>Total:</span><span id="cartTotal">₱0.00</span></div>
+      <button class="checkout-btn" id="checkoutBtn" onclick="checkout()" disabled>Proceed to Checkout</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="selectionModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">Select Water and Order Type</h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="water-type-options" id="waterTypeOptions"><h4>Water Type</h4></div>
+      <div class="order-type-options" id="orderTypeOptions"><h4>Order Type</h4></div>
+          <div class="modal-quantity" id="modalQuantity" style="display:flex; align-items:center; gap:8px; margin-top:12px;">
+            <button class="qty-btn" type="button" onclick="modalChangeQuantity(-1)" aria-label="Decrease quantity" id="modalQtyMinus">-</button>
+            <span id="modalQuantityValue" role="status" aria-live="polite" style="min-width:42px; text-align:center; display:inline-block; font-weight:700;">1</span>
+            <button class="qty-btn" type="button" onclick="modalChangeQuantity(1)" aria-label="Increase quantity" id="modalQtyPlus">+</button>
+          </div>
+          <button class="modal-confirm-btn" id="confirmSelection" onclick="confirmSelection()" disabled>Confirm Selection</button>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <div class="footer-brand">
+            <img src="../assets/images/ww_logo.png" alt="WaterWorld Logo" class="footer-logo">
+            <span class="brand-name">Water World</span>
+          </div>
+          <p class="footer-description">Your trusted partner for pure, fresh water delivery in Metro Manila since 2020.</p>
+        </div>
+        <div class="footer-section">
+          <h4 class="footer-title">Quick Links</h4>
+          <ul class="footer-links">
+            <li><a href="../index.html">Home</a></li>
+            <li><a href="product.html">Products</a></li>
+            <li><a href="order-tracking.html">Track Order</a></li>
+            <li><a href="#services">Services</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4 class="footer-title">Account</h4>
+          <ul class="footer-links">
+            <li><a href="login.html">Login</a></li>
+            <li><a href="register.html">Register</a></li>
+            <li><a href="usertransaction-history.html">Orders</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4 class="footer-title">Contact</h4>
+          <ul class="footer-links">
+            <li><a href="tel:+639171234567">0917-123-4567</a></li>
+            <li><a href="mailto:hello@waterworld.ph">hello@waterworld.ph</a></li>
+            <li><a href="https://www.google.com/maps/place/Water+World/" target="_blank" rel="noopener noreferrer">64-A Dr Jose P. Rizal Ext, Taguig, Metro Manila</a></li>
+            <li><a href="https://www.facebook.com/yourwaterworld" target="_blank">@yourwaterworld</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 Water World Water Station. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../assets/js/api-helper.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/notifications.js"></script>
+  <script src="../assets/js/product.js"></script>
+  <script src="../assets/js/business-status.js"></script>
+</body>
+</html>

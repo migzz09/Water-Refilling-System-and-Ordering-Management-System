@@ -1,0 +1,1582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - WaterWorld</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/design-system.css">
+    <link rel="stylesheet" href="../assets/css/index.css">
+    <link rel="stylesheet" href="../assets/css/product.css">
+    <link rel="stylesheet" href="../assets/css/header.css">
+    <link rel="stylesheet" href="../assets/css/notifications.css">
+    <style>
+        /* Prevent text wrapping in navbar */
+        .brand-name { white-space: nowrap; }
+        .nav-link { white-space: nowrap; }
+        .nav-menu { flex-wrap: nowrap; }
+
+        /* Page layout */
+        body {
+            padding-top: 88px;
+            background: #F7FAFC;
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .settings-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: flex;
+            gap: 2rem;
+        }
+
+        /* Side panel */
+        .settings-sidebar {
+            width: 280px;
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+        }
+
+        .settings-sidebar h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1A202C;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #E2E8F0;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            color: #4A5568;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .sidebar-menu a i {
+            font-size: 1.1rem;
+            width: 20px;
+            text-align: center;
+            color: #718096;
+        }
+
+        .sidebar-menu a:hover {
+            background: #F7FAFC;
+            color: #3B82F6;
+        }
+
+        .sidebar-menu a:hover i {
+            color: #3B82F6;
+        }
+
+        .sidebar-menu a.active {
+            background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+            color: #3B82F6;
+            font-weight: 600;
+        }
+
+        .sidebar-menu a.active i {
+            color: #3B82F6;
+        }
+
+        /* Main content area */
+        .settings-content {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .settings-section {
+            display: none;
+        }
+
+        .settings-section.active {
+            display: block;
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #E2E8F0;
+        }
+
+        .section-header h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1A202C;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-header p {
+            color: #6B7280;
+            font-size: 0.95rem;
+        }
+
+        /* Profile section */
+        .profile-photo-container {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #F9FAFB;
+            border-radius: 12px;
+        }
+
+        .profile-photo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .profile-photo img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .profile-photo-info {
+            flex: 1;
+        }
+
+        .profile-photo-info h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1A202C;
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-photo-info p {
+            color: #6B7280;
+            margin-bottom: 1rem;
+        }
+
+        .photo-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-upload,
+        .btn-remove {
+            padding: 0.625rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .btn-upload {
+            background: #3B82F6;
+            color: white;
+        }
+
+        .btn-upload:hover {
+            background: #2563EB;
+            transform: translateY(-1px);
+        }
+
+        .btn-remove {
+            background: transparent;
+            color: #EF4444;
+            border: 1px solid #FCA5A5;
+        }
+
+        .btn-remove:hover {
+            background: #FEF2F2;
+        }
+
+        /* Form styles */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #E5E7EB;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-group input:disabled {
+            background: #F3F4F6;
+            cursor: not-allowed;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid #E2E8F0;
+            margin-top: 2rem;
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #6B7280;
+            border: 2px solid #E5E7EB;
+        }
+
+        .btn-secondary:hover {
+            background: #F9FAFB;
+        }
+
+        /* Password section */
+        .password-requirements {
+            background: #F0F9FF;
+            border: 1px solid #BFDBFE;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .password-requirements h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1E40AF;
+            margin-bottom: 0.75rem;
+        }
+
+        .password-requirements ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .password-requirements li {
+            color: #3B82F6;
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .password-requirements li i {
+            font-size: 0.75rem;
+        }
+
+        /* Security alerts */
+        .security-info {
+            background: #FFFBEB;
+            border: 1px solid #FDE68A;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .security-info i {
+            color: #F59E0B;
+            font-size: 1.25rem;
+        }
+
+        .security-info-content h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #92400E;
+            margin-bottom: 0.25rem;
+        }
+
+        .security-info-content p {
+            color: #B45309;
+            font-size: 0.85rem;
+        }
+
+        /* Alert info box */
+        .alert-info {
+            background: #EFF6FF;
+            border: 1px solid #BFDBFE;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .alert-info i {
+            color: #3B82F6;
+            font-size: 1.25rem;
+            margin-top: 0.125rem;
+        }
+
+        .alert-info p {
+            color: #1E40AF;
+            font-size: 0.9rem;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        /* Section header with edit button */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-header > div h2 {
+            margin: 0;
+        }
+
+        .section-header > div p {
+            margin: 0.25rem 0 0 0;
+        }
+
+        .btn-edit {
+            padding: 0.625rem 1.25rem;
+            background: white;
+            color: #3B82F6;
+            border: 2px solid #3B82F6;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-edit:hover {
+            background: #3B82F6;
+            color: white;
+        }
+
+        /* Info display grid */
+        .profile-display {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .info-item.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .info-item label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #6B7280;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .info-item p {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #1A202C;
+            margin: 0;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #E2E8F0;
+        }
+
+        .profile-photo-edit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid #E2E8F0;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            border-bottom: 2px solid #E2E8F0;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1A202C;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #6B7280;
+            cursor: pointer;
+            padding: 0.5rem;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: #F3F4F6;
+            color: #1A202C;
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        /* DELETE ACCOUNT SECTION */
+        .delete-account-card {
+            background: #FEF2F2;
+            border: 2px solid #FCA5A5;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .delete-account-card h3 {
+            color: #991B1B;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .delete-account-card p {
+            color: #991B1B;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .delete-account-card ul {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+            color: #991B1B;
+            font-size: 0.9rem;
+        }
+
+        .btn-delete {
+            background: #EF4444;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+        }
+
+        .btn-delete:hover {
+            background: #DC2626;
+            transform: translateY(-1px);
+        }
+
+        .delete-confirm-modal .modal-content {
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .delete-confirm-modal .warning-icon {
+            font-size: 3rem;
+            color: #F59E0B;
+            margin-bottom: 1rem;
+        }
+
+        .delete-confirm-modal p {
+            color: #374151;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10B981;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .settings-container {
+                flex-direction: column;
+                padding: 0 1rem;
+            }
+
+            .settings-sidebar {
+                width: 100%;
+                position: static;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .profile-photo-container {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .modal {
+                padding: 1rem;
+            }
+
+            .modal-content {
+                max-height: 95vh;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+                padding: 1.5rem;
+            }
+
+            .section-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .btn-edit {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar glass">
+        <div class="container">
+            <div class="nav-content">
+                <div class="nav-brand">
+                    <img src="../assets/images/ww_logo.png" alt="WaterWorld Logo" class="nav-logo">
+                    <span class="brand-name">Water World</span>
+                </div>
+
+                <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                    <span class="icon-menu"></span>
+                </button>
+
+                <div class="nav-menu" id="navMenu">
+                    <a href="../index.html" class="nav-link">
+                        <i class="fa fa-home"></i>
+                        Home
+                    </a>
+                    <a href="product.html" class="nav-link">
+                        <i class="fa fa-shopping-cart"></i>
+                        Products
+                    </a>
+                    <a href="order-tracking.html" class="nav-link">
+                        <i class="fa fa-search"></i>
+                        Track Order
+                    </a>
+                    <a href="../index.html#services" class="nav-link">
+                        <i class="fa fa-tint"></i>
+                        Services
+                    </a>
+                    <a href="../index.html#contact" class="nav-link">
+                        <i class="fa fa-envelope"></i>
+                        Contact
+                    </a>
+                </div>
+
+                <div class="nav-actions" id="navActions">
+                    <a href="login.html" class="btn btn-outline btn-sm" id="loginBtn" style="display: none;">
+                        <i class="fa fa-sign-in"></i>
+                        Login
+                    </a>
+                    <a href="register.html" class="btn btn-primary btn-sm" id="registerBtn" style="display: none;">
+                        <i class="fa fa-user-plus"></i>
+                        Register
+                    </a>
+                    
+                    <!-- Notifications (hidden by default; JS will reveal only when logged in) -->
+                    <div class="notifications-menu" id="notificationsMenu" style="display: none;">
+                        <button class="btn btn-outline btn-sm notifications-btn" onclick="toggleNotifications()" aria-label="Notifications" title="Notifications">
+                            <i class="fa fa-bell"></i>
+                            <span class="notifications-badge" id="notificationsBadge" style="display: none;">0</span>
+                        </button>
+
+                        <div class="notifications-dropdown" id="notificationsDropdown" style="display: none;">
+                            <div class="notifications-header">
+                                <h3>Notifications</h3>
+                                <button class="mark-all-read" id="markAllReadBtn" onclick="markAllAsRead()">Mark all read</button>
+                            </div>
+                            <div class="notifications-list" id="notificationsList">
+                                <div class="empty-notifications">No notifications</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="user-menu" id="userMenu">
+                        <button class="btn btn-outline btn-sm profile-btn" onclick="toggleUserDropdown()" aria-label="Profile" title="Profile">
+                            <i class="fa fa-user-circle"></i>
+                            <span id="userName">Profile</span>
+                            <i class="fa fa-chevron-down"></i>
+                        </button>
+                        <div class="user-dropdown" id="userDropdown" style="display: none;">
+                            <a href="product.html" class="dropdown-item"><i class="fa fa-shopping-cart"></i> View Products</a>
+                            <a href="usertransaction-history.html" class="dropdown-item"><i class="fa fa-history"></i> Order History</a>
+                            <a href="order-tracking.html" class="dropdown-item"><i class="fa fa-search"></i> Track Order</a>
+                            <a href="feedback.html" class="dropdown-item"><i class="fa fa-comment"></i> Feedback</a>
+                            <a href="settings.html" class="dropdown-item"><i class="fa fa-cog"></i> Settings</a>
+                            <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
+                            <a href="#" onclick="logout()" class="dropdown-item"><i class="fa fa-sign-out"></i> Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Settings Container -->
+    <div class="settings-container">
+        <!-- Sidebar -->
+        <aside class="settings-sidebar">
+            <h3>Settings</h3>
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="#profile" class="sidebar-link active" data-section="profile">
+                        <i class="fa fa-user"></i>
+                        Profile
+                    </a>
+                </li>
+                <li>
+                    <a href="#password" class="sidebar-link" data-section="password">
+                        <i class="fa fa-lock"></i>
+                        Password & Security
+                    </a>
+                </li>
+                <li>
+                    <a href="#personal" class="sidebar-link" data-section="personal">
+                        <i class="fa fa-id-card"></i>
+                        Personal Details
+                    </a>
+                </li>
+                <li>
+                    <a href="#delete" class="sidebar-link" data-section="delete">
+                        <i class="fa fa-trash"></i>
+                        Delete Account
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="settings-content">
+            <!-- Profile Section -->
+            <section id="profile" class="settings-section active">
+                <div class="section-header">
+                    <div>
+                        <h2>Profile</h2>
+                        <p>Your profile information and photo</p>
+                    </div>
+                    <button class="btn-edit" onclick="openEditModal('profileModal')">
+                        <i class="fa fa-pencil"></i> Edit
+                    </button>
+                </div>
+
+                <div class="profile-display">
+                    <div class="profile-photo-container">
+                        <div class="profile-photo" id="profilePhotoDisplay">
+                            <i class="fa fa-user"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Username</label>
+                            <p id="displayUsername">Loading...</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Email Address</label>
+                            <p id="displayEmail">Loading...</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Contact Number</label>
+                            <p id="displayContact">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Password & Security Section -->
+            <section id="password" class="settings-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Password & Security</h2>
+                        <p>Manage your password and security settings</p>
+                    </div>
+                    <button class="btn-edit" onclick="openEditModal('passwordModal')">
+                        <i class="fa fa-pencil"></i> Change Password
+                    </button>
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Password</label>
+                        <p>••••••••</p>
+                    </div>
+                    <div class="info-item">
+                        <label>Last Changed</label>
+                        <p id="displayPasswordChanged">Never</p>
+                    </div>
+                </div>
+
+                <div class="security-info">
+                    <i class="fa fa-shield"></i>
+                    <div class="security-info-content">
+                        <h4>Keep Your Account Secure</h4>
+                        <p>Use a strong password with at least 8 characters, including letters, numbers, and symbols.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Personal Details Section -->
+            <section id="personal" class="settings-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Personal Details</h2>
+                        <p>Your personal information and address</p>
+                    </div>
+                    <button class="btn-edit" onclick="openEditModal('personalModal')">
+                        <i class="fa fa-pencil"></i> Edit
+                    </button>
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Full Name</label>
+                        <p id="displayFullName">Loading...</p>
+                    </div>
+                    <div class="info-item">
+                        <label>Contact Number</label>
+                        <p id="displayPersonalContact">Loading...</p>
+                    </div>
+                    <div class="info-item full-width">
+                        <label>Address</label>
+                        <p id="displayAddress">Loading...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DELETE ACCOUNT SECTION -->
+            <section id="delete" class="settings-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Delete Account</h2>
+                        <p>Permanently remove your account and all data</p>
+                    </div>
+                </div>
+
+                <div class="delete-account-card">
+                    <h3><i class="fa fa-exclamation-triangle"></i> Danger Zone</h3>
+                    <p>This action <strong>cannot be undone</strong>. You will lose:</p>
+                    <ul>
+                        <li>Your profile and personal information</li>
+                        <li>All order history and tracking</li>
+                        <li>Delivery addresses and preferences</li>
+                        <li>Access to your account</li>
+                    </ul>
+                    <button class="btn-delete" onclick="openDeleteConfirm()">
+                        <i class="fa fa-trash"></i> Delete My Account
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- DELETE CONFIRM MODAL -->
+    <div id="deleteConfirmModal" class="modal delete-confirm-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirm Account Deletion</h3>
+                <button class="modal-close" onclick="closeEditModal('deleteConfirmModal')">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <i class="fa fa-exclamation-triangle warning-icon"></i>
+                <p>You're about to <strong>permanently delete</strong> your account.</p>
+                <p>A verification email will be sent to:</p>
+                <p><strong id="deleteEmail">your.email@example.com</strong></p>
+                <p><strong>This link expires in 24 hours.</strong></p>
+                <div class="form-actions" style="justify-content: center; margin-top: 2rem;">
+                    <button class="btn-delete" onclick="requestDeletion()">
+                        <i class="fa fa-envelope"></i> Send Verification Email
+                    </button>
+                    <button class="btn-secondary" onclick="closeEditModal('deleteConfirmModal')">
+                        <i class="fa fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SUCCESS TOAST -->
+    <div id="toast" class="toast" style="display: none;">
+        <i class="fa fa-check-circle"></i> <span id="toastMessage"></span>
+    </div>
+
+    <!-- Profile Edit Modal -->
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Profile</h3>
+                <button class="modal-close" onclick="closeEditModal('profileModal')">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="profile-photo-edit">
+                    <div class="profile-photo" id="profilePhotoPreview">
+                        <i class="fa fa-user"></i>
+                    </div>
+                    <div class="photo-actions">
+                        <label for="photoUpload" class="btn-upload">
+                            <i class="fa fa-upload"></i> Upload Photo
+                        </label>
+                        <input type="file" id="photoUpload" accept="image/*" style="display: none;">
+                        <button class="btn-remove" onclick="removePhoto()">
+                            <i class="fa fa-trash"></i> Remove
+                        </button>
+                    </div>
+                </div>
+
+                <form id="profileForm">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" placeholder="Enter your email">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="profileContact">Contact Number</label>
+                        <input type="tel" id="profileContact" name="contact" placeholder="09XXXXXXXXX" pattern="[0-9]{11}" maxlength="11">
+                        <small class="form-help">11-digit mobile number (e.g., 09123456789)</small>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">
+                            <i class="fa fa-check"></i> Save Changes
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="closeEditModal('profileModal')">
+                            <i class="fa fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Edit Modal -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Change Password</h3>
+                <button class="modal-close" onclick="closeEditModal('passwordModal')">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="password-requirements">
+                    <h4>Password Requirements:</h4>
+                    <ul>
+                        <li><i class="fa fa-check-circle"></i> At least 8 characters long</li>
+                        <li><i class="fa fa-check-circle"></i> Contains uppercase and lowercase letters</li>
+                        <li><i class="fa fa-check-circle"></i> Contains at least one number</li>
+                        <li><i class="fa fa-check-circle"></i> Contains at least one special character</li>
+                    </ul>
+                </div>
+
+                <form id="passwordForm">
+                    <div id="passwordStep1">
+                        <div class="form-group">
+                            <label for="currentPassword">Current Password</label>
+                            <input type="password" id="currentPassword" name="currentPassword" placeholder="Enter current password" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="newPassword">New Password</label>
+                            <input type="password" id="newPassword" name="newPassword" placeholder="Enter new password" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirm New Password</label>
+                            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm new password" required>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn-primary" id="sendOtpBtn">
+                                <i class="fa fa-envelope"></i> Send Verification Code
+                            </button>
+                            <button type="button" class="btn-secondary" onclick="closeEditModal('passwordModal')">
+                                <i class="fa fa-times"></i> Cancel
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="passwordStep2" style="display: none;">
+                        <div class="alert-info">
+                            <i class="fa fa-info-circle"></i>
+                            <p>We've sent a verification code to <strong id="otpEmail"></strong>. Please enter it below.</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="otpCode">Verification Code</label>
+                            <input type="text" id="otpCode" name="otpCode" placeholder="Enter 6-digit code" maxlength="6" pattern="[0-9]{6}" required>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">
+                                <i class="fa fa-lock"></i> Change Password
+                            </button>
+                            <button type="button" class="btn-secondary" id="resendOtpBtn">
+                                <i class="fa fa-refresh"></i> Resend Code
+                            </button>
+                            <button type="button" class="btn-secondary" onclick="resetPasswordModal()">
+                                <i class="fa fa-arrow-left"></i> Back
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Personal Details Edit Modal -->
+    <div id="personalModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Personal Details</h3>
+                <button class="modal-close" onclick="closeEditModal('personalModal')">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="personalForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firstName">First Name</label>
+                            <input type="text" id="firstName" name="firstName" placeholder="Enter first name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="middleName">Middle Name</label>
+                            <input type="text" id="middleName" name="middleName" placeholder="Enter middle name">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lastName">Last Name</label>
+                        <input type="text" id="lastName" name="lastName" placeholder="Enter last name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contact">Contact Number</label>
+                        <input type="tel" id="contact" name="contact" placeholder="09XXXXXXXXX" pattern="[0-9]{11}" maxlength="11" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="street">Street Address</label>
+                        <input type="text" id="street" name="street" placeholder="Enter street address" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="barangay">Barangay</label>
+                            <select id="barangay" name="barangay" required disabled>
+                                <option value="">Select Barangay</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="city">City</label>
+                            <select id="city" name="city" required>
+                                <option value="">Select City</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="province">Province</label>
+                        <input type="text" id="province" name="province" value="Metro Manila" readonly style="background: #F3F4F6; cursor: default;">
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">
+                            <i class="fa fa-check"></i> Save Changes
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="closeEditModal('personalModal')">
+                            <i class="fa fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api-helper.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/notifications.js"></script>
+    <script>
+        // Tab switching
+        document.querySelectorAll('.sidebar-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                const sectionId = this.getAttribute('data-section');
+                document.querySelectorAll('.settings-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById(sectionId).classList.add('active');
+            });
+        });
+
+        // Modal functions
+        function openEditModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeEditModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close modal when clicking outside
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeEditModal(modal.id);
+                }
+            });
+        });
+
+        // ACCOUNT DELETION
+        function openDeleteConfirm() {
+            const email = document.getElementById('displayEmail').textContent;
+            document.getElementById('deleteEmail').textContent = email || 'your email';
+            openEditModal('deleteConfirmModal');
+        }
+
+        async function requestDeletion() {
+            try {
+                const btn = event.target;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Sending...';
+
+                const result = await API.post('/account/request-deletion.php', {});
+                if (result.success) {
+                    showToast('Verification email sent! Check your inbox.');
+                    closeEditModal('deleteConfirmModal');
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Deletion request failed:', error);
+                alert('Failed to send verification email.');
+            } finally {
+                const btn = event.target;
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa fa-envelope"></i> Send Verification Email';
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = message;
+            toast.style.display = 'flex';
+            setTimeout(() => { toast.style.display = 'none'; }, 4000);
+        }
+
+        // ORIGINAL SCRIPTS (UNCHANGED)
+        async function loadUserData() {
+            try {
+                const sessionResult = await API.get('/auth/session.php');
+                const profileResult = await API.get('/auth/profile.php');
+
+                if (!sessionResult.authenticated || !profileResult.success) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const user = sessionResult.user;
+                const profile = profileResult.profile;
+
+                const userData = {
+                    username: user.username || 'N/A',
+                    email: profile.email || '',
+                    contact: profile.customer_contact || '',
+                    firstName: profile.first_name || '',
+                    middleName: profile.middle_name || '',
+                    lastName: profile.last_name || '',
+                    street: profile.street || '',
+                    barangay: profile.barangay || '',
+                    city: profile.city || '',
+                    province: profile.province || '',
+                    profilePhoto: user.profile_photo || null,
+                    passwordChangedAt: user.password_changed_at || null
+                };
+
+                const photoPreview = document.getElementById('profilePhotoPreview');
+                if (userData.profilePhoto) {
+                    const cacheBuster = new Date().getTime();
+                    const imgPath = `/wrsoms/assets/images/profiles/${userData.profilePhoto}?v=${cacheBuster}`;
+                    const img = document.createElement('img');
+                    img.src = imgPath;
+                    img.alt = 'Profile Photo';
+                    img.onerror = function() {
+                        photoPreview.innerHTML = '<i class="fa fa-user"></i>';
+                    };
+                    photoPreview.innerHTML = '';
+                    photoPreview.appendChild(img);
+                } else {
+                    photoPreview.innerHTML = '<i class="fa fa-user"></i>';
+                }
+
+                document.getElementById('displayUsername').textContent = userData.username;
+                document.getElementById('displayEmail').textContent = userData.email || 'Not set';
+                document.getElementById('displayContact').textContent = userData.contact || 'Not set';
+                
+                if (userData.passwordChangedAt) {
+                    const changedDate = new Date(userData.passwordChangedAt);
+                    const formattedDate = changedDate.toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    });
+                    document.getElementById('displayPasswordChanged').textContent = formattedDate;
+                } else {
+                    document.getElementById('displayPasswordChanged').textContent = 'Never';
+                }
+                
+                const middleInitial = userData.middleName ? userData.middleName + ' ' : '';
+                document.getElementById('displayFullName').textContent = `${userData.firstName} ${middleInitial}${userData.lastName}`.trim() || 'Not set';
+                document.getElementById('displayPersonalContact').textContent = userData.contact || 'Not set';
+                document.getElementById('displayAddress').textContent = userData.street && userData.barangay && userData.city && userData.province 
+                    ? `${userData.street}, ${userData.barangay}, ${userData.city}, ${userData.province}`
+                    : 'Not set';
+
+                document.getElementById('username').value = userData.username;
+                document.getElementById('email').value = userData.email;
+                document.getElementById('profileContact').value = userData.contact;
+                document.getElementById('firstName').value = userData.firstName;
+                document.getElementById('middleName').value = userData.middleName;
+                document.getElementById('lastName').value = userData.lastName;
+                document.getElementById('contact').value = userData.contact;
+                document.getElementById('street').value = userData.street;
+
+                setTimeout(() => {
+                    if (userData.city) {
+                        document.getElementById('city').value = userData.city;
+                        updateBarangays();
+                        setTimeout(() => {
+                            if (userData.barangay) {
+                                document.getElementById('barangay').value = userData.barangay;
+                            }
+                        }, 100);
+                    }
+                    document.getElementById('province').value = 'Metro Manila';
+                }, 500);
+
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                window.location.href = 'login.html';
+            }
+        }
+
+        document.getElementById('photoUpload').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const preview = document.getElementById('profilePhotoPreview');
+                    preview.innerHTML = `<img src="${event.target.result}" alt="Profile Photo">`;
+                };
+                reader.readAsDataURL(file);
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('photo', file);
+                    
+                    const response = await fetch('/wrsoms/api/profile/upload-photo.php', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        alert('Profile photo updated successfully!');
+                    } else {
+                        alert('Error: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Error uploading photo:', error);
+                    alert('Error uploading photo. Please try again.');
+                }
+            }
+        });
+
+        async function removePhoto() {
+            if (!confirm('Are you sure you want to remove your profile photo?')) return;
+            
+            try {
+                const result = await API.post('/profile/delete-photo.php', {});
+                if (result.success) {
+                    const preview = document.getElementById('profilePhotoPreview');
+                    preview.innerHTML = '<i class="fa fa-user"></i>';
+                    document.getElementById('photoUpload').value = '';
+                    alert('Profile photo removed successfully!');
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error removing photo:', error);
+                alert('Error removing photo. Please try again.');
+            }
+        }
+
+        document.getElementById('profileForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            try {
+                const formData = {
+                    email: document.getElementById('email').value,
+                    contact: document.getElementById('profileContact').value
+                };
+                const result = await API.post('/profile/update.php', formData);
+                if (result.success) {
+                    alert('Profile updated successfully!');
+                    closeEditModal('profileModal');
+                    loadUserData();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                alert('Failed to update profile. Please try again.');
+            }
+        });
+
+        document.getElementById('sendOtpBtn').addEventListener('click', async function() {
+            const newPass = document.getElementById('newPassword').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+            const currentPass = document.getElementById('currentPassword').value;
+            
+            if (!currentPass || !newPass || !confirmPass) {
+                showToast('Please fill all fields');
+                return;
+            }
+            if (newPass !== confirmPass) {
+                showToast('Passwords do not match!');
+                return;
+            }
+            if (newPass.length < 8 || !/[A-Z]/.test(newPass) || !/[a-z]/.test(newPass) || !/[0-9]/.test(newPass) || !/[^A-Za-z0-9]/.test(newPass)) {
+                showToast('Password does not meet requirements');
+                return;
+            }
+            
+            try {
+                this.disabled = true;
+                this.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Sending...';
+                const result = await API.post('/password/send-otp.php', { currentPassword: currentPass });
+                if (result.success) {
+                    document.getElementById('otpEmail').textContent = result.email;
+                    document.getElementById('passwordStep1').style.display = 'none';
+                    document.getElementById('passwordStep2').style.display = 'block';
+                    if (result.debug_otp) {
+                        showToast('DEV OTP: ' + result.debug_otp);
+                    }
+                } else {
+                    showToast('Error: ' + result.message);
+                }
+            } catch (error) {
+                showToast('Failed to send OTP');
+            } finally {
+                this.disabled = false;
+                this.innerHTML = '<i class="fa fa-envelope"></i> Send Verification Code';
+            }
+        });
+
+        document.getElementById('resendOtpBtn').addEventListener('click', async function() {
+            const currentPass = document.getElementById('currentPassword').value;
+            try {
+                this.disabled = true;
+                this.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Resending...';
+                const result = await API.post('/password/send-otp.php', { currentPassword: currentPass });
+                if (result.success) showToast('Code resent!');
+            } catch (error) {
+                showToast('Failed to resend');
+            } finally {
+                this.disabled = false;
+                this.innerHTML = '<i class="fa fa-refresh"></i> Resend Code';
+            }
+        });
+
+        document.getElementById('passwordForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const otp = document.getElementById('otpCode').value;
+            const newPass = document.getElementById('newPassword').value;
+            if (!otp || otp.length !== 6) {
+                showToast('Enter 6-digit code');
+                return;
+            }
+            try {
+                const result = await API.post('/password/change.php', { otp, newPassword: newPass });
+                if (result.success) {
+                    showToast('Password changed!');
+                    this.reset();
+                    resetPasswordModal();
+                    closeEditModal('passwordModal');
+                } else {
+                    showToast('Error: ' + result.message);
+                }
+            } catch (error) {
+                showToast('Failed to change password');
+            }
+        });
+
+        function resetPasswordModal() {
+            document.getElementById('passwordStep1').style.display = 'block';
+            document.getElementById('passwordStep2').style.display = 'none';
+            document.getElementById('otpCode').value = '';
+        }
+
+        document.getElementById('personalForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            try {
+                const formData = {
+                    firstName: document.getElementById('firstName').value,
+                    middleName: document.getElementById('middleName').value,
+                    lastName: document.getElementById('lastName').value,
+                    contact: document.getElementById('contact').value,
+                    street: document.getElementById('street').value,
+                    barangay: document.getElementById('barangay').value,
+                    city: document.getElementById('city').value,
+                    province: 'Metro Manila'
+                };
+                const result = await API.post('/customer/update-details.php', formData);
+                if (result.success) {
+                    showToast('Details updated!');
+                    closeEditModal('personalModal');
+                    loadUserData();
+                } else {
+                    showToast('Error: ' + result.message);
+                }
+            } catch (error) {
+                showToast('Failed to update');
+            }
+        });
+
+        let ncrCities = {};
+        async function loadCities() {
+            try {
+                const result = await API.get('/common/cities.php');
+                if (result.success) {
+                    ncrCities = result.data;
+                    populateCityDropdown();
+                }
+            } catch (error) {
+                console.error('Error loading cities:', error);
+            }
+        }
+
+        function populateCityDropdown() {
+            const citySelect = document.getElementById('city');
+            while (citySelect.options.length > 1) citySelect.remove(1);
+            Object.keys(ncrCities).forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                citySelect.appendChild(option);
+            });
+        }
+
+        function updateBarangays() {
+            const citySelect = document.getElementById('city');
+            const barangaySelect = document.getElementById('barangay');
+            const selectedCity = citySelect.value;
+            barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+            if (!selectedCity) {
+                barangaySelect.disabled = true;
+                return;
+            }
+            barangaySelect.disabled = false;
+            if (ncrCities[selectedCity]) {
+                ncrCities[selectedCity].forEach(barangay => {
+                    const option = document.createElement('option');
+                    option.value = barangay;
+                    option.textContent = barangay;
+                    barangaySelect.appendChild(option);
+                });
+            }
+        }
+
+        document.getElementById('city').addEventListener('change', updateBarangays);
+        loadCities();
+        loadUserData();
+    </script>
+</body>
+</html>

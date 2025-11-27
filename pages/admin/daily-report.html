@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Daily Report — Water Refilling</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background: #F7FAFC;
+    color: #1A202C;
+    min-height: 100vh;
+    display: flex;
+    overflow-x: hidden;
+}
+
+.sidebar {
+    width: 64px;
+    background: #1A202C;
+    color: #E2E8F0;
+    position: fixed;
+    height: 100vh;
+    padding: 24px 0;
+    transition: width 0.3s ease;
+    z-index: 1000;
+}
+
+.sidebar:hover, .sidebar:focus-within {
+    width: 240px;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #3B82F6;
+    text-align: center;
+    margin-bottom: 32px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    background: transparent;
+    padding: 8px;
+}
+
+.logo-img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    background: transparent;
+}
+
+.logo-text {
+    font-size: 20px;
+    font-weight: 600;
+    color: #3B82F6;
+}
+
+.sidebar:hover .logo-container, .sidebar:focus-within .logo-container {
+    opacity: 1;
+}
+
+.sidebar ul {
+    list-style: none;
+}
+
+.sidebar ul li {
+    padding: 16px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.sidebar ul li:hover, .sidebar ul li:focus {
+    background: #2D3748;
+}
+
+.sidebar ul li.active {
+    background: #3B82F6;
+    color: #FFFFFF;
+    position: relative;
+}
+
+.sidebar ul li a, .sidebar ul li button {
+    color: inherit;
+    text-decoration: none;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    display: block;
+    text-align: center;
+    background: none;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+}
+
+.sidebar:hover ul li a, .sidebar:focus-within ul li a,
+.sidebar:hover ul li button, .sidebar:focus-within ul li button {
+    opacity: 1;
+    text-align: left;
+}
+
+.content {
+    margin-left: 64px;
+    padding: 24px;
+    width: calc(100% - 64px);
+    background: #FFFFFF;
+    min-height: 100vh;
+    transition: margin-left 0.3s ease, width 0.3s ease;
+}
+
+.sidebar:hover ~ .content, .sidebar:focus-within ~ .content {
+    margin-left: 240px;
+    width: calc(100% - 240px);
+}
+
+/* Report Sidebar */
+.sidebar-report {
+    position: fixed;
+    top: 0;
+    left: -250px;
+    width: 250px;
+    height: 100%;
+    background: #2c3e50;
+    color: #fff;
+    transition: 0.3s;
+    padding-top: 60px;
+    overflow-y: auto;
+    z-index: 1050;
+}
+.sidebar-report.active {
+    left: 0;
+}
+.sidebar-report ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.sidebar-report ul li {
+    padding: 10px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.sidebar-report ul li a {
+    color: #fff;
+    text-decoration: none;
+    display: block;
+}
+.sidebar-report ul li a:hover {
+    background: #34495e;
+}
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #fff;
+}
+
+.card{border:none;border-radius:.75rem;box-shadow:0 6px 18px rgba(38,78,118,.06)}
+.stat{font-size:1.6rem;font-weight:700}
+.small-muted{color:#6b7280;font-size:.95rem}
+.table thead th{border-bottom:2px solid #e6eef8}
+.stat-sub{font-size:.875rem;color:#6b7280}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        padding-bottom: 16px;
+    }
+    .sidebar:hover, .sidebar:focus-within {
+        width: 100%;
+    }
+    .content {
+        margin-left: 0;
+        width: 100%;
+        padding: 16px;
+    }
+    .sidebar:hover ~ .content, .sidebar:focus-within ~ .content {
+        margin-left: 0;
+        width: 100%;
+    }
+}
+</style>
+</head>
+<body>
+<!-- Main Sidebar (same as admin_dashboard.php) -->
+<nav class="sidebar" aria-label="Main navigation">
+    <div class="logo-container">
+        <img src="ww_logo.png" alt="Water World Logo" class="logo-img">
+        <span class="logo-text">WATER WORLD</span>
+    </div>
+    <ul>
+        <li><a href="admin_dashboard.php">Dashboard</a></li>
+        <li><a href="manage_orders.php">Manage Orders</a></li>
+        <li><a href="status.php">Manage Status</a></li>
+        <li class="active"><button type="button" onclick="showDailyReport()">Daily Report</button></li>
+    </ul>
+</nav>
+
+<!-- Report Sidebar Panel -->
+<div class="sidebar-report" id="reportSidebar">
+    <span class="close-btn" onclick="toggleReportSidebar()">&times;</span>
+    <ul id="reportDates"></ul>
+</div>
+
+<!-- Main Content -->
+<main class="content" id="mainContent">
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-0">Daily Sales Report</h2>
+                <div class="small-muted">Overview for <span id="reportDate">-</span></div>
+            </div>
+            <div>
+                <button type="button" onclick="toggleReportSidebar()" class="btn btn-outline-primary me-2" title="Date Selector">📅</button>
+                <a id="prevDayBtn" href="#" class="btn btn-outline-primary">⬅ Previous Day</a>
+                <a id="nextDayBtn" href="#" class="btn btn-outline-primary">Next Day ➡</a>
+                
+            </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card p-3">
+                    <div class="small-muted">Total Revenue</div>
+                    <div class="stat" id="totalRevenue">₱ 0.00</div>
+                    <div class="stat-sub mt-1" id="ordersToday">0 orders</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3">
+                    <div class="small-muted">Orders</div>
+                    <div class="stat" id="ordersStat">0</div>
+                    <div class="stat-sub mt-1" id="newCustomers">0 new customers</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3">
+                    <div class="small-muted">New Customers</div>
+                    <div class="stat" id="newCustomersStat">0</div>
+                    <div class="stat-sub mt-1">Registered</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3">
+                    <div class="small-muted">Completed Payments</div>
+                    <div class="stat" id="completedPayments">₱ 0.00</div>
+                    <div class="stat-sub mt-1">Paid status</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="row g-3 mb-4">
+            <div class="col-lg-7">
+                <div class="card p-3">
+                    <h6 class="mb-3">Revenue — Last 7 days</h6>
+                    <canvas id="revenueLine"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="card p-3 mb-3">
+                    <h6 class="mb-3">Orders — Last 7 days</h6>
+                    <canvas id="ordersBar"></canvas>
+                </div>
+                <div class="card p-3">
+                    <h6 class="mb-3">Payments by Method — Last 30 days</h6>
+                    <canvas id="paymentsPie" style="height:240px"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tables -->
+        <div class="row g-3">
+            <div class="col-lg-7">
+                <div class="card p-3">
+                    <h6 class="mb-3">Recent Orders</h6>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead class="small-muted">
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Customer</th>
+                                    <th>Date</th>
+                                    <th class="text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentOrdersBody">
+                                <tr><td colspan="4" class="text-center small-muted">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="card p-3">
+                    <h6 class="mb-3">Top Selling Containers (30 days)</h6>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead class="small-muted">
+                                <tr>
+                                    <th>Container</th>
+                                    <th class="text-end">Qty</th>
+                                    <th class="text-end">Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topProductsBody">
+                                <tr><td colspan="3" class="text-center small-muted">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+function toggleReportSidebar() {
+    document.getElementById('reportSidebar').classList.toggle('active');
+}
+
+function fetchDates() {
+    fetch('/WRSOMS/api/admin/daily_report.php')
+        .then(response => response.json())
+        .then(res => {
+            if (!res.success) return;
+            const dates = res.data.available_dates || [];
+            const ul = document.getElementById('reportDates');
+            ul.innerHTML = '';
+            dates.forEach(d => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = '#';
+                a.textContent = d;
+                a.onclick = (e) => { e.preventDefault(); loadReport(d); toggleReportSidebar(); };
+                li.appendChild(a);
+                ul.appendChild(li);
+            });
+        })
+        .catch(error => console.error('Error fetching dates:', error));
+}
+
+let chartRevenue = null;
+let chartOrders = null;
+let chartPayments = null;
+
+function renderCharts(labels, revenueData, ordersData, paymentsByMethod) {
+    // Revenue line
+    const revCtx = document.getElementById('revenueLine').getContext('2d');
+    if (chartRevenue) chartRevenue.destroy();
+    chartRevenue = new Chart(revCtx, {
+        type: 'line',
+        data: { labels: labels, datasets: [{ label: 'Revenue (₱)', data: revenueData, tension:0.3, fill:true, borderColor:'#007bff', backgroundColor:'rgba(0,123,255,0.2)' }] },
+        options: { responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, ticks:{callback:v=>'₱'+v}}} }
+    });
+
+    // Orders bar
+    const ordCtx = document.getElementById('ordersBar').getContext('2d');
+    if (chartOrders) chartOrders.destroy();
+    chartOrders = new Chart(ordCtx, {
+        type: 'bar',
+        data: { labels: labels, datasets: [{ label:'Orders', data: ordersData, backgroundColor:'#28a745' }] },
+        options: { responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
+    });
+
+    // Payments pie
+    const payCtx = document.getElementById('paymentsPie').getContext('2d');
+    if (chartPayments) chartPayments.destroy();
+    const pieLabels = (paymentsByMethod || []).map(p=>p.method_name || 'Method');
+    const pieData = (paymentsByMethod || []).map(p=>parseFloat(p.total) || 0);
+    chartPayments = new Chart(payCtx, {
+        type:'pie',
+        data:{ labels:pieLabels, datasets:[{ data:pieData, backgroundColor:['#007bff','#ffc107','#28a745','#dc3545','#6f42c1'] }] },
+        options:{ responsive:true, plugins:{legend:{position:'bottom'}} }
+    });
+}
+
+function loadReport(date) {
+    const url = '/WRSOMS/api/admin/daily_report.php' + (date ? '?date=' + encodeURIComponent(date) : '');
+    fetch(url)
+        .then(r => r.json())
+        .then(res => {
+            if (!res.success) throw new Error(res.message || 'Failed to load');
+            const data = res.data || {};
+
+            // Update header date and prev/next
+            document.getElementById('reportDate').textContent = data.selected_date || '';
+            const prevBtn = document.getElementById('prevDayBtn');
+            const nextBtn = document.getElementById('nextDayBtn');
+            prevBtn.href = '#'; nextBtn.href = '#';
+            prevBtn.onclick = (e) => { e.preventDefault(); if (data.prev_date) loadReport(data.prev_date); };
+            nextBtn.onclick = (e) => { e.preventDefault(); if (data.next_date) loadReport(data.next_date); };
+
+            // Update stats
+            const stats = data.stats || {};
+            document.getElementById('totalRevenue').textContent = '₱ ' + (stats.total_revenue || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+            document.getElementById('ordersToday').textContent = (stats.orders_today || 0) + ' orders';
+            document.getElementById('ordersStat').textContent = (stats.orders_today || 0);
+            document.getElementById('newCustomers').textContent = (stats.new_customers_today || 0) + ' new customers';
+            document.getElementById('newCustomersStat').textContent = (stats.new_customers_today || 0);
+            document.getElementById('completedPayments').textContent = '₱ ' + (stats.completed_payments_today || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+
+            // Recent orders
+            const recentBody = document.getElementById('recentOrdersBody');
+            const recent = data.recent_orders || [];
+            recentBody.innerHTML = '';
+            if (recent.length === 0) {
+                recentBody.innerHTML = '<tr><td colspan="4" class="text-center small-muted">No recent orders</td></tr>';
+            } else {
+                recent.forEach(o => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td><strong>${o.reference_id}</strong></td><td>${o.customer_name || 'Guest'}</td><td>${o.order_date}</td><td class="text-end">₱ ${Number(o.total_amount).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>`;
+                    recentBody.appendChild(tr);
+                });
+            }
+
+            // Top products
+            const topBody = document.getElementById('topProductsBody');
+            const top = data.top_products || [];
+            topBody.innerHTML = '';
+            if (top.length === 0) {
+                topBody.innerHTML = '<tr><td colspan="3" class="text-center small-muted">No sales in last 30 days</td></tr>';
+            } else {
+                top.forEach(tp => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${tp.container_type}</td><td class="text-end">${parseInt(tp.qty||0)}</td><td class="text-end">₱ ${Number(tp.revenue||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>`;
+                    topBody.appendChild(tr);
+                });
+            }
+
+            // Charts
+            const charts = data.charts || {};
+            renderCharts(charts.labels || [], charts.revenue_data || [], charts.orders_data || [], charts.payments_by_method || []);
+
+            // Populate dates list (if present)
+            if (data.available_dates) {
+                const ul = document.getElementById('reportDates');
+                ul.innerHTML = '';
+                data.available_dates.forEach(d => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = '#'; a.textContent = d;
+                    a.onclick = (e) => { e.preventDefault(); loadReport(d); toggleReportSidebar(); };
+                    li.appendChild(a); ul.appendChild(li);
+                });
+            }
+
+            // Update URL without reload
+            try { history.replaceState(null, '', '?date=' + encodeURIComponent(data.selected_date)); } catch(e){}
+        })
+        .catch(err => {
+            console.error('Error loading report:', err);
+            document.getElementById('mainContent').innerHTML = '<p>Error loading daily report. Please try again.</p>';
+        });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // If URL has ?date= use it
+    const params = new URLSearchParams(window.location.search);
+    const date = params.get('date');
+    loadReport(date);
+    fetchDates();
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

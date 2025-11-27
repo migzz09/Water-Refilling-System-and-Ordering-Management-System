@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-cache-control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Transaction History - WaterWorld</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../assets/css/design-system.css">
+    <link rel="stylesheet" href="../assets/css/index.css">
+    <link rel="stylesheet" href="../assets/css/product.css">
+    <link rel="stylesheet" href="../assets/css/header.css">
+    <link rel="stylesheet" href="../assets/css/notifications.css">
+    <style>
+        /* Prevent text wrapping in navbar */
+        .brand-name {
+            white-space: nowrap;
+        }
+
+        .nav-link {
+            white-space: nowrap;
+        }
+
+        .nav-menu {
+            flex-wrap: nowrap;
+        }
+
+        /* Page-specific overrides for better layout */
+        body {
+            padding-top: 120px; /* Increased to match hero padding (8rem ≈ 128px) and prevent header overlap */
+            background: #F7FAFC;
+            min-height: 100vh;
+        }
+
+        /* Enhanced container with card design - ONLY for content area */
+        body > .container {
+            padding: 2rem 5%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Page header with icon */
+        .page-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #E2E8F0;
+        }
+
+        .page-header-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Page title with modern typography */
+        .title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1A202C;
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Modern search bar with icon */
+        .search-bar {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+        
+        .search-bar i {
+            position: absolute;
+            left: 1.25rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6B7280;
+            font-size: 1.1rem;
+        }
+
+        .search-bar input {
+            padding: 1rem 1.5rem 1rem 3.5rem;
+            width: 100%;
+            border-radius: 12px;
+            border: 2px solid #E2E8F0;
+            font-size: 1rem;
+            background: white;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Transaction list container with admin-style card */
+        .transaction-list {
+            background: white;
+            border-radius: 12px;
+            padding: 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            min-height: 400px;
+            overflow: hidden;
+        }
+
+        /* Date headers with admin colors */
+        .date-header {
+            background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+            padding: 0.875rem 1.5rem;
+            font-weight: 600;
+            color: #1E40AF;
+            font-size: 0.875rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #BFDBFE;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .date-header i {
+            color: #3B82F6;
+        }
+
+        /* Transaction items with hover effect and icons */
+        .transaction-item {
+            background: white;
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid #F3F4F6;
+        }
+
+        .transaction-item:hover {
+            background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
+            transform: translateX(4px);
+            padding-left: 1.75rem;
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-details {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+        }
+
+        .transaction-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .transaction-icon.refill {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        }
+
+        .transaction-icon.buy {
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+        }
+
+        .transaction-icon.combo {
+            background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+        }
+
+        .transaction-info {
+            flex: 1;
+        }
+
+        .transaction-type {
+            font-weight: 600;
+            color: #1A202C;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .transaction-time {
+            font-size: 0.8125rem;
+            color: #6B7280;
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .transaction-time i {
+            font-size: 0.75rem;
+        }
+
+        .transaction-amount {
+            font-weight: 700;
+            color: #3B82F6;
+            font-size: 1.125rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .transaction-amount i {
+            font-size: 0.875rem;
+        }
+
+        /* Enhanced receipt modal */
+        #receipt-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            align-items: center;
+            justify-content: center;
+            background: rgba(17, 24, 39, 0.7);
+            z-index: 1200;
+            backdrop-filter: blur(4px);
+        }
+
+        .receipt-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            width: 92%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .receipt-title {
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #1A202C;
+            text-align: center;
+            border-bottom: 2px solid #E2E8F0;
+            padding-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .receipt-title i {
+            color: #3B82F6;
+            font-size: 1.75rem;
+        }
+
+        .close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #9CA3AF;
+            transition: all 0.2s;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: #F3F4F6;
+        }
+
+        .close:hover {
+            color: #1F2937;
+            background: #E5E7EB;
+        }
+
+        .receipt-details p {
+            margin: 1rem 0;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9375rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            background: #F9FAFB;
+        }
+
+        .receipt-details p strong {
+            color: #4B5563;
+            font-weight: 600;
+        }
+
+        .receipt-details p span {
+            color: #1A202C;
+            font-weight: 500;
+        }
+
+        .receipt-details .total {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 2px solid #3B82F6;
+            font-size: 1.125rem;
+            background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+        }
+
+        .receipt-details .total strong {
+            color: #1E40AF;
+        }
+
+        .receipt-details .total span {
+            color: #3B82F6;
+            font-weight: 700;
+        }
+
+        .back-btn {
+            display: block;
+            margin: 1.5rem auto 0;
+            padding: 0.875rem 2.5rem;
+            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Empty state styling */
+        .transaction-list > p {
+            text-align: center;
+            color: #6B7280;
+            font-size: 1rem;
+            padding: 4rem 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .transaction-list > p i {
+            font-size: 3rem;
+            color: #D1D5DB;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .title {
+                font-size: 1.5rem;
+            }
+
+            .page-header-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+
+            .transaction-list {
+                padding: 0;
+            }
+
+            .receipt-content {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+        <!-- Navigation -->
+        <nav class="navbar glass">
+            <div class="container">
+                <div class="nav-content">
+                    <div class="nav-brand">
+                        <img src="../assets/images/ww_logo.png" alt="WaterWorld Logo" class="nav-logo">
+                        <span class="brand-name">Water World</span>
+                    </div>
+
+                    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                        <span class="icon-menu"></span>
+                    </button>
+
+                    <div class="nav-menu" id="navMenu">
+                        <a href="../index.html" class="nav-link">
+                            <i class="fa fa-home"></i>
+                            Home
+                        </a>
+                        <a href="product.html" class="nav-link">
+                            <i class="fa fa-shopping-cart"></i>
+                            Products
+                        </a>
+                        <a href="order-tracking.html" class="nav-link">
+                            <i class="fa fa-search"></i>
+                            Track Order
+                        </a>
+                        <a href="../index.html#services" class="nav-link">
+                            <i class="fa fa-tint"></i>
+                            Services
+                        </a>
+                        <a href="../index.html#contact" class="nav-link">
+                            <i class="fa fa-envelope"></i>
+                            Contact
+                        </a>
+                    </div>
+
+                    <div class="nav-actions" id="navActions">
+                        <a href="login.html" class="btn btn-outline btn-sm" id="loginBtn">
+                            <i class="fa fa-sign-in"></i>
+                            Login
+                        </a>
+                        <a href="register.html" class="btn btn-primary btn-sm" id="registerBtn">
+                            <i class="fa fa-user-plus"></i>
+                            Register
+                        </a>
+                        
+                        <!-- Notifications (hidden by default; JS will reveal only when logged in) -->
+                        <div class="notifications-menu" id="notificationsMenu" style="display: none;">
+                            <button class="btn btn-outline btn-sm notifications-btn" onclick="toggleNotifications()" aria-label="Notifications" title="Notifications">
+                                <i class="fa fa-bell"></i>
+                                <span class="notifications-badge" id="notificationsBadge" style="display: none;">0</span>
+                            </button>
+
+                            <div class="notifications-dropdown" id="notificationsDropdown" style="display: none;">
+                                <div class="notifications-header">
+                                    <h3>Notifications</h3>
+                                    <button class="mark-all-read" id="markAllReadBtn" onclick="markAllAsRead()">Mark all read</button>
+                                </div>
+                                <div class="notifications-list" id="notificationsList">
+                                    <div class="empty-notifications">No notifications</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="user-menu" id="userMenu" style="display: none;">
+                            <button class="btn btn-outline btn-sm profile-btn" onclick="toggleUserDropdown()" aria-label="Profile" title="Profile">
+                                <i class="fa fa-user-circle"></i>
+                                <span id="userName">Profile</span>
+                                <i class="fa fa-chevron-down"></i>
+                            </button>
+                            <div class="user-dropdown" id="userDropdown" style="display: none;">
+                                <a href="product.html" class="dropdown-item"><i class="fa fa-shopping-cart"></i> View Products</a>
+                                <a href="usertransaction-history.html" class="dropdown-item"><i class="fa fa-history"></i> Order History</a>
+                                <a href="order-tracking.html" class="dropdown-item"><i class="fa fa-search"></i> Track Order</a>
+                                <a href="feedback.html" class="dropdown-item"><i class="fa fa-comment"></i> Feedback</a>
+                                <a href="settings.html" class="dropdown-item"><i class="fa fa-cog"></i> Settings</a>
+                                <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
+                                <a href="#" onclick="logout()" class="dropdown-item"><i class="fa fa-sign-out"></i> Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <div class="page-header-icon">
+                <i class="fa fa-history"></i>
+            </div>
+            <h1 class="title">Transaction History</h1>
+        </div>
+        <div class="search-bar">
+            <i class="fa fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search by reference ID..." value="">
+        </div>
+        <section class="transaction-list">
+            <p><i class="fa fa-inbox"></i>No delivered transactions found.</p>
+        </section>
+
+        <div id="receipt-modal" class="receipt-modal">
+            <div class="receipt-content">
+                <span class="close" onclick="closeReceipt()">&times;</span>
+                <div class="receipt-title">
+                    <i class="fa fa-file-text-o"></i>
+                    Transaction Details
+                </div>
+                <div class="receipt-details">
+                    <p><strong>Reference ID:</strong> <span id="receipt-reference-id"></span></p>
+                    <p><strong>Type:</strong> <span id="receipt-type"></span></p>
+                    <p><strong>Amount:</strong> <span id="receipt-amount"></span></p>
+                    <p><strong>Delivery Date:</strong> <span id="receipt-delivery-date"></span></p>
+                    
+                    <!-- Order Items Section -->
+                    <div id="receipt-items-container"></div>
+                    
+                    <p class="total"><strong>Total Amount:</strong> <span id="receipt-total"></span></p>
+                    <p><strong>Status:</strong> <span id="receipt-status"></span></p>
+                </div>
+                <button class="back-btn" onclick="goBack()">Back</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const transactionList = document.querySelector('.transaction-list');
+        const receiptModal = document.getElementById('receipt-modal');
+        const receiptReferenceId = document.getElementById('receipt-reference-id');
+        const receiptType = document.getElementById('receipt-type');
+        const receiptAmount = document.getElementById('receipt-amount');
+        const receiptDeliveryDate = document.getElementById('receipt-delivery-date');
+        const receiptItemsContainer = document.getElementById('receipt-items-container');
+        const receiptTotal = document.getElementById('receipt-total');
+        const receiptStatus = document.getElementById('receipt-status');
+
+                // Function to load transactions
+        function loadTransactions(searchQuery = '') {
+            fetch(`/WRSOMS/api/orders/transaction_history.php?search=${encodeURIComponent(searchQuery)}`)
+                .then(response => response.json())
+                .then(data => {
+                    transactionList.innerHTML = '';
+                    if (data.transactions.length === 0) {
+                        transactionList.innerHTML = '<p><i class="fa fa-inbox"></i><span>No delivered transactions found.</span></p>';
+                    } else {
+                        let currentDate = '';
+                        data.transactions.forEach(transaction => {
+                            const transactionDate = new Date(transaction.order_date).toISOString().split('T')[0];
+                            const dateHeader = new Date(transaction.order_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                            const time = new Date(transaction.order_date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
+                            
+                            // Determine transaction type based on items
+                            let hasRefill = false;
+                            let hasPurchase = false;
+                            let transactionType = '';
+                            let iconClass = '';
+                            let iconType = '';
+                            
+                            if (transaction.items && transaction.items.length > 0) {
+                                transaction.items.forEach(item => {
+                                    if (item.order_type_id == 1) hasRefill = true;
+                                    if (item.order_type_id == 2) hasPurchase = true;
+                                });
+                                
+                                if (hasRefill && hasPurchase) {
+                                    transactionType = 'Refill and Purchase Container/s';
+                                    iconClass = 'combo';
+                                    iconType = 'fa-cubes';
+                                } else if (hasPurchase) {
+                                    transactionType = 'Purchase Container/s';
+                                    iconClass = 'buy';
+                                    iconType = 'fa-shopping-bag';
+                                } else if (hasRefill) {
+                                    transactionType = 'Refill';
+                                    iconClass = 'refill';
+                                    iconType = 'fa-tint';
+                                } else {
+                                    transactionType = 'Order';
+                                    iconClass = 'refill';
+                                    iconType = 'fa-question';
+                                }
+                            } else {
+                                transactionType = 'Order';
+                                iconClass = 'refill';
+                                iconType = 'fa-question';
+                            }
+                            
+                            if (currentDate !== transactionDate) {
+                                transactionList.innerHTML += `<div class="date-header"><i class="fa fa-calendar"></i>${dateHeader}</div>`;
+                                currentDate = transactionDate;
+                            }
+                            
+                            const item = document.createElement('div');
+                            item.className = 'transaction-item';
+                            item.onclick = () => showReceipt(JSON.stringify(transaction));
+                            item.innerHTML = `
+                                <div class="transaction-details">
+                                    <div class="transaction-icon ${iconClass}">
+                                        <i class="fa ${iconType}"></i>
+                                    </div>
+                                    <div class="transaction-info">
+                                        <div class="transaction-type">${transactionType}</div>
+                                        <div class="transaction-time"><i class="fa fa-clock-o"></i>${time}</div>
+                                    </div>
+                                </div>
+                                <div class="transaction-amount">
+                                    <i class="fa fa-peso-sign">₱</i>${parseFloat(transaction.total_amount).toFixed(2)}
+                                </div>
+                            `;
+                            transactionList.appendChild(item);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                    transactionList.innerHTML = '<p><i class="fa fa-exclamation-triangle"></i><span>Error loading transactions. Please try again.</span></p>';
+                });
+        }
+
+        // Load transactions on page load
+        loadTransactions();
+
+        // Load transactions when user types in search
+        searchInput.addEventListener('input', function() {
+            const searchQuery = this.value.trim();
+            loadTransactions(searchQuery);
+        });
+
+        function showReceipt(transactionData) {
+            const transaction = JSON.parse(transactionData);
+            
+            // Determine receipt type based on items
+            let hasRefill = false;
+            let hasPurchase = false;
+            
+            if (transaction.items && transaction.items.length > 0) {
+                transaction.items.forEach(item => {
+                    if (item.order_type_id == 1) hasRefill = true;
+                    if (item.order_type_id == 2) hasPurchase = true;
+                });
+            }
+            
+            let receiptTypeText = '';
+            if (hasRefill && hasPurchase) {
+                receiptTypeText = 'Refill and Purchase Container/s';
+            } else if (hasPurchase) {
+                receiptTypeText = 'Purchase Container/s';
+            } else if (hasRefill) {
+                receiptTypeText = 'Refill';
+            } else {
+                receiptTypeText = 'Order';
+            }
+            
+            receiptReferenceId.textContent = transaction.reference_id || 'N/A';
+            receiptType.textContent = receiptTypeText;
+            receiptAmount.textContent = `₱${parseFloat(transaction.total_amount).toFixed(2)}`;
+            receiptDeliveryDate.textContent = new Date(transaction.delivery_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            
+            // Display all items
+            receiptItemsContainer.innerHTML = '';
+            if (transaction.items && transaction.items.length > 0) {
+                const itemsTitle = document.createElement('h4');
+                itemsTitle.style.cssText = 'margin: 1rem 0 0.5rem 0; color: #008CBA; font-size: 1rem; font-weight: 600;';
+                itemsTitle.innerHTML = '<i class="fa fa-cube"></i> Order Items';
+                receiptItemsContainer.appendChild(itemsTitle);
+                
+                transaction.items.forEach(item => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.style.cssText = 'display: flex; justify-content: space-between; padding: 0.75rem; margin-bottom: 0.5rem; background: #f9fbfc; border-radius: 5px; border-left: 3px solid #008CBA;';
+                    
+                    const itemType = item.order_type_id == 1 ? 'Refill' : 'Purchase';
+                    const itemBadge = item.order_type_id == 1 
+                        ? '<span style="background: #10B981; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-left: 0.5rem;">Refill</span>'
+                        : '<span style="background: #F59E0B; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-left: 0.5rem;">Purchase</span>';
+                    
+                    itemDiv.innerHTML = `
+                        <div>
+                            <strong>${item.container_type || 'N/A'}</strong> ${itemBadge}
+                            <div style="font-size: 0.85rem; color: #6B7280; margin-top: 0.25rem;">
+                                Qty: ${item.quantity || 0} × ₱${parseFloat(item.container_price || 0).toFixed(2)}
+                            </div>
+                        </div>
+                        <div style="font-weight: 700; color: #008CBA;">
+                            ₱${parseFloat(item.subtotal || 0).toFixed(2)}
+                        </div>
+                    `;
+                    receiptItemsContainer.appendChild(itemDiv);
+                });
+            } else {
+                receiptItemsContainer.innerHTML = '<p style="color: #6B7280;">No item details available</p>';
+            }
+            
+            receiptTotal.textContent = `₱${parseFloat(transaction.total_amount).toFixed(2)}`;
+            
+            // Clean up status text - remove "Archived - " prefix
+            let statusText = transaction.delivery_status || 'N/A';
+            statusText = statusText.replace(/^Archived\s*-\s*/i, '');
+            receiptStatus.textContent = statusText;
+            
+            transactionList.style.display = 'none';
+            receiptModal.style.display = 'flex';
+        }
+
+        function goBack() {
+            receiptModal.style.display = 'none';
+            transactionList.style.display = 'block';
+        }
+
+        function closeReceipt() {
+            receiptModal.style.display = 'none';
+            transactionList.style.display = 'block';
+        }
+
+        // Close receipt when clicking outside
+        window.addEventListener('click', function(event) {
+            if (event.target === receiptModal) {
+                closeReceipt();
+            }
+        });
+
+        // Add close functionality with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && receiptModal.style.display === 'flex') {
+                closeReceipt();
+            }
+        });
+
+        // Reveal on scroll animation
+        const sections = document.querySelectorAll("section");
+        const revealOnScroll = () => {
+            const triggerBottom = window.innerHeight * 0.85;
+            sections.forEach(section => {
+                const sectionTop = section.getBoundingClientRect().top;
+                if (sectionTop < triggerBottom) {
+                    section.classList.add("show");
+                }
+            });
+        };
+        window.addEventListener("scroll", revealOnScroll);
+        revealOnScroll();
+
+        // Auto-open transaction from notification click
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Transaction History: Page loaded');
+            
+            // Check if we have a reference ID in the URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const refFromUrl = urlParams.get('ref');
+            const showModal = urlParams.get('showModal');
+            
+            if (refFromUrl && showModal === 'true') {
+                console.log('Transaction History: Auto-opening transaction with ref:', refFromUrl);
+                
+                // Wait for transactions to load, then find and open the matching one
+                const checkAndOpenTransaction = setInterval(() => {
+                    // Get all transaction items that have been rendered
+                    const transactionItems = document.querySelectorAll('.transaction-item');
+                    
+                    if (transactionItems.length > 0) {
+                        console.log(`Transaction History: Found ${transactionItems.length} transactions, searching for ref ${refFromUrl}`);
+                        
+                        // Find the transaction data by fetching again and matching reference_id
+                        fetch(`/WRSOMS/api/orders/transaction_history.php?search=`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.transactions && data.transactions.length > 0) {
+                                    // Find transaction(s) with matching reference_id
+                                    const matchingTransactions = data.transactions.filter(t => t.reference_id === refFromUrl);
+                                    
+                                    if (matchingTransactions.length > 0) {
+                                        console.log('Transaction History: Found matching transaction, opening receipt');
+                                        // Open the first matching transaction
+                                        showReceipt(JSON.stringify(matchingTransactions[0]));
+                                        clearInterval(checkAndOpenTransaction);
+                                        
+                                        // Clean URL without reloading
+                                        window.history.replaceState({}, document.title, window.location.pathname);
+                                    } else {
+                                        console.log('Transaction History: No matching transaction found for ref:', refFromUrl);
+                                        clearInterval(checkAndOpenTransaction);
+                                    }
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Transaction History: Error fetching transaction data:', error);
+                                clearInterval(checkAndOpenTransaction);
+                            });
+                    }
+                }, 500); // Check every 500ms
+                
+                // Stop checking after 5 seconds to avoid infinite loop
+                setTimeout(() => {
+                    clearInterval(checkAndOpenTransaction);
+                    console.log('Transaction History: Timeout waiting for transactions to load');
+                }, 5000);
+            }
+        });
+    </script>
+
+    <!-- Page scripts (same as index.html, adjusted paths) -->
+    <script src="../assets/js/api-helper.js?v=1762860135"></script>
+    <script src="../assets/js/auth.js?v=1762860135"></script>
+    <script src="../assets/js/notifications.js?v=1762860135"></script>
+    <script src="../assets/js/product.js?v=1762860135"></script>
+
+</body>
+</html>

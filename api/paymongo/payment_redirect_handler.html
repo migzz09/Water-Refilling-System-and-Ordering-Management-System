@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Processing Payment...</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .loader {
+      text-align: center;
+      color: white;
+    }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .text {
+      font-size: 1.1rem;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="loader">
+    <div class="spinner"></div>
+    <div class="text">Processing payment...</div>
+  </div>
+  <script>
+    // Check if we're in an iframe (PayMongo checkout)
+    if (window.location !== window.parent.location) {
+      // We're in an iframe, wait for parent to handle redirect
+      console.log('In iframe, waiting for redirect...');
+    } else {
+      // We're in the main window, check URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionId = urlParams.get('session_id');
+      const status = urlParams.get('status');
+      
+      if (status === 'failed' || status === 'cancelled') {
+        window.location.href = '/WRSOMS/api/paymongo/payment_failed.php?reason=' + status;
+      } else if (sessionId) {
+        window.location.href = '/WRSOMS/api/paymongo/payment_success.php?session_id=' + sessionId;
+      } else {
+        // No valid parameters, redirect to checkout
+        setTimeout(() => {
+          window.location.href = '/WRSOMS/pages/checkout.html';
+        }, 2000);
+      }
+    }
+  </script>
+</body>
+</html>

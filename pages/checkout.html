@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout - WaterWorld</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <!-- include index styles so header/nav matches the homepage (keep order: index then header) -->
+  <link rel="stylesheet" href="../assets/css/index.css">
+  <link rel="stylesheet" href="../assets/css/header.css">
+  <link rel="stylesheet" href="../assets/css/checkout.css">
+  <link rel="stylesheet" href="../assets/css/business-status.css">
+</head>
+<body>
+  <!-- Navigation (unified with index header) -->
+  <nav class="navbar glass">
+    <div class="container">
+      <div class="nav-content">
+        <div class="nav-brand">
+          <img src="../assets/images/ww_logo.png" alt="WaterWorld Logo" class="nav-logo">
+          <span class="brand-name">Water World</span>
+        </div>
+
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+          <span class="icon-menu"></span>
+        </button>
+
+        <div class="nav-menu" id="navMenu">
+          <a href="../index.html" class="nav-link">
+            <i class="fa fa-home"></i>
+            Home
+          </a>
+          <a href="product.html" class="nav-link">
+            <i class="fa fa-shopping-cart"></i>
+            Products
+          </a>
+          <a href="order-tracking.html" class="nav-link">
+            <i class="fa fa-search"></i>
+            Track Order
+          </a>
+          <a href="../index.html#services" class="nav-link">
+            <i class="fa fa-tint"></i>
+            Services
+          </a>
+          <a href="../index.html#contact" class="nav-link">
+            <i class="fa fa-envelope"></i>
+            Contact
+          </a>
+        </div>
+
+        <div class="nav-actions" id="navActions">
+          <a href="login.html" class="btn btn-outline btn-sm" id="loginBtn">
+            <i class="fa fa-sign-in"></i>
+            Login
+          </a>
+          <a href="register.html" class="btn btn-primary btn-sm" id="registerBtn">
+            <i class="fa fa-user-plus"></i>
+            Register
+          </a>
+          <div class="user-menu" id="userMenu" style="display: none;">
+            <button class="btn btn-outline btn-sm profile-btn" onclick="toggleUserDropdown()" aria-label="Profile" title="Profile">
+              <i class="fa fa-user-circle"></i>
+              <span id="userName">Profile</span>
+              <i class="fa fa-chevron-down"></i>
+            </button>
+            <div class="user-dropdown" id="userDropdown" style="display: none;">
+              <a href="product.html" class="dropdown-item"><i class="fa fa-shopping-cart"></i> View Products</a>
+              <a href="usertransaction-history.html" class="dropdown-item"><i class="fa fa-history"></i> Order History</a>
+              <a href="order-tracking.html" class="dropdown-item"><i class="fa fa-search"></i> Track Order</a>
+              <a href="feedback.html" class="dropdown-item"><i class="fa fa-comment"></i> Feedback</a>
+              <a href="settings.html" class="dropdown-item"><i class="fa fa-cog"></i> Settings</a>
+              <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
+              <a href="#" onclick="logout()" class="dropdown-item"><i class="fa fa-sign-out"></i> Logout</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="checkout-container">
+    <div class="checkout-main">
+      <!-- Cart Items -->
+      <section class="checkout-section">
+        <h2 class="section-title">Order Items</h2>
+        <div id="cartItems">
+          <!-- Cart items will be rendered here -->
+        </div>
+      </section>
+
+      <!-- Delivery Address -->
+      <section class="checkout-section">
+        <h2 class="section-title">Delivery Address</h2>
+        <div id="addressList">
+          <!-- Address list will be rendered here -->
+        </div>
+        <div id="vehicleInfo" style="margin-top:1rem;"></div>
+        <div class="form-group" style="margin-top:1rem; display:none;">
+          <label class="form-label" for="deliveryDate">Preferred Delivery Date</label>
+          <input type="date" id="deliveryDate" name="deliveryDate" class="form-control" required />
+        </div>
+        <div class="info-box" style="margin-top:1rem; padding:12px; background:#e8f5e9; border-left:4px solid #4caf50; border-radius:4px;">
+          <i class="fa fa-info-circle" style="color:#4caf50; margin-right:8px;"></i>
+          <strong>Same-Day Delivery:</strong> Your order will be delivered today.
+        </div>
+      </section>
+
+      <!-- Payment Method -->
+      <section class="checkout-section">
+        <h2 class="section-title">Payment Method</h2>
+        <div class="payment-options">
+          <div class="payment-option" data-method="cod" onclick="selectPaymentMethod('cod')" role="button" tabindex="0" aria-pressed="false">
+            <div class="payment-icon">
+              <i class="fa fa-money"></i>
+            </div>
+            <div class="payment-details">
+              <div class="payment-title">Cash on Delivery</div>
+              <div class="payment-description">Pay when your order arrives</div>
+            </div>
+            <div class="payment-check" aria-hidden="true"><i class="fa fa-check"></i></div>
+          </div>
+          <div class="payment-option" data-method="gcash" onclick="selectPaymentMethod('gcash')" role="button" tabindex="0" aria-pressed="false">
+            <div class="payment-icon">
+              <i class="fa fa-mobile"></i>
+            </div>
+            <div class="payment-details">
+              <div class="payment-title">GCash</div>
+              <div class="payment-description">Pay securely with GCash</div>
+            </div>
+            <div class="payment-check" aria-hidden="true"><i class="fa fa-check"></i></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Order Summary -->
+    <aside class="checkout-sidebar">
+      <div class="summary-section">
+        <h2 class="section-title">Order Summary</h2>
+        <div class="summary-line">
+          <span>Subtotal</span>
+          <span id="subtotal">₱0.00</span>
+        </div>
+        <div class="summary-line total">
+          <span>Total</span>
+          <span id="total">₱0.00</span>
+        </div>
+        <button class="btn btn-primary btn-block btn-lg" id="checkoutBtn" onclick="placeOrder()" disabled>
+          Place Order
+        </button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Address Form Modal -->
+  <div class="modal-overlay" id="addressFormModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="addressFormTitle">Add New Address</h3>
+        <button class="close-modal" onclick="onCloseAddressForm()" aria-label="Close address form">
+          <i class="fa fa-times" aria-hidden="true"></i>
+          <span class="sr-only">Close</span>
+        </button>
+      </div>
+      <form id="addressForm">
+        <div class="form-group">
+          <label class="form-label" for="addressType">Address Type</label>
+          <select class="form-control" id="addressType" name="addressType" required>
+            <option value="Home">Home</option>
+            <option value="Office">Office</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="street">Street Address</label>
+          <input type="text" class="form-control" id="street" name="street" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="city">City</label>
+          <select class="form-control" id="city" name="city" required>
+            <option value="">Select City</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="barangay">Barangay</label>
+          <select class="form-control" id="barangay" name="barangay" required>
+            <option value="">Select Barangay</option>
+          </select>
+        </div>
+        <!-- Contact number removed from add-address modal by request (handled via saved profile/address) -->
+        <button type="submit" class="btn btn-primary btn-block">Save Address</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Notification -->
+  <div class="notification" id="notification"></div>
+
+  <!-- Order Confirmation Modal -->
+  <div class="modal-overlay" id="orderConfirmation">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Confirm Your Order</h3>
+        <button class="close-modal" onclick="closeModal()" aria-label="Close confirmation modal"><i class="fa fa-times" aria-hidden="true"></i><span class="sr-only">Close</span></button>
+      </div>
+      <div class="order-details"></div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmOrder()">Confirm & Place Order</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Selection Modal (for editing cart items) -->
+  <div class="modal-overlay" id="selectionModal" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 id="modalTitle">Edit Order</h3>
+        <button class="close-modal" onclick="closeSelectionModal()" aria-label="Close modal">
+          <i class="fa fa-times" aria-hidden="true"></i>
+          <span class="sr-only">Close</span>
+        </button>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem;">
+        <div style="margin-bottom: 1.5rem;">
+          <p id="modalItemName" style="font-weight: 600; font-size: 1.1rem; color: var(--text-primary); margin-bottom: 0.5rem;"></p>
+        </div>
+        
+        <!-- Water Type Selection -->
+        <div style="margin-bottom: 1.5rem;">
+          <h4 style="font-size: 1rem; color: var(--text-primary); margin-bottom: 0.75rem;">Water Type</h4>
+          <div id="waterTypeOptions" style="display: grid; gap: 0.75rem;">
+            <!-- Water type options will be inserted here -->
+          </div>
+        </div>
+
+        <!-- Order Type Selection -->
+        <div style="margin-bottom: 1.5rem;">
+          <h4 style="font-size: 1rem; color: var(--text-primary); margin-bottom: 0.75rem;">Order Type</h4>
+          <div id="orderTypeOptions" style="display: grid; gap: 0.75rem;">
+            <!-- Order type options will be inserted here -->
+          </div>
+        </div>
+
+        <!-- Quantity Control -->
+        <div style="margin-bottom: 1rem;">
+          <h4 style="font-size: 1rem; color: var(--text-primary); margin-bottom: 0.75rem;">Quantity</h4>
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <button class="qty-btn" onclick="modalChangeQuantity(-1)" style="width: 40px; height: 40px; font-size: 20px; border-radius: var(--radius-md); border: 2px solid var(--primary-blue); background: white; color: var(--primary-blue); cursor: pointer; transition: all 0.2s;">-</button>
+            <span id="modalQuantityValue" style="font-size: 1.5rem; font-weight: 700; min-width: 50px; text-align: center; color: var(--primary-blue-dark);">1</span>
+            <button class="qty-btn" onclick="modalChangeQuantity(1)" style="width: 40px; height: 40px; font-size: 20px; border-radius: var(--radius-md); border: 2px solid var(--primary-blue); background: white; color: var(--primary-blue); cursor: pointer; transition: all 0.2s;">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions" style="padding: 1rem 1.5rem 1.5rem;">
+        <button class="btn btn-outline" onclick="closeSelectionModal()" style="flex: 1;">Cancel</button>
+        <button class="btn btn-primary" id="confirmSelection" onclick="confirmSelection()" style="flex: 1;">Update</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Receipt Modal -->
+  <div class="modal-overlay" id="receiptModal">
+    <div class="modal-content receipt">
+      <div class="modal-header">
+        <h3>Order Receipt</h3>
+        <button class="close-modal" onclick="closeReceipt()" aria-label="Close receipt"><i class="fa fa-times" aria-hidden="true"></i><span class="sr-only">Close</span></button>
+      </div>
+      <div class="receipt-details"></div>
+      <div class="receipt-actions">
+        <button class="btn btn-outline" onclick="printReceipt()">Print Receipt</button>
+        <button class="btn btn-primary" onclick="closeReceipt()">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/api-helper.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <!-- index.js provides header/auth UI initialization and small helpers used by the nav -->
+  <script src="../assets/js/index.js"></script>
+  <script src="../assets/js/checkout.js?v=20251126e"></script>
+    <script>
+      // Show toast if redirected with ?order_error=...
+      (function() {
+        const params = new URLSearchParams(window.location.search);
+        const err = params.get('order_error');
+        if (err && typeof showToast === 'function') {
+          showToast(decodeURIComponent(err), 'error', 6000);
+          // Optionally, remove the error from the URL after showing
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      })();
+    </script>
+  <script src="../assets/js/business-status.js"></script>
+</body>
+</html>

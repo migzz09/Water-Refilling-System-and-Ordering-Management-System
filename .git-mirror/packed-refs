@@ -1,0 +1,23 @@
+# pack-refs with: peeled fully-peeled sorted 
+0b14097b5f1802b9564b9a0c48f8ba0ed39bdf41 refs/heads/admin-test
+9e26740e1ca9f52138fe24855af5b37a835c4379 refs/heads/checkpoint
+9d1d121ba4556c0e7220ee7a17de87cceede5d79 refs/heads/fixed-merge-conflict-test
+cae38ec321d9a718091ee6b8ebabd8e8ecc868a3 refs/heads/main
+57e1c29080dfd091aab889e7bcc7de50846c1750 refs/heads/temp-save
+d78f8c8ff53ac9a40d0b3e70d4654031bb37133b refs/remotes/origin/Abujen
+032d46cbb36d59860278f4d8cd6034434544769f refs/remotes/origin/HEAD
+0b14097b5f1802b9564b9a0c48f8ba0ed39bdf41 refs/remotes/origin/admin-test
+c1b7d5d1e4f677d43c56ccd17efccc9784ac195c refs/remotes/origin/andrei
+e355419cf10d84e9a23467a7b9177d056e42cc94 refs/remotes/origin/briongos
+f56d94ab88c7224cd8ac7b0cf548504e90f990b3 refs/remotes/origin/checkout
+9e26740e1ca9f52138fe24855af5b37a835c4379 refs/remotes/origin/checkpoint
+c38e5fa47eaa5e4f8737fbb2fc040e3b8259399b refs/remotes/origin/dog
+032d46cbb36d59860278f4d8cd6034434544769f refs/remotes/origin/finalized-na-may-isang-loophole
+9d1d121ba4556c0e7220ee7a17de87cceede5d79 refs/remotes/origin/fixed-merge-conflict-test
+3a842bdb6e3d63e71c346732f1369426c11c8d2b refs/remotes/origin/gmailsmtp-phpmailer(working)
+1fc34b3d81b1a887f58da86b50822adee5f10aba refs/remotes/origin/jeh
+032d46cbb36d59860278f4d8cd6034434544769f refs/remotes/origin/main
+84f40b432e4fe3badefffda75065ea638bc105f9 refs/remotes/origin/paymongo
+f7ef7ded58779f73de697600c7fb58856ecd1601 refs/remotes/origin/princeandreibriongos-bit-patch-1
+29da0f3d9052630f93306aee40774cd9adbc7a91 refs/remotes/origin/princeandreibriongos-bit-patch-2
+c8191d526c5f94927661c8ca2fa55b920b4ac113 refs/remotes/origin/san-j-tranhis

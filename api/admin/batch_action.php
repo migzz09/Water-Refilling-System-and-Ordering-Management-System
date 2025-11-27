@@ -1,0 +1,165 @@
+<?php
+// Admin batch actions: start_pickup, complete_pickup, start_delivery, complete_delivery
+ob_start();
+session_start();
+require_once '../../config/connect.php';
+
+header('Content-Type: application/json');
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+    exit;
+}
+
+$input = json_decode(file_get_contents('php://input'), true);
+$action = $input['action'] ?? '';
+$batchId = isset($input['batch_id']) ? (int)$input['batch_id'] : 0;
+
+// Authentication/authorization check
+// Admins can perform all actions. Staff users (e.g. Drivers) may be allowed a subset.
+$isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1;
+$isAuthorized = false;
+if ($isAdmin) {
+    $isAuthorized = true;
+} else {
+    // Try to detect staff role by session username
+    $username = $_SESSION['username'] ?? null;
+    if ($username) {
+        $sstmt = $pdo->prepare("SELECT staff_role FROM staff WHERE staff_user = ? LIMIT 1");
+        $sstmt->execute([$username]);
+        $srow = $sstmt->fetch(PDO::FETCH_ASSOC);
+        if ($srow && !empty($srow['staff_role'])) {
+            $staffRole = strtolower(trim($srow['staff_role']));
+            // Normalize role names: treat 'rider' as 'driver'
+            if (strpos($staffRole, 'rider') !== false) $staffRole = 'driver';
+            // Drivers/riders are now allowed to perform all actions (pickup and delivery)
+            if ($staffRole === 'driver') {
+                if (in_array($action, ['start_pickup', 'complete_pickup', 'start_delivery', 'complete_delivery'])) {
+                    $isAuthorized = true;
+                }
+            }
+            // Future roles with limited permissions can be added here
+        }
+    }
+}
+
+if (!$isAuthorized) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'Unauthorized - insufficient privileges']);
+    exit;
+}
+
+if (!$batchId || !$action) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'batch_id and action are required']);
+    exit;
+}
+
+try {
+    $pdo->beginTransaction();
+
+    // Validate batch exists
+    $bst = $pdo->prepare("SELECT batch_id FROM batches WHERE batch_id = ? LIMIT 1");
+    $bst->execute([$batchId]);
+    if (!$bst->fetchColumn()) {
+        throw new Exception('Batch not found');
+    }
+
+    // Helper: update deliveries by type
+    $updateDelivery = function($type, $statusId, $setActual=false) use ($pdo, $batchId) {
+        if ($setActual) {
+            $stmt = $pdo->prepare("UPDATE deliveries SET delivery_status_id = ?, actual_time = NOW() WHERE batch_id = ? AND delivery_type = ?");
+            $stmt->execute([$statusId, $batchId, $type]);
+        } else {
+            $stmt = $pdo->prepare("UPDATE deliveries SET delivery_status_id = ? WHERE batch_id = ? AND delivery_type = ?");
+            $stmt->execute([$statusId, $batchId, $type]);
+        }
+    };
+
+    // Helper: update orders status for all orders in batch (used when starting/completing delivery)
+    $updateOrdersStatus = function($statusId) use ($pdo, $batchId) {
+        $stmt = $pdo->prepare("UPDATE orders SET order_status_id = ? WHERE batch_id = ?");
+        $stmt->execute([$statusId, $batchId]);
+    };
+
+    switch ($action) {
+        case 'start_pickup':
+            // mark pickup rows as In Progress (2)
+            $updateDelivery('pickup', 2, false);
+            // set batch status to In Progress (2)
+            $pdo->prepare("UPDATE batches SET batch_status_id = 2 WHERE batch_id = ?")->execute([$batchId]);
+            break;
+        case 'complete_pickup':
+            // mark pickup as Completed (3) and set actual_time
+            $updateDelivery('pickup', 3, true);
+            break;
+        case 'start_delivery':
+            // mark delivery rows as In Progress (2)
+            $updateDelivery('delivery', 2, false);
+            // update orders to In Progress
+            $updateOrdersStatus(2);
+            // set batch status to In Progress
+            $pdo->prepare("UPDATE batches SET batch_status_id = 2 WHERE batch_id = ?")->execute([$batchId]);
+            break;
+        case 'complete_delivery':
+            // mark delivery as Completed (3) and set actual_time
+            $updateDelivery('delivery', 3, true);
+            // update orders to Completed
+            $updateOrdersStatus(3);
+            // set batch status to Completed (3)
+            $pdo->prepare("UPDATE batches SET batch_status_id = 3 WHERE batch_id = ?")->execute([$batchId]);
+            
+            // Auto-mark COD payments as Paid when delivery is completed
+            // Get all orders in this batch with COD payment method (payment_method_id = 1)
+            // and update their payment status to Paid (payment_status_id = 2)
+            $codStmt = $pdo->prepare("
+                UPDATE payments p
+                INNER JOIN orders o ON p.reference_id = o.reference_id
+                SET p.payment_status_id = 2
+                WHERE o.batch_id = ? 
+                AND p.payment_method_id = 1 
+                AND p.payment_status_id = 1
+            ");
+            $codStmt->execute([$batchId]);
+            $updatedRows = $codStmt->rowCount();
+            error_log("Complete delivery: Updated $updatedRows COD payment(s) to Paid for batch_id: $batchId");
+            break;
+        default:
+            throw new Exception('Unknown action');
+    }
+    $pdo->commit();
+
+    // After commit, fetch updated batch_status and deliveries to return structured info for the UI
+    $bst = $pdo->prepare("SELECT bs.status_name as batch_status FROM batches b LEFT JOIN batch_status bs ON b.batch_status_id = bs.batch_status_id WHERE b.batch_id = ? LIMIT 1");
+    $bst->execute([$batchId]);
+    $batchStatusRow = $bst->fetch(PDO::FETCH_ASSOC);
+    $batchStatusName = $batchStatusRow['batch_status'] ?? null;
+
+    $stmt4 = $pdo->prepare("SELECT d.delivery_type, ds.status_name as delivery_status, d.scheduled_time, d.actual_time
+        FROM deliveries d
+        LEFT JOIN delivery_status ds ON d.delivery_status_id = ds.delivery_status_id
+        WHERE d.batch_id = ?");
+    $stmt4->execute([$batchId]);
+    $deliveryRows = $stmt4->fetchAll(PDO::FETCH_ASSOC);
+
+    $pickupStatus = null;
+    $deliveryStatus = null;
+    foreach ($deliveryRows as $dr) {
+        if (!empty($dr['delivery_type']) && strtolower($dr['delivery_type']) === 'pickup') {
+            $pickupStatus = $dr['delivery_status'] ?? $pickupStatus;
+        } elseif (!empty($dr['delivery_type']) && strtolower($dr['delivery_type']) === 'delivery') {
+            $deliveryStatus = $dr['delivery_status'] ?? $deliveryStatus;
+        }
+    }
+
+    ob_end_clean();
+    echo json_encode(['success' => true, 'message' => 'Action performed: ' . $action, 'data' => ['batch_id' => $batchId, 'batch_status' => $batchStatusName, 'pickup_status' => $pickupStatus, 'delivery_status' => $deliveryStatus]]);
+} catch (Exception $e) {
+    $pdo->rollBack();
+    ob_end_clean();
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+}
+
+exit;

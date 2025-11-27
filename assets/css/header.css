@@ -1,0 +1,65 @@
+/* Shared header overrides to ensure consistent appearance across pages */
+
+/* Force consistent brand sizing and logo */
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  font-family: var(--font-heading);
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+  color: var(--primary-blue-dark) !important;
+  flex-shrink: 0;
+  min-width: 180px;
+  white-space: nowrap;
+}
+
+.nav-logo {
+  height: 48px !important;
+  width: auto !important;
+  flex-shrink: 0;
+}
+
+.brand-name {
+  background: linear-gradient(135deg, var(--primary-blue-dark) 0%, var(--secondary-teal) 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+/* Ensure profile button always shows username text when present */
+.profile-btn span {
+  display: inline-block !important;
+  font-weight: 500 !important;
+  color: var(--primary-blue-dark) !important;
+}
+
+/* Ensure navbar padding consistent */
+.navbar {
+  padding: 1rem 0 !important;
+}
+
+/* Make sure navbar sits above page content */
+.navbar {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1100 !important;
+}
+
+/* Slight adjustments for small screens */
+@media (max-width: 768px) {
+  .nav-brand { 
+    font-size: 1.25rem !important;
+    min-width: 160px;
+  }
+  
+  .nav-logo {
+    height: 40px !important;
+  }
+  
+  .profile-btn span { 
+    display: none !important; 
+  }
+}

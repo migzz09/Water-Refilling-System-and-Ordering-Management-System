@@ -1,0 +1,152 @@
+/* Business Status Banner Styles */
+
+.business-status-banner {
+    position: relative;
+    padding: 20px 24px;
+    margin: 100px auto 24px auto;
+    max-width: 1200px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    animation: slideDown 0.4s ease-out;
+    z-index: 50;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.banner-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.banner-icon {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 28px;
+}
+
+.banner-text {
+    flex: 1;
+}
+
+.banner-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.banner-message {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 4px;
+}
+
+.banner-hours {
+    font-size: 0.875rem;
+    margin-top: 8px;
+    opacity: 0.9;
+    font-weight: 600;
+}
+
+/* Cutoff Time Warning (Orange) */
+.status-banner-cutoff {
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+    border: 3px solid #fb923c;
+    color: #9a3412;
+}
+
+.status-banner-cutoff .banner-icon {
+    background: linear-gradient(135deg, #fb923c, #f97316);
+    color: white;
+}
+
+.status-banner-cutoff .banner-title {
+    color: #c2410c;
+}
+
+/* Closed (Red) */
+.status-banner-closed {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    border: 3px solid #f87171;
+    color: #991b1b;
+}
+
+.status-banner-closed .banner-icon {
+    background: linear-gradient(135deg, #f87171, #ef4444);
+    color: white;
+}
+
+.status-banner-closed .banner-title {
+    color: #dc2626;
+}
+
+/* Warning (Yellow) */
+.status-banner-warning {
+    background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+    border: 3px solid #fbbf24;
+    color: #854d0e;
+}
+
+.status-banner-warning .banner-icon {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: white;
+}
+
+.status-banner-warning .banner-title {
+    color: #b45309;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .business-status-banner {
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .banner-content {
+        gap: 12px;
+    }
+    
+    .banner-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 24px;
+    }
+    
+    .banner-title {
+        font-size: 1.125rem;
+    }
+    
+    .banner-message {
+        font-size: 0.9375rem;
+    }
+    
+    .banner-hours {
+        font-size: 0.8125rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .banner-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .banner-icon {
+        margin: 0 auto;
+    }
+}

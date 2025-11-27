@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Manage Status</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background:#f8f9fa; font-family:Poppins, Arial, sans-serif; }
+    .container { margin-top:40px; margin-bottom:80px; max-width:1100px; }
+    .nav-tabs .nav-link.active { background:#0d6efd; color:#fff; }
+    .btn-custom { border-radius:18px; padding:4px 12px; }
+    .back-btn { position:fixed; top:20px; left:20px; }
+    .card { border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+  </style>
+</head>
+<body>
+<a href="admin_dashboard.php" class="btn btn-secondary back-btn">← Back</a>
+<div class="container">
+  <h2 class="text-center mb-4">Manage Status</h2>
+
+  
+    <div class="alert alert-success"></div>
+  
+  
+    <div class="alert alert-danger"></div>
+  
+
+  <ul class="nav nav-tabs justify-content-center mb-3" id="tabs">
+    <li class="nav-item"><a class="nav-link " data-bs-toggle="tab" href="#batch">Batch Status</a></li>
+    <li class="nav-item"><a class="nav-link " data-bs-toggle="tab" href="#delivery">Delivery Status</a></li>
+    <li class="nav-item"><a class="nav-link " data-bs-toggle="tab" href="#payment">Payment Status</a></li>
+  </ul>
+
+  <div class="tab-content">
+    <div class="tab-pane fade " id="batch">
+      
+    </div>
+    <div class="tab-pane fade " id="delivery">
+      
+    </div>
+    <div class="tab-pane fade " id="payment">
+      
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// preserve tab selection when linking with ?tab=table
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const tab = params.get('tab');
+  if(tab){
+    const mapping = {
+      'batch_status':'#batch',
+      'delivery_status':'#delivery',
+      'payment_status':'#payment'
+    };
+    const selector = mapping[tab];
+    if(selector){
+      const tabEl = document.querySelector('a[href="'+selector+'"]');
+      if(tabEl){
+        const bs = bootstrap.Tab.getOrCreateInstance(tabEl);
+        bs.show();
+      }
+    }
+  }
+})();
+</script>
+</body>
+</html>

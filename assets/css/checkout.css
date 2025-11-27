@@ -1,0 +1,562 @@
+/* Checkout page styles */
+.checkout-container {
+  max-width: 1100px;
+  margin: 2rem auto;
+  margin-top: 6rem; /* ensure checkout content sits below the fixed navbar */
+  padding: 1.25rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  display: block; /* single-column layout: main content then summary below */
+}
+
+.checkout-container h1 {
+  font-size: 2rem;
+  color: var(--primary-color);
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+/* Cart Summary */
+.cart-summary {
+  background: #f9fbfc;
+  padding: 1.5rem;
+  border-radius: 10px;
+  margin-bottom: 2rem;
+}
+
+.cart-summary h3 {
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+.cart-items {
+  margin-bottom: 1rem;
+}
+
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.cart-item:last-child {
+  border-bottom: none;
+}
+
+.cart-item-details {
+  flex: 1;
+}
+
+.cart-item-title {
+  font-weight: 500;
+}
+
+.cart-item-subtitle {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.cart-item-price {
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.cart-total {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 1rem;
+  border-top: 2px solid #e5e5e5;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+/* Form Sections */
+section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f9fbfc;
+  border-radius: 10px;
+}
+
+/* Address selection boxes */
+.address-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.address-box {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  /* align items to the top so multi-line content (summary) is not vertically clipped */
+  align-items: flex-start;
+  min-height: 64px;
+}
+
+.address-box.address-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.address-box:hover {
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
+.address-radio {
+  display: flex;
+  gap: 0.75rem;
+  /* align radio and content to the top for multi-line content */
+  align-items: flex-start;
+  width: 100%;
+}
+
+.address-radio input[type="radio"] {
+  margin-top: 0; /* keep radio vertically centered with content */
+  /* Center the radio even when the address content is top-aligned for multi-line summaries */
+  align-self: center;
+}
+
+.address-content .address-lines {
+  /* Allow multi-line content and avoid clipping the summary. Previously we limited
+     this container which caused the summary to be visually cut off. Keep wrapping
+     behavior but allow enough room for the extra summary line. */
+  max-height: none;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+/* debug button removed from UI; styles intentionally deleted */
+
+/* Make the address-content a positioned container so we can place the arrow button */
+.address-content {
+  position: relative;
+  padding-right: 64px; /* space for the arrow button (wider for round button) */
+}
+
+/* Arrow button for opening/editing alternative address */
+.address-open-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  /* force a high-contrast primary background and white icon */
+  background: var(--primary-color, #0b74de) !important;
+  color: #fff !important;
+  border: none !important;
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(11,116,222,0.12);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+
+.address-open-btn:hover {
+  transform: translateY(-50%) translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.14);
+}
+
+.address-open-btn:focus {
+  outline: 3px solid rgba(0,140,186,0.18);
+  outline-offset: 2px;
+}
+
+/* Make the button slightly larger on touch devices for easier tapping */
+@media (max-width: 480px) {
+  .address-open-btn {
+    width: 44px;
+    height: 44px;
+    right: 10px;
+    border-radius: 50%;
+    font-size: 1.15rem;
+  }
+}
+
+/* Ensure SVG inside the button scales and uses current color */
+.address-open-btn svg { display:block; width:18px; height:18px; color: #fff; }
+/* Ensure the chevron path is visible and crisp */
+.address-open-btn svg path { stroke: #fff; stroke-width: 2.6; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+.address-text {
+  font-size: 0.95rem;
+  color: #333;
+  /* allow wrapping so full address components are visible */
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+.address-sub {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+section h3 {
+  color: var(--primary-color);
+  margin-bottom: 1.5rem;
+}
+
+.form-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.input-group,
+.select-group {
+  margin-bottom: 1rem;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 0.8rem;
+  border: 2px solid #e5e5e5;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+input:focus,
+select:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.note {
+  color: #666;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+/* Payment Options */
+.payment-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.payment-option {
+  position: relative;
+  padding: 0.4rem;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  outline: none;
+}
+
+.payment-option.selected {
+  border: 2px solid var(--primary-color);
+  background: #eaf6ff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.payment-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+}
+
+.payment-option .payment-details,
+.payment-option .payment-icon {
+  display: inline-block;
+}
+.payment-option {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  background: white;
+  border: 2px solid #e5e5e5;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.payment-option:focus-visible {
+  box-shadow: 0 0 0 4px rgba(11,116,222,0.12);
+}
+
+.payment-option input[type="radio"]:checked + label {
+  border-color: var(--primary-color);
+  background: #e3f2fd;
+}
+
+.payment-icon {
+  margin-right: 1rem;
+  font-size: 1.5rem;
+  color: var(--primary-color);
+}
+
+/* Checkmark shown for selected payment option */
+.payment-check {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--primary-color);
+  border: 2px solid transparent;
+}
+.payment-option.selected .payment-check {
+  background: #fff;
+  border-color: rgba(11,116,222,0.12);
+  box-shadow: 0 6px 18px rgba(11,116,222,0.08);
+}
+.payment-check i { font-size: 14px; }
+
+/* Vehicle Info */
+#vehicleInfo {
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+/* Sidebar styling */
+.checkout-sidebar {
+  width: 100%;
+  margin-top: 1.25rem;
+}
+
+.checkout-sidebar .summary-section {
+  background: #fff;
+  padding: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+}
+
+/* Modals */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(44, 95, 111, 0.6);
+  backdrop-filter: blur(4px);
+  /* Raised above header (header uses z-index ~1100) */
+  z-index: 1220;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+.modal-content {
+  background: var(--bg-white);
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 680px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  /* make this a positioned container so absolutely-positioned children
+     (close button) are positioned relative to the modal */
+  position: relative;
+}
+
+/* Modal close button improvements */
+.modal-content .close-modal,
+.modal-header .close-modal {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,0.04);
+  color: #333;
+  cursor: pointer;
+  transition: background 0.12s ease, transform 0.12s ease;
+  z-index: 1101;
+}
+
+.modal-content .close-modal i {
+  font-size: 14px;
+}
+
+.modal-content .close-modal:hover {
+  background: rgba(0,0,0,0.08);
+  transform: translateY(-1px);
+}
+
+.modal-content .close-modal:focus {
+  outline: 3px solid rgba(0,140,186,0.18);
+  outline-offset: 2px;
+}
+
+/* Screen reader only helper */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.modal h2 {
+  color: var(--primary-color);
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+/* Confirmation modal specifics */
+.confirmation-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.confirmation-details h3 { margin: 0 0 0.5rem 0; color: #0b4f9a; }
+.confirmation-block { background: #fff; padding: 0.75rem; border-radius: 8px; border:1px solid rgba(0,0,0,0.04); }
+.confirmation-items { max-height: 200px; overflow:auto; margin-bottom: 0.5rem; }
+.conf-item { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.03); }
+.conf-item .qty { color:#666; font-size:0.9rem; }
+.conf-summary { display:flex; justify-content:space-between; font-weight:700; margin-top:8px; }
+.confirmation-note { font-size:0.9rem; color:#666; margin-top:8px; }
+
+/* Make confirm button stand out inside modal */
+.modal-actions .btn-primary { padding: 0.75rem 1.25rem; font-size:1rem; }
+.modal-actions .btn-outline { padding: 0.6rem 1rem; }
+
+/* Receipt Styles */
+.receipt {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+}
+
+.receipt-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.receipt-header img {
+  height: 50px;
+  margin-bottom: 1rem;
+}
+
+.receipt-details {
+  border-top: 2px solid #e5e5e5;
+  border-bottom: 2px solid #e5e5e5;
+  padding: 1.5rem 0;
+  margin-bottom: 1.5rem;
+}
+
+.receipt-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .checkout-container {
+    margin: 1rem;
+    padding: 1rem;
+    grid-template-columns: 1fr;
+  }
+
+  .form-container {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-options {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-content {
+    width: 95%;
+    padding: 1.5rem;
+  }
+}
+
+/* Quantity Edit Button */
+.btn-edit-qty {
+  transition: all 0.2s ease;
+}
+
+.btn-edit-qty:hover {
+  background: var(--primary-blue) !important;
+  color: white !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(74, 144, 164, 0.3);
+}
+
+.btn-edit-qty:active {
+  transform: translateY(0);
+}
+
+/* Selection Modal Option Cards */
+.option-card {
+  transition: all 0.2s ease;
+}
+
+.option-card:hover {
+  border-color: var(--primary-blue) !important;
+  background-color: rgba(74, 144, 164, 0.05) !important;
+  transform: translateX(4px);
+}
+
+.option-card.selected {
+  background-color: rgba(74, 144, 164, 0.1) !important;
+  box-shadow: 0 2px 8px rgba(74, 144, 164, 0.2);
+}
+
+.option-card input[type="radio"] {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+/* Quantity Modal Buttons */
+.qty-btn:hover {
+  background: var(--primary-blue) !important;
+  color: white !important;
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(74, 144, 164, 0.3);
+}
+
+.qty-btn:active {
+  transform: scale(0.98);
+}
