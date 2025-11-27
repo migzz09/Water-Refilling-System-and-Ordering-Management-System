@@ -7,7 +7,7 @@ function toggleReportSidebar() {
 }
 
 function fetchDates() {
-    fetch('/WRSOMS/api/admin/daily_report.php?get_dates=true')
+    fetch('/api/admin/daily_report.php?get_dates=true')
         .then(response => response.json())
         .then(res => {
             if (!res.success) return;

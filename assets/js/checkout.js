@@ -858,7 +858,7 @@ async function confirmOrder() {
     // GCASH PAYMENT: Redirect to PayMongo instead of creating order directly
     if (selectedPaymentMethod === 'gcash') {
       // 1. Check batch availability before redirecting to PayMongo
-      const batchCheckRes = await fetch('/WRSOMS/api/orders/check_batch.php', {
+      const batchCheckRes = await fetch('/api/orders/check_batch.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
@@ -887,7 +887,7 @@ async function confirmOrder() {
           notes: orderData.notes || ''
         }
       };
-      const payMongoResponse = await fetch('/WRSOMS/api/paymongo/create_gcash_checkout.php', {
+      const payMongoResponse = await fetch('/api/paymongo/create_gcash_checkout.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',

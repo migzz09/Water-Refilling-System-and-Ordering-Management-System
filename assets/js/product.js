@@ -687,8 +687,8 @@ async function editItem(id, water_type_id, order_type_id) {
   // Load water types and order types
   try {
     const [waterTypesResponse, orderTypesResponse] = await Promise.all([
-      fetch('/WRSOMS/api/common/water_types.php'),
-      fetch('/WRSOMS/api/common/order_types.php')
+      fetch('/api/common/water_types.php'),
+      fetch('/api/common/order_types.php')
     ]);
 
     if (waterTypesResponse.ok) {

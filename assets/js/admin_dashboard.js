@@ -1,6 +1,6 @@
 // Toggle container visibility (Launch/Hide)
 function toggleContainerVisibility(containerId, isVisible) {
-    fetch('/WRSOMS/api/common/containers.php', {
+    fetch('/api/common/containers.php', {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -111,7 +111,7 @@ if (typeof window.originalContent === 'undefined') {
             }
 
             function populateReport(date) {
-                const apiUrl = '/WRSOMS/api/admin/daily_report.php' + (date ? ('?date=' + encodeURIComponent(date)) : '');
+                const apiUrl = '/api/admin/daily_report.php' + (date ? ('?date=' + encodeURIComponent(date)) : '');
                 fetch(apiUrl, { credentials: 'same-origin' })
                     .then(r => r.json())
                     .then(res => {
@@ -227,7 +227,7 @@ if (typeof window.originalContent === 'undefined') {
         }
 
         function fetchDates() {
-            fetch('/WRSOMS/api/admin/daily_report.php?get_dates=true')
+            fetch('/api/admin/daily_report.php?get_dates=true')
                     .then(response => response.json())
                     .then(res => {
                         if (!res.success) return;
@@ -301,7 +301,7 @@ if (typeof window.originalContent === 'undefined') {
             const list = document.getElementById('waterTypesList');
             if (!list) return;
             list.innerHTML = 'Loading...';
-            fetch('/WRSOMS/api/common/water_types.php', { credentials: 'same-origin' })
+            fetch('/api/common/water_types.php', { credentials: 'same-origin' })
                 .then(r => r.json())
                 .then(items => {
                     list.innerHTML = '';
@@ -319,7 +319,7 @@ if (typeof window.originalContent === 'undefined') {
 
         function editWaterType(id) {
             // fetch single type from common list
-            fetch('/WRSOMS/api/common/water_types.php', { credentials: 'same-origin' })
+            fetch('/api/common/water_types.php', { credentials: 'same-origin' })
                 .then(r => r.json())
                 .then(items => {
                     const wt = items.find(x => Number(x.water_type_id) === Number(id));
@@ -339,7 +339,7 @@ if (typeof window.originalContent === 'undefined') {
             const payload = { type_name: name, description: desc };
             if (id) payload.water_type_id = id;
 
-            fetch('/WRSOMS/api/admin/water_types.php', {
+            fetch('/api/admin/water_types.php', {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json' },
@@ -360,7 +360,7 @@ if (typeof window.originalContent === 'undefined') {
 
         function deleteWaterType(id) {
             if (!confirm('Delete this water type?')) return;
-            fetch('/WRSOMS/api/admin/water_types.php', {
+            fetch('/api/admin/water_types.php', {
                 method: 'DELETE',
                 credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json' },

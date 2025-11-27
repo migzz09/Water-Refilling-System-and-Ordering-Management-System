@@ -145,7 +145,7 @@ function toggleNotifications() {
 
 async function markAllAsRead() {
     try {
-        await fetch('/wrsoms/api/notifications.php', {
+        await fetch('/api/notifications.php', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -158,7 +158,7 @@ async function markAllAsRead() {
 
 async function markSingleAsRead(notificationId) {
     try {
-        await fetch('/wrsoms/api/notifications.php', {
+        await fetch('/api/notifications.php', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },

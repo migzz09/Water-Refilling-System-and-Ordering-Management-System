@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         // Call API to send OTP
         try {
-            const res = await fetch('/WRSOMS/api/password/forgot-request.php', {
+            const res = await fetch('/api/password/forgot-request.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email })
@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         // Call API to reset password
         try {
-            const res = await fetch('/WRSOMS/api/password/forgot-reset.php', {
+            const res = await fetch('/api/password/forgot-reset.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: tempEmail, otp, new_password: pass })

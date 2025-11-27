@@ -76,7 +76,7 @@ function stopNotificationPolling() {
 
 async function checkNotifications() {
     try {
-        const res = await fetch('/wrsoms/api/notifications.php', {
+        const res = await fetch('/api/notifications.php', {
             method: 'GET',
             credentials: 'include',
             headers: { 'Accept': 'application/json' }
@@ -253,7 +253,7 @@ function toggleNotifications() {
 
 async function markAllAsRead() {
     try {
-        await fetch('/wrsoms/api/notifications.php', {
+        await fetch('/api/notifications.php', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -266,7 +266,7 @@ async function markAllAsRead() {
 
 async function markSingleAsRead(notificationId) {
     try {
-        await fetch('/wrsoms/api/notifications.php', {
+        await fetch('/api/notifications.php', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -301,7 +301,7 @@ async function handleNotificationClickV2(e) {
         
         // First, try to track the order (check if it exists in active orders)
         try {
-            const trackResponse = await fetch(`/WRSOMS/api/orders/track.php?reference_id=${encodeURIComponent(ref)}`, {
+            const trackResponse = await fetch(`/api/orders/track.php?reference_id=${encodeURIComponent(ref)}`, {
                 method: 'GET',
                 credentials: 'include',
                 headers: { 'Accept': 'application/json' }

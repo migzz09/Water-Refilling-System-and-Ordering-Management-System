@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             // Make API call
-            const response = await fetch('/WRSOMS/api/auth/login.php', {
+            const response = await fetch('/api/auth/login.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
