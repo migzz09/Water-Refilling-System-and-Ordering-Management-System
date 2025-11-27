@@ -1,7 +1,5 @@
 # Composer
 /vendor/
-composer.lock
-composer.json
 composer.phar
 
 # Configuration (contains sensitive data)
